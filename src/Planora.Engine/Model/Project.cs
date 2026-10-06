@@ -15,12 +15,22 @@ public sealed class Project
     {
         Name = name;
         StartDate = startDate;
+        FinishDate = startDate;
         Calendar = WorkingCalendar.CreateStandard();
         Calendars.Add(Calendar);
     }
 
     public string Name { get; set; }
+
+    /// <summary>Project start, used when scheduling forward (the default).</summary>
     public DateTime StartDate { get; set; }
+
+    /// <summary>Project finish, used when <see cref="ScheduleFromFinish"/> is true.</summary>
+    public DateTime FinishDate { get; set; }
+
+    /// <summary>Schedule backward from <see cref="FinishDate"/> instead of forward from <see cref="StartDate"/>.</summary>
+    public bool ScheduleFromFinish { get; set; }
+
     public DateTime? StatusDate { get; set; }
 
     /// <summary>The project calendar, used by tasks that have no calendar of their own.</summary>
@@ -31,6 +41,9 @@ public sealed class Project
 
     /// <summary>Tasks in display (outline) order.</summary>
     public IReadOnlyList<ProjectTask> Tasks => _tasks;
+
+    /// <summary>Earliest start of any task; set by the scheduler.</summary>
+    public DateTime Start { get; internal set; }
 
     /// <summary>Latest finish of any task; set by the scheduler.</summary>
     public DateTime Finish { get; internal set; }
@@ -68,6 +81,55 @@ public sealed class Project
         _tasks.Insert(index, task);
         RebuildHierarchy();
         return task;
+    }
+
+    /// <summary>Appends a recurring task: a summary task whose subtasks are the generated occurrences.</summary>
+    public ProjectTask AddRecurringTask(string name, RecurrencePattern pattern)
+    {
+        var summary = AddTask(name);
+        try
+        {
+            SetRecurrence(summary, pattern);
+        }
+        catch
+        {
+            RemoveTask(summary);
+            throw;
+        }
+        return summary;
+    }
+
+    /// <summary>
+    /// (Re)generates the occurrences of a recurring task. Each occurrence gets a Start No Earlier Than
+    /// constraint on its date. Existing occurrences are replaced.
+    /// </summary>
+    public void SetRecurrence(ProjectTask summary, RecurrencePattern pattern)
+    {
+        RequireIndex(summary);
+        var dates = pattern.Dates()
+            .Where(d => !pattern.SkipNonWorkingDays || Calendar.IsWorkingDay(d))
+            .ToList();
+        if (dates.Count == 0)
+            throw new InvalidOperationException("The recurrence pattern produces no occurrences on working days.");
+
+        foreach (var child in summary.Children.ToList())
+            RemoveTask(child);
+
+        summary.Recurrence = pattern;
+        int index = _tasks.IndexOf(summary) + 1;
+        int number = 1;
+        foreach (var date in dates)
+        {
+            var occurrence = new ProjectTask(_nextId++, $"{summary.Name} {number++}")
+            {
+                DurationMinutes = pattern.OccurrenceDurationMinutes,
+                OutlineLevel = summary.OutlineLevel + 1,
+                ConstraintType = ConstraintType.StartNoEarlierThan,
+                ConstraintDate = Calendar.NextWorkingMoment(date.ToDateTime(TimeOnly.MinValue)),
+            };
+            _tasks.Insert(index++, occurrence);
+        }
+        RebuildHierarchy();
     }
 
     /// <summary>Removes a task, its subtasks, and every link pointing at them.</summary>

@@ -19,4 +19,11 @@ public sealed class ScheduleOptions
     /// critical path. When false (default), their late finish is the project finish.
     /// </summary>
     public bool CalculateMultipleCriticalPaths { get; set; }
+
+    /// <summary>
+    /// When true and a status date is set, work that should have happened before the status date but
+    /// did not is moved to start at the status date: unstarted tasks start no earlier than it, and the
+    /// remaining part of in-progress tasks is split off and resumes at it.
+    /// </summary>
+    public bool RescheduleUncompletedWorkToStatusDate { get; set; }
 }
