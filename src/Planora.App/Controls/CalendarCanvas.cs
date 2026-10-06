@@ -22,6 +22,12 @@ public sealed class CalendarCanvas : FrameworkElement, ITaskCanvas
     private MainViewModel? _viewModel;
     private DateTime _month = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     private readonly List<(Rect Bounds, ProjectTask Task)> _hitAreas = new();
+    private readonly List<(Rect Bounds, DateTime Day)> _dayCells = new();
+    private ProjectTask? _dragTask;
+    private DateTime _dragFromDay;
+    private Point _dragStart;
+    private Point _dragCurrent;
+    private bool _dragging;
     private Rect _previousButton, _nextButton, _todayButton;
     private bool _monthChosen;
 
@@ -55,6 +61,7 @@ public sealed class CalendarCanvas : FrameworkElement, ITaskCanvas
     protected override void OnRender(DrawingContext dc)
     {
         _hitAreas.Clear();
+        _dayCells.Clear();
         dc.DrawRectangle(Drawing.Background, null, new Rect(RenderSize));
         if (_viewModel is null)
             return;
@@ -92,6 +99,7 @@ public sealed class CalendarCanvas : FrameworkElement, ITaskCanvas
             {
                 var day = weekStart.AddDays(d);
                 var cell = new Rect(d * columnWidth, top, columnWidth, weekHeight);
+                _dayCells.Add((cell, day));
                 if (day.Month != _month.Month)
                     dc.DrawRectangle(Drawing.HeaderBackground, null, cell);
                 else if (!calendar.IsWorkingDay(DateOnly.FromDateTime(day)))
@@ -158,7 +166,19 @@ public sealed class CalendarCanvas : FrameworkElement, ITaskCanvas
                 }
             }
         }
+
+        if (_dragging && _dragTask is not null && DayAt(_dragCurrent) is { } target)
+        {
+            var cell = _dayCells.First(c => c.Day == target).Bounds;
+            dc.DrawRectangle(null, Drawing.SelectedBorder, new Rect(cell.X + 2, cell.Y + 2, cell.Width - 4, cell.Height - 4));
+            var label = Drawing.Text(this, $"Move {_dragTask.Name} to {target.ToString("ddd d MMM", CultureInfo.CurrentCulture)}", 11);
+            var box = new Rect(_dragCurrent.X + 10, _dragCurrent.Y - 22, label.Width + 10, label.Height + 4);
+            dc.DrawRectangle(Brushes.LightYellow, Drawing.GridPen, box);
+            dc.DrawText(label, new Point(box.X + 5, box.Y + 2));
+        }
     }
+
+    private DateTime? DayAt(Point p) => _dayCells.Where(c => c.Bounds.Contains(p)).Select(c => (DateTime?)c.Day).FirstOrDefault();
 
     private void DrawHeader(DrawingContext dc)
     {
@@ -199,7 +219,44 @@ public sealed class CalendarCanvas : FrameworkElement, ITaskCanvas
             return;
         TaskClicked?.Invoke(this, hit.Task);
         if (e.ClickCount == 2)
+        {
             TaskDoubleClicked?.Invoke(this, hit.Task);
+            return;
+        }
+        if (DayAt(p) is { } day && !hit.Task.IsSummary)
+        {
+            _dragTask = hit.Task;
+            _dragFromDay = day;
+            _dragStart = _dragCurrent = p;
+            CaptureMouse();
+        }
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        if (_dragTask is null)
+            return;
+        _dragCurrent = e.GetPosition(this);
+        if (!_dragging && (_dragCurrent - _dragStart).Length > 6)
+            _dragging = true;
+        if (_dragging)
+            InvalidateVisual();
+    }
+
+    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonUp(e);
+        var (task, dragging, from) = (_dragTask, _dragging, _dragFromDay);
+        _dragTask = null;
+        _dragging = false;
+        if (IsMouseCaptured)
+            ReleaseMouseCapture();
+        InvalidateVisual();
+        if (task is null || !dragging || _viewModel is null || DayAt(e.GetPosition(this)) is not { } to || to == from)
+            return;
+        // Move by whole days, keeping the time of day; the scheduler snaps to working time.
+        _viewModel.MoveTask(task, task.Start.AddDays((to - from).TotalDays));
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e)

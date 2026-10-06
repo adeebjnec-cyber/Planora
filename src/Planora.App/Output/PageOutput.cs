@@ -19,10 +19,12 @@ public static class PageOutput
 
     public static void SavePdf(PageSet pages, string path, string title, double dpi = 160)
     {
-        var images = pages.Pages.Select(page => Render(page, pages.PageSize, dpi))
-            .Select(bitmap => (Jpeg(bitmap, 90), bitmap.PixelWidth, bitmap.PixelHeight))
-            .ToList();
-        PdfWriter.Write(path, images, pages.PageSize.Width * 72 / 96, pages.PageSize.Height * 72 / 96, title);
+        var pdfPages = pages.Pages.Select(page =>
+        {
+            var bitmap = Render(page, pages.PageSize, dpi);
+            return new PdfPage(Jpeg(bitmap, 90), bitmap.PixelWidth, bitmap.PixelHeight, TextExtractor.Extract(page));
+        }).ToList();
+        PdfWriter.Write(path, pdfPages, pages.PageSize.Width * 72 / 96, pages.PageSize.Height * 72 / 96, pages.PageSize.Width, title);
     }
 
     /// <summary>Shows the print dialog, then builds pages at the printer's page size and prints them.</summary>
