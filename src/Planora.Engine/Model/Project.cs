@@ -245,6 +245,61 @@ public sealed class Project
     public bool Unlink(ProjectTask predecessor, ProjectTask successor) =>
         successor.Predecessors.RemoveAll(l => l.PredecessorId == predecessor.Id) > 0;
 
+    /// <summary>
+    /// Autolink for a newly inserted task: when the rows above and below it (at its outline level) are
+    /// joined by a finish-to-start link, the new task is put into that chain. Returns whether it was.
+    /// </summary>
+    public bool AutolinkInserted(ProjectTask task)
+    {
+        int index = RequireIndex(task);
+        var above = Neighbour(index, -1, task.OutlineLevel);
+        var below = Neighbour(index, +1, task.OutlineLevel);
+        if (above is null || below is null || task.IsSummary)
+            return false;
+        var link = below.Predecessors.FirstOrDefault(l => l.PredecessorId == above.Id && l.Type == LinkType.FinishToStart);
+        if (link is null)
+            return false;
+        below.Predecessors.Remove(link);
+        Link(above, task);
+        Link(task, below, LinkType.FinishToStart, link.LagMinutes).LagFormat = link.LagFormat;
+        return true;
+    }
+
+    /// <summary>
+    /// Removes a task like <see cref="RemoveTask"/>, but first joins its finish-to-start predecessors to
+    /// its finish-to-start successors (Microsoft Project's autolink on delete) when it sits in one chain.
+    /// </summary>
+    public void RemoveTaskAutolinked(ProjectTask task)
+    {
+        if (!task.IsSummary && task.Predecessors.Count == 1 && task.Predecessors[0].Type == LinkType.FinishToStart
+            && GetTask(task.Predecessors[0].PredecessorId) is { } predecessor)
+        {
+            var successors = _tasks.Where(t => t.Predecessors.Any(l => l.PredecessorId == task.Id && l.Type == LinkType.FinishToStart)).ToList();
+            RemoveTask(task);
+            foreach (var successor in successors)
+            {
+                if (!successor.Predecessors.Any(l => l.PredecessorId == predecessor.Id) && !predecessor.Predecessors.Any(l => l.PredecessorId == successor.Id)
+                    && !IsAncestor(predecessor, successor) && !IsAncestor(successor, predecessor))
+                    Link(predecessor, successor);
+            }
+            return;
+        }
+        RemoveTask(task);
+    }
+
+    /// <summary>The nearest row above or below <paramref name="index"/> at the given outline level, stopping at a parent.</summary>
+    private ProjectTask? Neighbour(int index, int step, int level)
+    {
+        for (int i = index + step; i >= 0 && i < _tasks.Count; i += step)
+        {
+            if (_tasks[i].OutlineLevel < level)
+                return null;
+            if (_tasks[i].OutlineLevel == level)
+                return _tasks[i];
+        }
+        return null;
+    }
+
     // ------------------------------------------------------------------ loading (used by the file reader)
 
     /// <summary>Appends a task with a known ID and outline level, as read from a file.</summary>

@@ -10,8 +10,10 @@ namespace Planora.Engine.Scheduling;
 /// summary's rolled-up dates in the forward pass, and constrain every leaf beneath it in the backward pass.
 /// </para>
 /// <para>
-/// Constraints are always honoured (Microsoft Project's default), so a hard constraint that conflicts
-/// with a link produces negative total float rather than moving the task.
+/// By default constraints are honoured (Microsoft Project's "Tasks will always honor their constraint
+/// dates"): a task stays on its constraint date even when a link would push it later, and the conflict
+/// shows as negative total float. With <see cref="ScheduleOptions.HonorConstraints"/> off, links win
+/// over must-on and no-later-than constraints.
 /// </para>
 /// <para>
 /// Forward-scheduled projects run the forward pass from the project start, then the backward pass from
@@ -488,19 +490,34 @@ public static class ProjectScheduler
                         case ConstraintType.FinishNoEarlierThan:
                             finishNoEarlierThan = Max(finishNoEarlierThan, date);
                             break;
-                        case ConstraintType.MustStartOn:
+                        case ConstraintType.MustStartOn when _options.HonorConstraints:
                             start = date;
                             finishNoEarlierThan = null;
                             break;
-                        case ConstraintType.MustFinishOn:
+                        case ConstraintType.MustFinishOn when _options.HonorConstraints:
                             start = StartFromFinish(cal, date, span);
                             finishNoEarlierThan = null;
+                            break;
+                        case ConstraintType.MustStartOn:
+                            start = Max(start, date);
+                            break;
+                        case ConstraintType.MustFinishOn:
+                            start = Max(start, StartFromFinish(cal, date, span));
                             break;
                     }
                 }
 
                 if (finishNoEarlierThan is { } minFinish)
                     start = Max(start, StartFromFinish(cal, minFinish, span));
+
+                // An honoured no-later-than constraint holds the task back even when links push it later.
+                if (_options.HonorConstraints && task.ConstraintDate is { } latest)
+                {
+                    if (task.ConstraintType == ConstraintType.StartNoLaterThan)
+                        start = Min(start, latest);
+                    else if (task.ConstraintType == ConstraintType.FinishNoLaterThan)
+                        start = Min(start, StartFromFinish(cal, latest, span));
+                }
 
                 if (span > 0)
                     start = cal.NextWorkingMoment(start);

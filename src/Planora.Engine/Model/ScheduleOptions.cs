@@ -27,6 +27,15 @@ public sealed class ScheduleOptions
     /// </summary>
     public bool RescheduleUncompletedWorkToStatusDate { get; set; }
 
+    /// <summary>
+    /// "Tasks will always honor their constraint dates": when true (default), must-on and no-later-than
+    /// constraints hold a task even against its links; when false, links win.
+    /// </summary>
+    public bool HonorConstraints { get; set; } = true;
+
+    /// <summary>"Autolink inserted or moved tasks": a task inserted inside a finish-to-start chain joins it.</summary>
+    public bool AutolinkInsertedTasks { get; set; } = true;
+
     // ---- Defaults for new tasks (Microsoft Project's Options > Schedule) ----
 
     public TaskType DefaultTaskType { get; set; } = TaskType.FixedUnits;

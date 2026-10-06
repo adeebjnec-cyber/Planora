@@ -30,6 +30,8 @@ public partial class ProjectInformationDialog : Window
         CriticalSlack = DurationText.Format(o.CriticalSlackLimitMinutes, o);
         MultipleCriticalPaths = o.CalculateMultipleCriticalPaths;
         RescheduleToStatusDate = o.RescheduleUncompletedWorkToStatusDate;
+        HonorConstraints = o.HonorConstraints;
+        AutolinkTasks = o.AutolinkInsertedTasks;
         Statistics = BuildStatistics(p);
 
         InitializeComponent();
@@ -49,6 +51,8 @@ public partial class ProjectInformationDialog : Window
     public string CriticalSlack { get; set; }
     public bool MultipleCriticalPaths { get; set; }
     public bool RescheduleToStatusDate { get; set; }
+    public bool HonorConstraints { get; set; }
+    public bool AutolinkTasks { get; set; }
     public IReadOnlyList<StatisticRow> Statistics { get; }
 
     private static IReadOnlyList<StatisticRow> BuildStatistics(Project p)
@@ -108,6 +112,8 @@ public partial class ProjectInformationDialog : Window
             : throw new FormatException($"'{CriticalSlack}' is not a valid duration.");
         o.CalculateMultipleCriticalPaths = MultipleCriticalPaths;
         o.RescheduleUncompletedWorkToStatusDate = RescheduleToStatusDate;
+        o.HonorConstraints = HonorConstraints;
+        o.AutolinkInsertedTasks = AutolinkTasks;
     }
 
     private static int Minutes(string text, string what, double min, double max) =>

@@ -76,6 +76,8 @@ public static class MspdiFile
             E("CriticalSlackLimit", (int)(o.CriticalSlackLimitMinutes / Math.Max(1, o.MinutesPerDay))),
             E("MultipleCriticalPaths", o.CalculateMultipleCriticalPaths),
             E("MoveRemainingPartsBackToStatusDate", o.RescheduleUncompletedWorkToStatusDate),
+            E("HonorConstraints", o.HonorConstraints),
+            E("Autolink", o.AutolinkInsertedTasks),
             project.StatusDate is { } status ? E("StatusDate", status) : null,
             E("DurationFormat", 7),
             new XElement(Ns + "Calendars", calendars.Select(c => WriteCalendar(c, calendarUid, project))),
@@ -380,6 +382,8 @@ public static class MspdiFile
         o.CriticalSlackLimitMinutes = (Int(root, "CriticalSlackLimit") ?? 0) * (long)o.MinutesPerDay;
         o.CalculateMultipleCriticalPaths = Text(root, "MultipleCriticalPaths") == "1";
         o.RescheduleUncompletedWorkToStatusDate = Text(root, "MoveRemainingPartsBackToStatusDate") == "1";
+        o.HonorConstraints = Text(root, "HonorConstraints") != "0";
+        o.AutolinkInsertedTasks = Text(root, "Autolink") != "0";
 
         // Calendars: base calendars first, so derived (resource) calendars can refer to them.
         var calendarElements = Children(root, "Calendars", "Calendar").ToList();

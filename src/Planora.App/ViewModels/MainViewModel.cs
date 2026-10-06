@@ -237,7 +237,13 @@ public sealed partial class MainViewModel : ObservableObject
     private void InsertAtSelection(string description, Action<Project, ProjectTask> setup)
     {
         int index = SelectedTasks.Count > 0 ? Project.IndexOf(SelectedTasks[0]) : Project.Tasks.Count;
-        TryEdit(description, p => setup(p, p.InsertTask(index, "<New Task>")));
+        TryEdit(description, p =>
+        {
+            var task = p.InsertTask(index, "<New Task>");
+            setup(p, task);
+            if (p.Options.AutolinkInsertedTasks)
+                p.AutolinkInserted(task);
+        });
     }
 
     private void DeleteTasks()
@@ -247,7 +253,11 @@ public sealed partial class MainViewModel : ObservableObject
         {
             foreach (var id in ids)
             {
-                if (p.GetTask(id) is { } task)
+                if (p.GetTask(id) is not { } task)
+                    continue;
+                if (p.Options.AutolinkInsertedTasks)
+                    p.RemoveTaskAutolinked(task);
+                else
                     p.RemoveTask(task);
             }
         });

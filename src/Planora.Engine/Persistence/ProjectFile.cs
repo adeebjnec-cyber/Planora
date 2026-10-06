@@ -82,6 +82,8 @@ public static class ProjectFile
                 CriticalSlackLimitMinutes = project.Options.CriticalSlackLimitMinutes,
                 CalculateMultipleCriticalPaths = project.Options.CalculateMultipleCriticalPaths,
                 RescheduleUncompletedWorkToStatusDate = project.Options.RescheduleUncompletedWorkToStatusDate,
+                HonorConstraints = project.Options.HonorConstraints,
+                AutolinkInsertedTasks = project.Options.AutolinkInsertedTasks,
                 DefaultTaskType = project.Options.DefaultTaskType,
                 NewTasksEffortDriven = project.Options.NewTasksEffortDriven,
                 NewTasksManuallyScheduled = project.Options.NewTasksManuallyScheduled,
@@ -307,6 +309,8 @@ public static class ProjectFile
             project.Options.CriticalSlackLimitMinutes = o.CriticalSlackLimitMinutes;
             project.Options.CalculateMultipleCriticalPaths = o.CalculateMultipleCriticalPaths;
             project.Options.RescheduleUncompletedWorkToStatusDate = o.RescheduleUncompletedWorkToStatusDate;
+            project.Options.HonorConstraints = o.HonorConstraints;
+            project.Options.AutolinkInsertedTasks = o.AutolinkInsertedTasks;
             project.Options.DefaultTaskType = o.DefaultTaskType;
             project.Options.NewTasksEffortDriven = o.NewTasksEffortDriven;
             project.Options.NewTasksManuallyScheduled = o.NewTasksManuallyScheduled;
@@ -531,6 +535,8 @@ public static class ProjectFile
         public long CriticalSlackLimitMinutes { get; set; }
         public bool CalculateMultipleCriticalPaths { get; set; }
         public bool RescheduleUncompletedWorkToStatusDate { get; set; }
+        public bool HonorConstraints { get; set; } = true;
+        public bool AutolinkInsertedTasks { get; set; } = true;
         public TaskType DefaultTaskType { get; set; }
         public bool NewTasksEffortDriven { get; set; }
         public bool NewTasksManuallyScheduled { get; set; }

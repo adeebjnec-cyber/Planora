@@ -58,6 +58,8 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <TextBlock Text="Hours per day:" Style="{StaticResource FormLabel}" />
                     <TextBox Grid.Column="1" Text="{Binding HoursPerDay}" Style="{StaticResource FormText}" />
@@ -69,6 +71,9 @@
                     <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding CriticalSlack}" Style="{StaticResource FormText}" ToolTip="e.g. 0d, 2d" />
                     <CheckBox Grid.Row="4" Grid.ColumnSpan="2" Content="Calculate multiple critical paths" IsChecked="{Binding MultipleCriticalPaths}" Style="{StaticResource FormCheck}" />
                     <CheckBox Grid.Row="5" Grid.ColumnSpan="2" Content="Reschedule uncompleted work to start after the status date" IsChecked="{Binding RescheduleToStatusDate}" Style="{StaticResource FormCheck}" />
+                    <CheckBox Grid.Row="6" Grid.ColumnSpan="2" Content="Tasks will always honor their constraint dates" IsChecked="{Binding HonorConstraints}" Style="{StaticResource FormCheck}"
+                              ToolTip="When off, links can move a task past a must-on or no-later-than constraint" />
+                    <CheckBox Grid.Row="7" Grid.ColumnSpan="2" Content="Autolink inserted or deleted tasks" IsChecked="{Binding AutolinkTasks}" Style="{StaticResource FormCheck}" />
                 </Grid>
             </TabItem>
 
