@@ -179,6 +179,26 @@
                 </RibbonGroup>
             </RibbonTab>
 
+            <RibbonTab Header="Format">
+                <RibbonGroup Header="Format">
+                    <RibbonButton Label="Text Styles" LargeImageSource="{infra:Glyph &#xE8D2;}" Command="{Binding TextStylesCommand}" ToolTipTitle="Fonts for bar text and for summary, critical, milestone and marked rows" />
+                    <RibbonButton Label="Gridlines" SmallImageSource="{infra:Glyph &#xE80A;}" Command="{Binding GridlinesCommand}" ToolTipTitle="Row and column lines, date lines" />
+                    <RibbonButton Label="Timescale" SmallImageSource="{infra:Glyph &#xE823;}" Command="{Binding TimescaleCommand}" ToolTipTitle="One to three timescale tiers with their units and labels" />
+                </RibbonGroup>
+                <RibbonGroup Header="Bar Styles">
+                    <RibbonButton Label="Bar Styles" LargeImageSource="{infra:Glyph &#xE790;}" Command="{Binding BarStylesCommand}" ToolTipTitle="Colours, shapes and texts of the Gantt bars" />
+                    <StackPanel Margin="4,2">
+                        <CheckBox Content="Critical Tasks" IsChecked="{Binding ShowCriticalPath}" Margin="0,2" />
+                        <CheckBox Content="Baseline" IsChecked="{Binding ShowBaseline}" Margin="0,2" />
+                        <CheckBox Content="Progress Lines" IsChecked="{Binding ShowProgressLines}" Margin="0,2" />
+                    </StackPanel>
+                </RibbonGroup>
+                <RibbonGroup Header="Columns">
+                    <RibbonButton Label="Edit Table" LargeImageSource="{infra:Glyph &#xE8A1;}" Command="{Binding EditTableCommand}" ToolTipTitle="Insert, remove and arrange columns" />
+                    <RibbonButton Label="Custom Fields" SmallImageSource="{infra:Glyph &#xE8EC;}" Command="{Binding CustomFieldsCommand}" />
+                </RibbonGroup>
+            </RibbonTab>
+
             <RibbonTab Header="View">
                 <RibbonGroup Header="Data">
                     <StackPanel Margin="4,2">

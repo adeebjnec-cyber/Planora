@@ -19,13 +19,11 @@
                   MouseDoubleClick="OnSheetDoubleClick">
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource SheetRowStyle}">
+                    <Setter Property="FontWeight" Value="{Binding RowFontWeight}" />
+                    <Setter Property="FontStyle" Value="{Binding RowFontStyle}" />
+                    <Setter Property="Foreground" Value="{Binding RowForeground}" />
+                    <Setter Property="FontSize" Value="{Binding RowFontSize}" />
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsSummary}" Value="True">
-                            <Setter Property="FontWeight" Value="SemiBold" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding IsInactive}" Value="True">
-                            <Setter Property="Foreground" Value="#999999" />
-                        </DataTrigger>
                         <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
                             <Setter Property="Background" Value="#FFF4B8" />
                         </DataTrigger>

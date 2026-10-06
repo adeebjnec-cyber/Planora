@@ -36,6 +36,10 @@ internal static class DialogFactory
             "updateproject" => new UpdateProjectDialog(vm),
             "replace" => new FindReplaceDialog(vm, replace: true),
             "spelling" => new SpellingDialog(vm),
+            "barstyles" => new BarStylesDialog(vm),
+            "textstyles" => new TextStylesDialog(vm),
+            "timescale" => new TimescaleDialog(vm),
+            "gridlines" => new GridlinesDialog(vm),
             _ => throw new ArgumentException($"Unknown dialog '{name}'."),
         };
     }

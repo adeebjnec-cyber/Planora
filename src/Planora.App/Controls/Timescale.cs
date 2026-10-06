@@ -1,4 +1,5 @@
 using System.Globalization;
+using Planora.Engine.Views;
 
 namespace Planora.App.Controls;
 
@@ -7,8 +8,10 @@ public enum TimeUnit
     Hour,
     Day,
     Week,
+    ThirdOfMonth,
     Month,
     Quarter,
+    HalfYear,
     Year,
 }
 
@@ -23,8 +26,10 @@ public sealed record TimescaleTier(TimeUnit Unit, int Step, Func<DateTime, strin
             TimeUnit.Hour => day.AddHours(Math.Floor(date.TimeOfDay.TotalHours / Step) * Step),
             TimeUnit.Day => day,
             TimeUnit.Week => day.AddDays(-(((int)day.DayOfWeek - (int)Timescale.FirstDayOfWeek + 7) % 7)),
+            TimeUnit.ThirdOfMonth => new DateTime(date.Year, date.Month, date.Day < 11 ? 1 : date.Day < 21 ? 11 : 21),
             TimeUnit.Month => new DateTime(date.Year, date.Month, 1),
             TimeUnit.Quarter => new DateTime(date.Year, (date.Month - 1) / 3 * 3 + 1, 1),
+            TimeUnit.HalfYear => new DateTime(date.Year, date.Month <= 6 ? 1 : 7, 1),
             _ => new DateTime(date.Year, 1, 1),
         };
     }
@@ -34,8 +39,15 @@ public sealed record TimescaleTier(TimeUnit Unit, int Step, Func<DateTime, strin
         TimeUnit.Hour => boundary.AddHours(Step),
         TimeUnit.Day => boundary.AddDays(Step),
         TimeUnit.Week => boundary.AddDays(7 * Step),
+        TimeUnit.ThirdOfMonth => Enumerable.Range(0, Step).Aggregate(boundary, (b, _) => b.Day switch
+        {
+            1 => b.AddDays(10),
+            11 => b.AddDays(10),
+            _ => new DateTime(b.Year, b.Month, 1).AddMonths(1),
+        }),
         TimeUnit.Month => boundary.AddMonths(Step),
         TimeUnit.Quarter => boundary.AddMonths(3 * Step),
+        TimeUnit.HalfYear => boundary.AddMonths(6 * Step),
         _ => boundary.AddYears(Step),
     };
 
@@ -47,12 +59,40 @@ public sealed record TimescaleTier(TimeUnit Unit, int Step, Func<DateTime, strin
     }
 }
 
-/// <summary>Picks the two timescale tiers (like Microsoft Project's top/bottom tiers) for a zoom level.</summary>
+/// <summary>
+/// Picks the timescale tiers (like Microsoft Project's top/middle/bottom tiers): automatically for a zoom
+/// level, or from the project's Timescale settings.
+/// </summary>
 public static class Timescale
 {
     public static DayOfWeek FirstDayOfWeek => CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
 
     private static string Fmt(DateTime d, string format) => d.ToString(format, CultureInfo.CurrentCulture);
+
+    /// <summary>The tiers to draw, top first: the settings' fixed tiers, or two automatic ones.</summary>
+    public static IReadOnlyList<TimescaleTier> Tiers(double pixelsPerDay, TimescaleSettings? settings)
+    {
+        if (settings is { Automatic: false, Tiers.Count: > 0 })
+        {
+            return settings.Tiers.Take(Math.Clamp(settings.TierCount, 1, Math.Min(3, settings.Tiers.Count)))
+                .Select(t => new TimescaleTier(Map(t.Unit), Math.Max(1, t.Count), t.Format))
+                .ToList();
+        }
+        var (top, bottom) = For(pixelsPerDay);
+        return new[] { top, bottom };
+    }
+
+    private static TimeUnit Map(TimescaleUnit unit) => unit switch
+    {
+        TimescaleUnit.Hours => TimeUnit.Hour,
+        TimescaleUnit.Days => TimeUnit.Day,
+        TimescaleUnit.Weeks => TimeUnit.Week,
+        TimescaleUnit.ThirdsOfMonths => TimeUnit.ThirdOfMonth,
+        TimescaleUnit.Months => TimeUnit.Month,
+        TimescaleUnit.Quarters => TimeUnit.Quarter,
+        TimescaleUnit.HalfYears => TimeUnit.HalfYear,
+        _ => TimeUnit.Year,
+    };
 
     public static (TimescaleTier Top, TimescaleTier Bottom) For(double pixelsPerDay)
     {

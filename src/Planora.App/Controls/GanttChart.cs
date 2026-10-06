@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Planora.App.ViewModels;
 using Planora.Engine.Model;
+using Planora.Engine.Views;
 
 namespace Planora.App.Controls;
 
@@ -47,6 +48,7 @@ public sealed class GanttChart : TimelineElement
     private static readonly Pen TodayPen = FrozenPen(Color.FromRgb(0x2E, 0x9E, 0x4F), 1.5);
     private static readonly Pen StatusPen = FrozenPen(Color.FromRgb(0x80, 0x40, 0xC0), 1.5, dashed: true);
     private static readonly Pen ProgressLinePen = FrozenPen(Color.FromRgb(0xD0, 0x30, 0x30), 1.5);
+    private static readonly Pen ProjectLinePen = FrozenPen(Color.FromRgb(0x40, 0x40, 0x90), 1, dashed: true);
     private static readonly Pen DragLinkPen = FrozenPen(Color.FromRgb(0x20, 0x20, 0x20), 1.5, dashed: true);
     private static readonly Typeface Font = new("Segoe UI");
 
@@ -143,7 +145,10 @@ public sealed class GanttChart : TimelineElement
         int lastRow = Math.Min(rows.Count - 1, (int)((_verticalOffset + ActualHeight - HeaderHeight) / RowHeight) + 1);
 
         dc.PushClip(new RectangleGeometry(new Rect(0, HeaderHeight, ActualWidth, Math.Max(0, ActualHeight - HeaderHeight))));
-        DrawNonWorkingTime(dc, visibleFrom, visibleTo);
+        var gridlines = Project.GanttFormat.Gridlines;
+        if (Project.GanttFormat.Timescale.ShadeNonWorkingTime)
+            DrawNonWorkingTime(dc, visibleFrom, visibleTo);
+        DrawGridlines(dc, gridlines, visibleFrom, visibleTo, firstRow, lastRow);
 
         var selected = ShowSelection ? _viewModel.SelectedTasks.ToHashSet() : new HashSet<ProjectTask>();
         for (int i = firstRow; i <= lastRow; i++)
@@ -152,9 +157,14 @@ public sealed class GanttChart : TimelineElement
                 dc.DrawRectangle(SelectedRow, null, new Rect(0, RowTop(i), ActualWidth, RowHeight));
         }
 
-        DrawVerticalLine(dc, DateTime.Now, TodayPen);
-        if (Project.StatusDate is { } status)
+        if (gridlines.CurrentDate)
+            DrawVerticalLine(dc, DateTime.Now, TodayPen);
+        if (gridlines.StatusDate && Project.StatusDate is { } status)
             DrawVerticalLine(dc, status, StatusPen);
+        if (gridlines.ProjectStart && Project.Tasks.Count > 0)
+            DrawVerticalLine(dc, Project.Start, ProjectLinePen);
+        if (gridlines.ProjectFinish && Project.Tasks.Count > 0)
+            DrawVerticalLine(dc, Project.Finish, ProjectLinePen);
 
         for (int i = firstRow; i <= lastRow; i++)
         {
@@ -176,7 +186,37 @@ public sealed class GanttChart : TimelineElement
     private double RowTop(int row) => HeaderHeight + row * RowHeight - _verticalOffset;
 
     private void DrawHeader(DrawingContext dc, DateTime from, DateTime to) =>
-        Drawing.TimescaleHeader(dc, this, XOf, from, to, PixelsPerDay, ActualWidth, HeaderHeight);
+        Drawing.TimescaleHeader(dc, this, XOf, from, to, PixelsPerDay, ActualWidth, HeaderHeight, Project!.GanttFormat.Timescale);
+
+    /// <summary>Row lines and timescale column lines, as set in the Gridlines dialog.</summary>
+    private void DrawGridlines(DrawingContext dc, GridlineSettings gridlines, DateTime from, DateTime to, int firstRow, int lastRow)
+    {
+        var pen = PenOf(gridlines.Color, GridPen);
+        if (gridlines.RowLines)
+        {
+            for (int i = firstRow; i <= lastRow; i++)
+            {
+                double y = Math.Round(RowTop(i) + RowHeight) - 0.5;
+                dc.DrawLine(pen, new Point(0, y), new Point(ActualWidth, y));
+            }
+        }
+        if (!gridlines.TopTierColumns && !gridlines.BottomTierColumns)
+            return;
+        var tiers = Timescale.Tiers(PixelsPerDay, Project!.GanttFormat.Timescale);
+        var chosen = new List<TimescaleTier>();
+        if (gridlines.TopTierColumns)
+            chosen.Add(tiers[0]);
+        if (gridlines.BottomTierColumns)
+            chosen.Add(tiers[^1]);
+        foreach (var tier in chosen)
+        {
+            foreach (var boundary in tier.Boundaries(from, to))
+            {
+                double x = Math.Round(XOf(boundary)) + 0.5;
+                dc.DrawLine(pen, new Point(x, HeaderHeight), new Point(x, ActualHeight));
+            }
+        }
+    }
 
     private void DrawNonWorkingTime(DrawingContext dc, DateTime from, DateTime to)
     {
@@ -204,90 +244,193 @@ public sealed class GanttChart : TimelineElement
 
     private bool ShowCritical(ProjectTask t) => _viewModel!.ShowCriticalPath && t.IsCritical;
 
+    private GanttFormat Format => Project!.GanttFormat;
+
+    private readonly Dictionary<string, Brush> _brushes = new();
+    private readonly Dictionary<string, Pen> _pens = new();
+
+    /// <summary>A frozen brush for a #RRGGBB colour (cached).</summary>
+    private Brush BrushOf(string? hex, Brush fallback)
+    {
+        if (string.IsNullOrEmpty(hex))
+            return fallback;
+        if (_brushes.TryGetValue(hex, out var brush))
+            return brush;
+        try
+        {
+            brush = Frozen((Color)ColorConverter.ConvertFromString(hex));
+        }
+        catch (FormatException)
+        {
+            brush = fallback;
+        }
+        return _brushes[hex] = brush;
+    }
+
+    private Pen PenOf(string? hex, Pen fallback, bool dashed = false)
+    {
+        if (string.IsNullOrEmpty(hex))
+            return fallback;
+        string key = dashed ? hex + "-" : hex;
+        if (_pens.TryGetValue(key, out var pen))
+            return pen;
+        pen = new Pen(BrushOf(hex, fallback.Brush), 1);
+        if (dashed)
+            pen.DashStyle = DashStyles.Dash;
+        pen.Freeze();
+        return _pens[key] = pen;
+    }
+
+    private BarKind KindOf(ProjectTask task) => task switch
+    {
+        { IsSummary: true } => BarKind.Summary,
+        _ when IsMilestone(task) => BarKind.Milestone,
+        { IsActive: false } => BarKind.InactiveTask,
+        { Mode: TaskMode.ManuallyScheduled } => BarKind.ManualTask,
+        _ when ShowCritical(task) => BarKind.CriticalTask,
+        _ => BarKind.Task,
+    };
+
     private void DrawTask(DrawingContext dc, ProjectTask task, int row)
     {
         if (task.HideBar)
             return;
+        var project = Project!;
+        var format = Format;
         double top = RowTop(row);
         double center = top + RowHeight / 2;
 
         if (_viewModel!.ShowBaseline && task.Baselines[_viewModel.GanttBaselineIndex] is { } baseline)
         {
-            double bx = XOf(baseline.Start);
-            dc.DrawRectangle(BaselineFill, null, new Rect(bx, top + RowHeight * 0.72, Math.Max(2, XOf(baseline.Finish) - bx), 4));
+            var style = format.StyleFor(project, task, BarKind.Baseline);
+            if (style.Shape != BarShape.Hidden)
+            {
+                double bx = XOf(baseline.Start);
+                double height = style.Shape == BarShape.Bar ? RowHeight * 0.3 : 4;
+                dc.DrawRectangle(BrushOf(style.Fill, BaselineFill), null, new Rect(bx, top + RowHeight * 0.72, Math.Max(2, XOf(baseline.Finish) - bx), Math.Min(height, RowHeight * 0.28)));
+            }
         }
 
-        double barEnd;
-        if (task.IsSummary)
+        var kind = KindOf(task);
+        var barStyle = format.StyleFor(project, task, kind);
+        var fill = BrushOf(barStyle.Fill, TaskFill);
+        double barStart, barEnd;
+        if (kind == BarKind.Summary)
         {
             double x1 = XOf(task.Start), x2 = XOf(task.Finish);
-            double barTop = top + RowHeight * 0.3;
-            dc.DrawRectangle(SummaryFill, null, new Rect(x1, barTop, Math.Max(1, x2 - x1), 5));
-            DrawSummaryCap(dc, x1, barTop + 5);
-            DrawSummaryCap(dc, x2, barTop + 5);
-            if (task.PercentComplete > 0)
+            double barTop = barStyle.Shape == BarShape.Bar ? top + RowHeight * 0.25 : top + RowHeight * 0.3;
+            double barHeight = barStyle.Shape == BarShape.Bar ? RowHeight * 0.4 : 5;
+            if (barStyle.Shape != BarShape.Hidden)
             {
-                double px = XOf(task.CompleteThrough);
-                dc.DrawRectangle(ProgressFill, null, new Rect(x1, barTop + 1.5, Math.Max(0, px - x1), 2));
+                dc.DrawRectangle(fill, null, new Rect(x1, barTop, Math.Max(1, x2 - x1), barHeight));
+                DrawSummaryCap(dc, x1, barTop + barHeight, fill);
+                DrawSummaryCap(dc, x2, barTop + barHeight, fill);
+                if (task.PercentComplete > 0)
+                {
+                    var progress = format.StyleFor(project, task, BarKind.Progress);
+                    double px = XOf(task.CompleteThrough);
+                    if (progress.Shape != BarShape.Hidden)
+                        dc.DrawRectangle(BrushOf(progress.Fill, ProgressFill), null, new Rect(x1, barTop + barHeight / 2 - 1, Math.Max(0, px - x1), 2));
+                }
             }
-            barEnd = x2 + 5;
+            (barStart, barEnd) = (x1 - 5, x2 + 5);
         }
-        else if (IsMilestone(task))
+        else if (kind == BarKind.Milestone)
         {
             double x = XOf(task.Start);
             double size = RowHeight * 0.3;
-            var diamond = new StreamGeometry();
-            using (var g = diamond.Open())
+            if (barStyle.Shape != BarShape.Hidden)
             {
-                g.BeginFigure(new Point(x, center - size), true, true);
-                g.LineTo(new Point(x + size, center), true, false);
-                g.LineTo(new Point(x, center + size), true, false);
-                g.LineTo(new Point(x - size, center), true, false);
+                var diamondFill = ShowCritical(task) && barStyle.FlagField is null ? BrushOf(format.StyleFor(project, task, BarKind.CriticalTask).Border, CriticalBorder.Brush) : fill;
+                Drawing.Diamond(dc, new Point(x, center), size, diamondFill);
             }
-            diamond.Freeze();
-            dc.DrawGeometry(ShowCritical(task) ? CriticalBorder.Brush : MilestoneFill, null, diamond);
-            var label = Text(task.Start.ToString("d MMM", CultureInfo.CurrentCulture), 10);
-            dc.DrawText(label, new Point(x + size + 3, center - label.Height / 2));
-            barEnd = x + size + 3 + label.Width;
+            (barStart, barEnd) = (x - size, x + size);
         }
         else
         {
-            var (fill, border) = task switch
-            {
-                { IsActive: false } => ((Brush?)null, InactiveBorder),
-                { Mode: TaskMode.ManuallyScheduled } => (ManualFill, ManualBorder),
-                _ when ShowCritical(task) => (CriticalFill, CriticalBorder),
-                _ => (TaskFill, TaskBorder),
-            };
-            double barTop = top + RowHeight * 0.25, barHeight = RowHeight * 0.5;
+            var border = PenOf(barStyle.Border, TaskBorder, dashed: kind == BarKind.InactiveTask);
+            Brush? body = kind == BarKind.InactiveTask && barStyle.Fill.Equals("#FFFFFF", StringComparison.OrdinalIgnoreCase) ? null : fill;
+            double barTop = barStyle.Shape == BarShape.Thin ? center - 3 : top + RowHeight * 0.25;
+            double barHeight = barStyle.Shape == BarShape.Thin ? 6 : RowHeight * 0.5;
             double previousEnd = double.NaN;
+            double first = double.NaN;
             foreach (var segment in task.Segments)
             {
                 double x1 = XOf(segment.Start), x2 = XOf(segment.Finish);
-                if (!double.IsNaN(previousEnd))
-                    dc.DrawLine(SplitPen, new Point(previousEnd, center), new Point(x1, center));
-                dc.DrawRectangle(fill, border, new Rect(x1, barTop, Math.Max(2, x2 - x1), barHeight));
+                if (double.IsNaN(first))
+                    first = x1;
+                if (barStyle.Shape != BarShape.Hidden)
+                {
+                    if (!double.IsNaN(previousEnd))
+                        dc.DrawLine(PenOf(barStyle.Border, SplitPen, dashed: true), new Point(previousEnd, center), new Point(x1, center));
+                    dc.DrawRectangle(body, border, new Rect(x1, barTop, Math.Max(2, x2 - x1), barHeight));
+                }
                 previousEnd = x2;
             }
 
             if (task.PercentComplete > 0)
             {
-                double x1 = XOf(task.Start);
-                double px = XOf(task.CompleteThrough);
-                dc.DrawRectangle(ProgressFill, null, new Rect(x1, center - barHeight / 6, Math.Max(0, px - x1), barHeight / 3));
+                var progress = format.StyleFor(project, task, BarKind.Progress);
+                if (progress.Shape != BarShape.Hidden)
+                {
+                    double x1 = XOf(task.Start);
+                    double px = XOf(task.CompleteThrough);
+                    double h = progress.Shape == BarShape.Bar ? barHeight : barHeight / 3;
+                    dc.DrawRectangle(BrushOf(progress.Fill, ProgressFill), null, new Rect(x1, center - h / 2, Math.Max(0, px - x1), h));
+                }
             }
-            barEnd = previousEnd;
+            (barStart, barEnd) = (first, previousEnd);
         }
 
         if (task.Deadline is { } deadline)
             DrawDeadline(dc, XOf(deadline), top, task.MissesDeadline);
 
-        var resources = ResourceNamesText.Format(task);
-        if (resources.Length > 0 && !double.IsNaN(barEnd))
+        if (!double.IsNaN(barEnd))
+            DrawBarTexts(dc, task, barStyle, barStart, barEnd, top, center);
+    }
+
+    /// <summary>The bar style's left, right, top and inside texts, in the Bar Text style.</summary>
+    private void DrawBarTexts(DrawingContext dc, ProjectTask task, BarStyle style, double barStart, double barEnd, double top, double center)
+    {
+        var textStyle = Format.Text(TextItem.BarText);
+        double size = (textStyle.Size ?? 8.5) * 96 / 72;
+        var brush = BrushOf(textStyle.Color, TextBrush);
+        var typeface = new Typeface(new FontFamily("Segoe UI"), textStyle.Italic ? FontStyles.Italic : FontStyles.Normal,
+            textStyle.Bold ? FontWeights.SemiBold : FontWeights.Normal, FontStretches.Normal);
+
+        FormattedText? Make(string? key)
         {
-            var text = Text(resources, 11);
-            dc.DrawText(text, new Point(barEnd + 5, center - text.Height / 2));
+            if (key is null || BarFieldText(task, key) is not { Length: > 0 } text)
+                return null;
+            return new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface, size, brush, VisualTreeHelper.GetDpi(this).PixelsPerDip);
         }
+
+        if (Make(style.RightText) is { } right)
+            dc.DrawText(right, new Point(barEnd + 5, center - right.Height / 2));
+        if (Make(style.LeftText) is { } left)
+            dc.DrawText(left, new Point(barStart - 5 - left.Width, center - left.Height / 2));
+        if (Make(style.TopText) is { } above)
+        {
+            above.MaxLineCount = 1;
+            dc.DrawText(above, new Point((barStart + barEnd - above.Width) / 2, top - 1));
+        }
+        if (Make(style.InsideText) is { } inside && barEnd - barStart > 8)
+        {
+            inside.MaxTextWidth = Math.Max(1, barEnd - barStart - 4);
+            inside.MaxLineCount = 1;
+            inside.Trimming = TextTrimming.CharacterEllipsis;
+            dc.DrawText(inside, new Point(barStart + 2, center - inside.Height / 2));
+        }
+    }
+
+    /// <summary>A field's text for bar labels; dates are short ("8 Oct").</summary>
+    private string? BarFieldText(ProjectTask task, string key)
+    {
+        if (key == "ResourceNames")
+            return ResourceNamesText.Format(task);
+        if (Engine.Fields.TaskFields.Find(Project!, key) is not { } field)
+            return null;
+        return field.Get(Project!, task) is DateTime date ? date.ToString("d MMM", CultureInfo.CurrentCulture) : field.Format(Project!, task);
     }
 
     /// <summary>Working minutes of a task's own work before a moment (split gaps excluded), snapped to whole hours.</summary>
@@ -336,11 +479,11 @@ public sealed class GanttChart : TimelineElement
         double x1 = XOf(group.Start), x2 = XOf(group.Finish);
         double barTop = top + RowHeight * 0.3;
         dc.DrawRectangle(Drawing.MutedText, null, new Rect(x1, barTop, Math.Max(1, x2 - x1), 5));
-        DrawSummaryCap(dc, x1, barTop + 5);
-        DrawSummaryCap(dc, x2, barTop + 5);
+        DrawSummaryCap(dc, x1, barTop + 5, Drawing.MutedText);
+        DrawSummaryCap(dc, x2, barTop + 5, Drawing.MutedText);
     }
 
-    private static void DrawSummaryCap(DrawingContext dc, double x, double y)
+    private static void DrawSummaryCap(DrawingContext dc, double x, double y, Brush fill)
     {
         var cap = new StreamGeometry();
         using (var g = cap.Open())
@@ -350,7 +493,7 @@ public sealed class GanttChart : TimelineElement
             g.LineTo(new Point(x, y + 5), true, false);
         }
         cap.Freeze();
-        dc.DrawGeometry(SummaryFill, null, cap);
+        dc.DrawGeometry(fill, null, cap);
     }
 
     private void DrawDeadline(DrawingContext dc, double x, double top, bool missed)

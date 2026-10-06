@@ -208,6 +208,7 @@ public static class ProjectFile
                 Name = v.Name, Screen = v.Screen, Table = v.Table, Filter = v.Filter, Group = v.Group,
                 SortKeys = v.Sort.Keys.ToList(), KeepOutlineStructure = v.Sort.KeepOutlineStructure,
             }).ToList(),
+            GanttFormat = project.GanttFormat,
             BudgetCosts = project.BudgetCosts.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
             BudgetWork = project.BudgetWork.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
             Baselines = Sparse(project.Baselines),
@@ -450,6 +451,8 @@ public static class ProjectFile
             project.Filters.Add(new FilterDefinition(fl.Name, fl.Conditions.ToArray()) { ShowRelatedSummaryRows = fl.ShowRelatedSummaryRows });
         foreach (var g in dto.Groups ?? new())
             project.Groups.Add(new GroupDefinition(g.Name, g.Levels.ToArray()) { ShowSummaryTasks = g.ShowSummaryTasks });
+        if (dto.GanttFormat is { } format)
+            project.GanttFormat = format;
         foreach (var v in dto.SavedViews ?? new())
         {
             project.SavedViews.Add(new SavedView
@@ -510,6 +513,7 @@ public static class ProjectFile
         public List<FilterDto>? Filters { get; set; }
         public List<GroupDto>? Groups { get; set; }
         public List<SavedViewDto>? SavedViews { get; set; }
+        public GanttFormat? GanttFormat { get; set; }
     }
 
     private sealed class CustomFieldDto

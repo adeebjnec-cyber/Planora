@@ -137,7 +137,7 @@ public sealed class UsageGrid : TimelineElement
         }
         dc.Pop();
 
-        Drawing.TimescaleHeader(dc, this, XOf, from, to, PixelsPerDay, ActualWidth, HeaderHeight);
+        Drawing.TimescaleHeader(dc, this, XOf, from, to, PixelsPerDay, ActualWidth, HeaderHeight, Project?.GanttFormat.Timescale);
     }
 
     public static string FormatHours(double minutes)

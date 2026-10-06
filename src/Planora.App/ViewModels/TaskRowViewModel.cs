@@ -98,6 +98,24 @@ public sealed class TaskRowViewModel : ObservableObject
         }
     }
     public bool IsSummary => Task?.IsSummary ?? false;
+
+    // ---- Text Styles (Format > Text Styles) for the row ----
+
+    private Engine.Views.TextStyle? RowTextStyle => Task is null ? null : Project.GanttFormat.RowStyleFor(Task, _owner.ShowCriticalPath);
+
+    public System.Windows.FontWeight RowFontWeight =>
+        IsGroupHeader || RowTextStyle is { Bold: true } ? System.Windows.FontWeights.SemiBold : System.Windows.FontWeights.Normal;
+
+    public System.Windows.FontStyle RowFontStyle =>
+        RowTextStyle is { Italic: true } ? System.Windows.FontStyles.Italic : System.Windows.FontStyles.Normal;
+
+    public System.Windows.Media.Brush? RowForeground =>
+        IsInactive ? System.Windows.Media.Brushes.Gray
+        : RowTextStyle?.Color is { Length: > 0 } hex && System.Windows.Media.ColorConverter.ConvertFromString(hex) is System.Windows.Media.Color color
+            ? new System.Windows.Media.SolidColorBrush(color)
+            : System.Windows.Media.Brushes.Black;
+
+    public double RowFontSize => RowTextStyle?.Size is { } points ? points * 96 / 72 : 12;
     public bool IsCritical => Task?.IsCritical ?? false;
     public bool IsHighlighted => Task is not null && _owner.IsHighlighted(Task);
     public bool IsManual => Task?.Mode == TaskMode.ManuallyScheduled;

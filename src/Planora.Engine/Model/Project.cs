@@ -51,6 +51,9 @@ public sealed class Project
     public List<Views.FilterDefinition> Filters { get; } = new();
     public List<Views.GroupDefinition> Groups { get; } = new();
     public List<Views.SavedView> SavedViews { get; } = new();
+
+    /// <summary>Gantt Chart formatting: bar styles, text styles, timescale and gridlines.</summary>
+    public Views.GanttFormat GanttFormat { get; set; } = new();
     public ScheduleOptions Options { get; } = new();
 
     /// <summary>Tasks in display (outline) order.</summary>

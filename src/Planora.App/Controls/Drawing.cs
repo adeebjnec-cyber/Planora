@@ -74,18 +74,22 @@ public static class Drawing
     }
 
     /// <summary>
-    /// Draws the two-tier timescale header used by the Gantt chart and the usage views.
-    /// <paramref name="xOf"/> maps a date to an x position.
+    /// Draws the timescale header (two automatic tiers, or one to three fixed tiers from the project's
+    /// timescale settings) used by the Gantt chart and the usage views. <paramref name="xOf"/> maps a date to an x position.
     /// </summary>
     public static void TimescaleHeader(DrawingContext dc, Visual visual, Func<DateTime, double> xOf,
-        DateTime from, DateTime to, double pixelsPerDay, double width, double height)
+        DateTime from, DateTime to, double pixelsPerDay, double width, double height, Engine.Views.TimescaleSettings? settings = null)
     {
-        double tierHeight = height / 2;
+        var tiers = Timescale.Tiers(pixelsPerDay, settings);
+        double tierHeight = height / tiers.Count;
+        double fontSize = tiers.Count >= 3 ? 9.5 : 11;
         dc.DrawRectangle(HeaderBackground, null, new Rect(0, 0, width, height));
-        var (top, bottom) = Timescale.For(pixelsPerDay);
-        Tier(top, 0, centerLabels: false);
-        Tier(bottom, tierHeight, centerLabels: true);
-        dc.DrawLine(GridPen, new Point(0, tierHeight), new Point(width, tierHeight));
+        for (int i = 0; i < tiers.Count; i++)
+        {
+            Tier(tiers[i], i * tierHeight, centerLabels: i == tiers.Count - 1 && tiers.Count > 1);
+            if (i > 0)
+                dc.DrawLine(GridPen, new Point(0, i * tierHeight), new Point(width, i * tierHeight));
+        }
         dc.DrawLine(GridPen, new Point(0, height - 0.5), new Point(width, height - 0.5));
 
         void Tier(TimescaleTier tier, double y, bool centerLabels)
@@ -95,10 +99,10 @@ public static class Drawing
                 double x = Math.Round(xOf(boundary)) + 0.5;
                 double cellWidth = xOf(tier.Next(boundary)) - xOf(boundary);
                 dc.DrawLine(GridPen, new Point(x, y), new Point(x, y + tierHeight));
-                var label = Text(visual, tier.Label(boundary), 11);
+                var label = Text(visual, tier.Label(boundary), fontSize);
                 if (label.Width > cellWidth - 4)
                     continue;
-                // Top-tier labels stick to the left edge while their period is partly scrolled off.
+                // Non-bottom labels stick to the left edge while their period is partly scrolled off.
                 double textX = centerLabels ? x + (cellWidth - label.Width) / 2 : Math.Min(Math.Max(x + 3, 3), x + cellWidth - label.Width - 3);
                 dc.DrawText(label, new Point(textX, y + (tierHeight - label.Height) / 2));
             }
