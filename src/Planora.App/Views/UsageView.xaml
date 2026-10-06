@@ -45,6 +45,10 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <controls:UsageGrid x:Name="TimeGrid" RowHeight="24" HeaderHeight="44" />
+            <Canvas x:Name="EditLayer" ClipToBounds="True">
+                <TextBox x:Name="CellEditor" Visibility="Collapsed" Padding="2,0" VerticalContentAlignment="Center" TextAlignment="Right"
+                         KeyDown="OnCellEditorKey" LostKeyboardFocus="OnCellEditorLostFocus" />
+            </Canvas>
             <ScrollBar x:Name="HorizontalScroll" Grid.Row="1" Orientation="Horizontal" ValueChanged="OnHorizontalScroll" />
         </Grid>
     </Grid>

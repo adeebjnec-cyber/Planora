@@ -11,6 +11,18 @@ public enum WorkContour
     LatePeak,
     Bell,
     Turtle,
+
+    /// <summary>Work entered period by period (in the usage views); see <see cref="Assignment.Pieces"/>.</summary>
+    Contoured,
+}
+
+/// <summary>
+/// Part of a hand-edited (contoured) assignment: <see cref="WorkMinutes"/> of work spread evenly over
+/// <see cref="Length"/> working minutes, starting <see cref="Offset"/> working minutes after the assignment starts.
+/// </summary>
+public readonly record struct WorkPiece(long Offset, long Length, long WorkMinutes)
+{
+    public long End => Offset + Length;
 }
 
 public static class WorkContours
@@ -29,6 +41,8 @@ public static class WorkContours
         [WorkContour.LatePeak] = new[] { 10, 15, 25, 50, 50, 75, 100, 100, 50, 25 },
         [WorkContour.Bell] = new[] { 10, 20, 40, 80, 100, 100, 80, 40, 20, 10 },
         [WorkContour.Turtle] = new[] { 25, 50, 75, 100, 100, 100, 100, 75, 50, 25 },
+        // Contoured assignments use their own pieces; as a shape they behave like flat.
+        [WorkContour.Contoured] = new[] { 100, 100, 100, 100, 100, 100, 100, 100, 100, 100 },
     };
 
     public static IReadOnlyList<int> Shape(WorkContour contour) => Shapes[contour];
@@ -73,7 +87,45 @@ public sealed class Assignment
     /// <summary>Amount for cost resources, entered by the user.</summary>
     public decimal CostAmount { get; set; }
 
-    public WorkContour Contour { get; set; } = WorkContour.Flat;
+    /// <summary>Work distribution. Choosing a standard contour discards hand-edited pieces.</summary>
+    public WorkContour Contour
+    {
+        get => _contour;
+        set
+        {
+            _contour = value;
+            if (value != WorkContour.Contoured)
+                _pieces = null;
+        }
+    }
+
+    private WorkContour _contour = WorkContour.Flat;
+    private List<WorkPiece>? _pieces;
+
+    /// <summary>Hand-edited work pieces (empty unless the assignment is contoured).</summary>
+    public IReadOnlyList<WorkPiece> Pieces => (IReadOnlyList<WorkPiece>?)_pieces ?? Array.Empty<WorkPiece>();
+
+    public bool IsContoured => _pieces is { Count: > 0 };
+
+    /// <summary>Replaces the work profile with hand-edited pieces; work becomes their total.</summary>
+    internal void SetPieces(IEnumerable<WorkPiece> pieces)
+    {
+        var list = pieces.Where(p => p.Length > 0).OrderBy(p => p.Offset).ToList();
+        // Trailing pieces without work do not extend the assignment.
+        while (list.Count > 0 && list[^1].WorkMinutes == 0)
+            list.RemoveAt(list.Count - 1);
+        _pieces = list.Count > 0 ? list : null;
+        _contour = _pieces is null ? WorkContour.Flat : WorkContour.Contoured;
+        WorkMinutes = list.Sum(p => p.WorkMinutes);
+    }
+
+    /// <summary>Back to an even (flat) profile, e.g. when work or units are edited as a total.</summary>
+    internal void ClearPieces()
+    {
+        _pieces = null;
+        if (_contour == WorkContour.Contoured)
+            _contour = WorkContour.Flat;
+    }
 
     /// <summary>Cost rate table to use, 0-4 (A-E).</summary>
     public int CostRateTable { get; set; }
@@ -105,7 +157,9 @@ public sealed class Assignment
     public bool IsWork => Resource.Type == ResourceType.Work;
 
     /// <summary>Working minutes this assignment needs to complete its work at its units and contour.</summary>
-    public long SpanMinutes => Units <= 0
+    public long SpanMinutes => IsContoured
+        ? Math.Max(1, _pieces![^1].End)
+        : Units <= 0
         ? Task.DurationMinutes
         : (long)Math.Round(WorkMinutes / (Units * WorkContours.AverageFactor(Contour)));
 

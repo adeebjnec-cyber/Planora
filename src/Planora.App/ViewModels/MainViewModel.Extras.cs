@@ -108,6 +108,16 @@ public sealed partial class MainViewModel
         TryEdit("Split task", p => p.GetRequiredTask(id).Split(afterWorkMinutes, gapMinutes));
     }
 
+    /// <summary>Sets an assignment's work in one period (a cell of the usage views).</summary>
+    public void SetTimephasedWork(Assignment assignment, DateTime from, DateTime to, long workMinutes)
+    {
+        var (taskId, resourceId) = (assignment.Task.Id, assignment.Resource.Id);
+        TryEdit("Edit work", p =>
+        {
+            var a = p.GetRequiredTask(taskId).Assignments.Single(x => x.Resource.Id == resourceId);
+            p.SetTimephasedWork(a, from, to, workMinutes);
+        });
+    }
     public void ShowAssignmentInformation(Assignment assignment)
     {
         var dialog = new AssignmentInformationDialog(this, assignment) { Owner = Application.Current.MainWindow };

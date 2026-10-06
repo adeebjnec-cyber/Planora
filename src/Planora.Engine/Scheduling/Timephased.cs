@@ -21,6 +21,14 @@ public static class Timephased
             return moment >= assignment.Finish ? 1 : 0;
 
         double done = Math.Clamp(ActiveMinutes(assignment, cal, moment), 0, total);
+        if (assignment.IsContoured)
+        {
+            double totalWork = assignment.Pieces.Sum(p => (double)p.WorkMinutes);
+            if (totalWork <= 0)
+                return 0;
+            double worked = assignment.Pieces.Sum(p => p.WorkMinutes * Math.Clamp((done - p.Offset) / p.Length, 0, 1));
+            return worked / totalWork;
+        }
         var shape = WorkContours.Shape(assignment.Contour);
         double shapeTotal = shape.Sum();
         double part = total / shape.Count;
@@ -77,7 +85,16 @@ public static class Timephased
             yield return segment.Start;
             yield return segment.Finish;
         }
-        if (assignment.Contour != WorkContour.Flat && assignment.Segments.Count == 1 && assignment.EffectiveCalendar is { } cal)
+        if (assignment.IsContoured && assignment.Segments.Count == 1 && assignment.EffectiveCalendar is { } contourCal)
+        {
+            var start = assignment.Segments[0].Start;
+            foreach (var piece in assignment.Pieces)
+            {
+                yield return contourCal.AddWorkingMinutes(start, piece.Offset);
+                yield return contourCal.AddWorkingMinutes(start, piece.End);
+            }
+            yield break;
+        }        if (assignment.Contour != WorkContour.Flat && assignment.Segments.Count == 1 && assignment.EffectiveCalendar is { } cal)
         {
             var segment = assignment.Segments[0];
             double total = cal.WorkingTimeBetween(segment.Start, segment.Finish).TotalMinutes;

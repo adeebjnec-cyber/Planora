@@ -169,6 +169,7 @@ public static class ProjectFile
                     Contour = a.Contour,
                     CostRateTable = a.CostRateTable,
                     DelayMinutes = a.DelayMinutes,
+                    Pieces = a.IsContoured ? a.Pieces.ToList() : null,
                     Baselines = Sparse(a.Baselines),
                 }).ToList(),
             }).ToList(),
@@ -363,6 +364,8 @@ public static class ProjectFile
                 assignment.Contour = a.Contour;
                 assignment.CostRateTable = a.CostRateTable;
                 assignment.DelayMinutes = a.DelayMinutes;
+                if (a.Pieces is { Count: > 0 })
+                    assignment.SetPieces(a.Pieces);
                 Fill(assignment.Baselines, a.Baselines);
             }
         }
@@ -604,6 +607,7 @@ public static class ProjectFile
         public WorkContour Contour { get; set; }
         public int CostRateTable { get; set; }
         public long DelayMinutes { get; set; }
+        public List<WorkPiece>? Pieces { get; set; }
         public Dictionary<int, BaselineValues>? Baselines { get; set; }
     }
 }

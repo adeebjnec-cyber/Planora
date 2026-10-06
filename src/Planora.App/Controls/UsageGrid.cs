@@ -52,6 +52,8 @@ public sealed class UsageGrid : TimelineElement
     public IReadOnlyList<UsageRow> Rows { get; set; } = Array.Empty<UsageRow>();
 
     public event EventHandler<int>? WheelScrolled;
+    /// <summary>Raised when a cell is double-clicked: the row, the period, and the cell's bounds.</summary>
+    public event EventHandler<(UsageRow Row, DateTime From, DateTime To, Rect Cell)>? CellEditRequested;
 
     public MainViewModel? ViewModel
     {
@@ -123,7 +125,10 @@ public sealed class UsageGrid : TimelineElement
                 {
                     var brush = row.Overallocations.Any(o => o.From < periodEnd && o.To > periodStart) ? Drawing.AlertText : Drawing.TextBrush;
                     var text = Drawing.Text(this, row.FormatValue(minutes), 11, brush, bold: row.IsGroup);
-                    if (text.Width < cell.Width - 4)
+                    // In narrow cells, a rounded value is better than an empty cell.
+                    if (text.Width >= cell.Width - 4)
+                        text = Drawing.Text(this, Math.Round(row.FormatValue == FormatHours ? minutes / 60 : minutes).ToString(CultureInfo.CurrentCulture), 10, brush, bold: row.IsGroup);
+                    if (text.Width < cell.Width - 2)
                         dc.DrawText(text, new Point(x2 - text.Width - 4, top + (RowHeight - text.Height) / 2));
                 }
                 dc.DrawLine(Drawing.LightGridPen, new Point(Math.Round(x2) + 0.5, top), new Point(Math.Round(x2) + 0.5, top + RowHeight));
@@ -141,6 +146,22 @@ public sealed class UsageGrid : TimelineElement
         return (hours >= 100 ? hours.ToString("0", CultureInfo.CurrentCulture) : hours.ToString("0.##", CultureInfo.CurrentCulture)) + "h";
     }
 
+    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonDown(e);
+        var p = e.GetPosition(this);
+        if (e.ClickCount != 2 || p.Y < HeaderHeight)
+            return;
+        int row = (int)((p.Y - HeaderHeight + _verticalOffset) / RowHeight);
+        if (row < 0 || row >= Rows.Count)
+            return;
+        var (_, bottom) = Timescale.For(PixelsPerDay);
+        var from = bottom.Floor(DateAt(p.X));
+        var to = bottom.Next(from);
+        var cell = new Rect(XOf(from), HeaderHeight + row * RowHeight - _verticalOffset, XOf(to) - XOf(from), RowHeight);
+        CellEditRequested?.Invoke(this, (Rows[row], from, to, cell));
+        e.Handled = true;
+    }
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
         base.OnMouseWheel(e);

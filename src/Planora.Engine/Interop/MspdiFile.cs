@@ -523,7 +523,8 @@ public static class MspdiFile
                 continue;
             var assignment = Project.RestoreAssignment(task, resource, Double(a, "Units") ?? 1);
             assignment.WorkMinutes = Math.Max(0, Minutes(a, "Work") ?? 0);
-            assignment.Contour = (WorkContour)Math.Clamp(Int(a, "WorkContour") ?? 0, 0, 7);
+            // Code 8 (contoured) carries time-phased data Planora does not read; it is treated as flat.
+            assignment.Contour = Int(a, "WorkContour") is { } contour and >= 0 and <= 7 ? (WorkContour)contour : WorkContour.Flat;
             assignment.CostRateTable = Math.Clamp(Int(a, "CostRateTable") ?? 0, 0, Resource.RateTableCount - 1);
             assignment.DelayMinutes = (Long(a, "Delay") ?? 0) / 10;
             if (resource.Type == ResourceType.Cost)

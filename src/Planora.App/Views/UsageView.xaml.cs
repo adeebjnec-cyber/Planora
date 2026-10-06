@@ -32,6 +32,7 @@ public partial class UsageView : UserControl
                 _viewModel?.ShowAssignmentInformation(assignment);
         };
 
+        TimeGrid.CellEditRequested += (_, e) => BeginCellEdit(e.Row, e.From, e.To, e.Cell);
         TimeGrid.ExtentChanged += (_, _) => UpdateScrollBar();
         TimeGrid.SizeChanged += (_, _) => UpdateScrollBar();
         TimeGrid.WheelScrolled += (_, delta) => _sheetScroller?.ScrollToVerticalOffset(_sheetScroller.VerticalOffset - Math.Sign(delta) * 3);
@@ -157,8 +158,61 @@ public partial class UsageView : UserControl
         };
     }
 
-    private static string FormatQuantity(double quantity) => quantity.ToString("0.##", CultureInfo.CurrentCulture);
+    private static string FormatQuantity(double quantity) => quantity.ToString("0.#", CultureInfo.CurrentCulture);
 
+    // ---- Editing work in a period ----
+
+    private (Assignment Assignment, DateTime From, DateTime To)? _editing;
+
+    private void BeginCellEdit(UsageRow row, DateTime from, DateTime to, Rect cell)
+    {
+        if (row.Assignment is not { IsWork: true } assignment)
+        {
+            if (_viewModel is not null)
+                _viewModel.ShowError("Edit work on an assignment row (the rows under each task or resource).");
+            return;
+        }
+        _editing = (assignment, from, to);
+        CellEditor.Text = (row.WorkBetween(from, to) / 60).ToString("0.##", CultureInfo.CurrentCulture);
+        Canvas.SetLeft(CellEditor, cell.X);
+        Canvas.SetTop(CellEditor, cell.Y);
+        CellEditor.Width = Math.Max(48, cell.Width);
+        CellEditor.Height = cell.Height;
+        CellEditor.Visibility = Visibility.Visible;
+        CellEditor.Focus();
+        CellEditor.SelectAll();
+    }
+
+    private void OnCellEditorKey(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Enter)
+        {
+            CommitCellEdit();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Escape)
+        {
+            _editing = null;
+            CellEditor.Visibility = Visibility.Collapsed;
+            e.Handled = true;
+        }
+    }
+
+    private void OnCellEditorLostFocus(object sender, RoutedEventArgs e) => CommitCellEdit();
+
+    private void CommitCellEdit()
+    {
+        if (_editing is not { } edit || _viewModel is null)
+            return;
+        _editing = null;
+        CellEditor.Visibility = Visibility.Collapsed;
+        if (!DurationText.TryParse(CellEditor.Text, _viewModel.Project.Options, out var work, DurationUnit.Hours))
+        {
+            _viewModel.ShowError($"'{CellEditor.Text}' is not an amount of work. Type hours, e.g. 6 or 4.5h.");
+            return;
+        }
+        _viewModel.SetTimephasedWork(edit.Assignment, edit.From, edit.To, work.Minutes);
+    }
     private void OnHorizontalScroll(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
         if (Math.Abs(TimeGrid.HorizontalOffset - e.NewValue) > 0.5)

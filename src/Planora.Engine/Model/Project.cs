@@ -352,6 +352,7 @@ public sealed class Project
         task.DurationMinutes = durationMinutes;
         foreach (var a in WorkAssignments(task))
         {
+            a.ClearPieces();
             if (task.Type == TaskType.FixedWork)
             {
                 if (durationMinutes > 0)
@@ -367,6 +368,7 @@ public sealed class Project
     /// <summary>Changes an assignment's units; duration or work follow according to the task type.</summary>
     public void SetUnits(Assignment assignment, double units)
     {
+        assignment.ClearPieces();
         assignment.Units = units;
         if (!assignment.IsWork)
             return;
@@ -379,6 +381,7 @@ public sealed class Project
     /// <summary>Changes an assignment's work; duration or units follow according to the task type.</summary>
     public void SetWork(Assignment assignment, long workMinutes)
     {
+        assignment.ClearPieces();
         assignment.WorkMinutes = workMinutes;
         var task = assignment.Task;
         if (task.Type == TaskType.FixedDuration && task.DurationMinutes > 0)
@@ -387,6 +390,78 @@ public sealed class Project
             UpdateDurationFromAssignments(task);
     }
 
+    /// <summary>
+    /// Sets the work an assignment does between two moments (editing a cell of the usage views). The
+    /// assignment becomes contoured: work elsewhere is kept, its total and end follow the edit, and the
+    /// task's dates follow the assignment. The project must have been scheduled (so the assignment has
+    /// dates), and the task must be one whose dates come from its resources.
+    /// </summary>
+    public void SetTimephasedWork(Assignment assignment, DateTime from, DateTime to, long workMinutes)
+    {
+        if (!assignment.IsWork)
+            throw new InvalidOperationException("Only work resources have time-phased work.");
+        if (workMinutes < 0)
+            throw new ArgumentOutOfRangeException(nameof(workMinutes), "Work cannot be negative.");
+        var task = assignment.Task;
+        if (task.Mode != TaskMode.AutoScheduled || task.ActualStart is not null || task.Splits.Count > 0)
+            throw new InvalidOperationException("Work can be edited by period only on auto-scheduled tasks that have not started and are not split.");
+        var cal = assignment.EffectiveCalendar
+            ?? throw new InvalidOperationException("Schedule the project before editing work by period.");
+        if (to <= assignment.Start)
+            throw new InvalidOperationException("Work cannot be added before the assignment starts; move the task instead.");
+
+        long start = cal.WorkingMinutesBetween(assignment.Start, from < assignment.Start ? assignment.Start : from);
+        long end = cal.WorkingMinutesBetween(assignment.Start, to);
+        if (end <= start)
+            throw new InvalidOperationException("There is no working time for this resource in that period.");
+
+        // The current profile as pieces, cut at the edited period's edges.
+        var pieces = assignment.IsContoured ? assignment.Pieces.ToList() : CurrentPieces(assignment);
+        var result = new List<WorkPiece>();
+        foreach (var piece in pieces)
+        {
+            foreach (var part in Cut(piece, start, end))
+            {
+                if (part.End <= start || part.Offset >= end)
+                    result.Add(part);
+            }
+        }
+        result.Add(new WorkPiece(start, end - start, workMinutes));
+        assignment.SetPieces(result);
+        UpdateDurationFromAssignments(task);
+    }
+
+    /// <summary>A standard contour as pieces: ten equal parts of the span at the contour's percentages.</summary>
+    private static List<WorkPiece> CurrentPieces(Assignment assignment)
+    {
+        long span = assignment.SpanMinutes;
+        var shape = WorkContours.Shape(assignment.Contour);
+        double total = shape.Sum();
+        var pieces = new List<WorkPiece>();
+        long allocated = 0;
+        for (int i = 0; i < shape.Count; i++)
+        {
+            long offset = span * i / shape.Count, next = span * (i + 1) / shape.Count;
+            long work = i == shape.Count - 1 ? assignment.WorkMinutes - allocated : (long)Math.Round(assignment.WorkMinutes * shape[i] / total);
+            allocated += work;
+            pieces.Add(new WorkPiece(offset, next - offset, work));
+        }
+        return pieces;
+    }
+
+    /// <summary>Splits a piece at the given offsets, sharing its work in proportion to length.</summary>
+    private static IEnumerable<WorkPiece> Cut(WorkPiece piece, params long[] cuts)
+    {
+        var edges = cuts.Where(c => c > piece.Offset && c < piece.End).OrderBy(c => c).Prepend(piece.Offset).Append(piece.End).ToList();
+        long given = 0;
+        for (int i = 0; i + 1 < edges.Count; i++)
+        {
+            long length = edges[i + 1] - edges[i];
+            long work = i == edges.Count - 2 ? piece.WorkMinutes - given : (long)Math.Round((double)piece.WorkMinutes * length / piece.Length);
+            given += work;
+            yield return new WorkPiece(edges[i], length, work);
+        }
+    }
     private static IEnumerable<Assignment> WorkAssignments(ProjectTask task) =>
         task.Assignments.Where(a => a.IsWork);
 
@@ -396,6 +471,7 @@ public sealed class Project
     private static void RedistributeWork(ProjectTask task, long totalWork)
     {
         var assignments = WorkAssignments(task).ToList();
+        assignments.ForEach(a => a.ClearPieces());
         double totalUnits = assignments.Sum(a => a.Units * WorkContours.AverageFactor(a.Contour));
         if (totalUnits <= 0)
             return;
