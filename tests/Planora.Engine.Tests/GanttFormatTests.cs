@@ -47,4 +47,22 @@ public class GanttFormatTests
         Assert.True(loaded.Gridlines.RowLines);
         Assert.Equal("#C04030", loaded.Text(TextItem.CriticalTasks).Color);
     }
+
+    [Fact]
+    public void PageSetupCodesAndSaving()
+    {
+        var p = new Project("Plan", new DateTime(2026, 1, 5, 8, 0, 0)) { StatusDate = new DateTime(2026, 1, 9, 17, 0, 0) };
+        p.AddTask("A", 480);
+        Assert.Equal("Plan: page 2 of 5 (Gantt Chart)", PageSetup.Expand("&[Project Title]: page &[Page] of &[Pages] (&[View])", p, 2, 5, "Gantt Chart"));
+        Assert.Contains("2026", PageSetup.Expand("&[Status Date]", p, 1, 1, ""));
+
+        p.PageSetup.Landscape = false;
+        p.PageSetup.Paper = PaperSize.Letter;
+        p.PageSetup.Legend = LegendPlacement.EveryPage;
+        var (w, h) = p.PageSetup.PageSizeDips();
+        Assert.Equal(816, w, 0);       // 8.5 in at 96 per inch
+        Assert.Equal(1056, h, 0);
+        var loaded = ProjectFile.Deserialize(ProjectFile.Serialize(p)).PageSetup;
+        Assert.Equal((PaperSize.Letter, false, LegendPlacement.EveryPage), (loaded.Paper, loaded.Landscape, loaded.Legend));
+    }
 }

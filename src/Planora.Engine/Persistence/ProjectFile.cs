@@ -215,6 +215,7 @@ public static class ProjectFile
                 SortKeys = v.Sort.Keys.ToList(), KeepOutlineStructure = v.Sort.KeepOutlineStructure,
             }).ToList(),
             GanttFormat = project.GanttFormat,
+            PageSetup = project.PageSetup,
             CustomReports = project.CustomReports.Count == 0 ? null : project.CustomReports,
             Macros = project.Macros.Count == 0 ? null : project.Macros,
             BudgetCosts = project.BudgetCosts.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
@@ -468,6 +469,8 @@ public static class ProjectFile
             project.Groups.Add(new GroupDefinition(g.Name, g.Levels.ToArray()) { ShowSummaryTasks = g.ShowSummaryTasks });
         if (dto.GanttFormat is { } format)
             project.GanttFormat = format;
+        if (dto.PageSetup is { } pageSetup)
+            project.PageSetup = pageSetup;
         if (dto.PoolSharers is not null)
             project.PoolSharers.AddRange(dto.PoolSharers);
         if (dto.CustomReports is { } reports)
@@ -536,6 +539,7 @@ public static class ProjectFile
         public List<GroupDto>? Groups { get; set; }
         public List<SavedViewDto>? SavedViews { get; set; }
         public GanttFormat? GanttFormat { get; set; }
+        public PageSetup? PageSetup { get; set; }
         public List<Reports.CustomReport>? CustomReports { get; set; }
         public List<Macros.MacroModule>? Macros { get; set; }
     }

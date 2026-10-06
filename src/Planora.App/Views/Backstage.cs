@@ -61,11 +61,15 @@ public sealed class Backstage : UserControl
         {
             if (IsVisible)
             {
-                Select("Info");
+                Select(StartPage);
+                StartPage = "Info";
                 Focus();
             }
         };
     }
+
+    /// <summary>The page shown when the Backstage next opens (Info by default).</summary>
+    public string StartPage { get; set; } = "Info";
 
     /// <summary>Raised when the page should close (back, Esc, or after a command).</summary>
     public event EventHandler? CloseRequested;
@@ -243,21 +247,67 @@ public sealed class Backstage : UserControl
 
     private void ShowPrint()
     {
+        var tiles = new StackPanel
+        {
+            Width = 280,
+            Children =
+            {
+                Tile("Print...", "Choose a printer and print the current view.", () => Run(_vm.PrintCommand)),
+                Tile("Page Setup...", "Paper, orientation, margins, header, footer and legend.", () =>
+                {
+                    if (_vm.PageSetupCommand.CanExecute(null))
+                        _vm.PageSetupCommand.Execute(null);
+                    ShowPrint();
+                }),
+                Tile("Save as PDF...", "The current view as a PDF document.", () => Run(_vm.ExportPdfCommand)),
+                Tile("Save as image...", "The current view as a PNG picture.", () => Run(_vm.ExportImageCommand)),
+                Tile("Reports...", "Print or save a report as PDF.", () => Run(_vm.ReportsCommand, "Project Overview")),
+            },
+        };
+
+        // Print preview of the current view, page by page.
+        var preview = new Image { Stretch = Stretch.Uniform, MaxHeight = 540, MaxWidth = 680, HorizontalAlignment = HorizontalAlignment.Left };
+        var pageLabel = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 10, 0) };
+        var previous = new Button { Content = "◀", Padding = new Thickness(8, 2, 8, 2) };
+        var next = new Button { Content = "▶", Padding = new Thickness(8, 2, 8, 2) };
+        Output.PageSet? pages = null;
+        int index = 0;
+        void Show()
+        {
+            if (pages is null || pages.Pages.Count == 0)
+                return;
+            index = Math.Clamp(index, 0, pages.Pages.Count - 1);
+            preview.Source = Output.PageOutput.Render(pages.Pages[index], pages.PageSize, 72);
+            pageLabel.Text = $"Page {index + 1} of {pages.Pages.Count}";
+            previous.IsEnabled = index > 0;
+            next.IsEnabled = index < pages.Pages.Count - 1;
+        }
+        previous.Click += (_, _) => { index--; Show(); };
+        next.Click += (_, _) => { index++; Show(); };
+        try
+        {
+            pages = _vm.BuildPages(Output.GanttPages.PageSize(_vm));
+            Show();
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+        {
+            pageLabel.Text = "The preview is not available: " + ex.Message;
+        }
+        var previewPanel = new StackPanel
+        {
+            Margin = new Thickness(24, 0, 0, 0),
+            Children =
+            {
+                new Border { BorderBrush = Brushes.LightGray, BorderThickness = new Thickness(1), Child = preview, HorizontalAlignment = HorizontalAlignment.Left },
+                new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 8, 0, 0), Children = { previous, pageLabel, next } },
+            },
+        };
         _page.Content = new StackPanel
         {
             Children =
             {
                 Title("Print"),
-                new WrapPanel
-                {
-                    Children =
-                    {
-                        Tile("Print...", "Print the current view on A4 landscape pages, with page setup.", () => Run(_vm.PrintCommand)),
-                        Tile("Save as PDF...", "The current view as a PDF document.", () => Run(_vm.ExportPdfCommand)),
-                        Tile("Save as image...", "The current view as a PNG picture.", () => Run(_vm.ExportImageCommand)),
-                        Tile("Reports...", "Print or save a report as PDF.", () => Run(_vm.ReportsCommand, "Project Overview")),
-                    },
-                },
+                new StackPanel { Orientation = Orientation.Horizontal, Children = { tiles, previewPanel } },
             },
         };
     }

@@ -167,6 +167,7 @@
                 <RibbonGroup Header="Export">
                     <RibbonButton Label="PDF" LargeImageSource="{infra:Glyph &#xEA90;}" Command="{Binding ExportPdfCommand}" />
                     <RibbonButton Label="Print" LargeImageSource="{infra:Glyph &#xE749;}" Command="{Binding PrintCommand}" ToolTipTitle="Print (Ctrl+P)" />
+                    <RibbonButton Label="Page Setup" SmallImageSource="{infra:Glyph &#xE7C3;}" Command="{Binding PageSetupCommand}" ToolTipTitle="Paper, margins, header, footer and legend" />
                 </RibbonGroup>
             </RibbonTab>
 

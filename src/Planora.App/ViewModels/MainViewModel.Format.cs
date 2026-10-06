@@ -12,6 +12,7 @@ public sealed partial class MainViewModel
     public ICommand TimescaleCommand { get; private set; } = null!;
     public ICommand GridlinesCommand { get; private set; } = null!;
     public ICommand MacrosCommand { get; private set; } = null!;
+    public ICommand PageSetupCommand { get; private set; } = null!;
 
     private void InitializeFormatCommands()
     {
@@ -20,5 +21,6 @@ public sealed partial class MainViewModel
         TimescaleCommand = new RelayCommand(() => ShowDialog(new TimescaleDialog(this)));
         GridlinesCommand = new RelayCommand(() => ShowDialog(new GridlinesDialog(this)));
         MacrosCommand = new RelayCommand(() => ShowDialog(new MacrosDialog(this)));
+        PageSetupCommand = new RelayCommand(() => ShowDialog(new PageSetupDialog(this)));
     }
 }

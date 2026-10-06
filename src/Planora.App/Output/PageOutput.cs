@@ -28,10 +28,10 @@ public static class PageOutput
     }
 
     /// <summary>Shows the print dialog, then builds pages at the printer's page size and prints them.</summary>
-    public static bool Print(Func<Size, PageSet> buildPages, string description)
+    public static bool Print(Func<Size, PageSet> buildPages, string description, bool landscape = true)
     {
         var dialog = new PrintDialog();
-        dialog.PrintTicket.PageOrientation = PageOrientation.Landscape;
+        dialog.PrintTicket.PageOrientation = landscape ? PageOrientation.Landscape : PageOrientation.Portrait;
         if (dialog.ShowDialog() != true)
             return false;
         var pages = buildPages(new Size(dialog.PrintableAreaWidth, dialog.PrintableAreaHeight));

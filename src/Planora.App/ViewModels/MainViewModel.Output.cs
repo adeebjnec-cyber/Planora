@@ -188,7 +188,8 @@ public sealed partial class MainViewModel
     // ------------------------------------------------------------------ print, PDF, image
 
     /// <summary>Pages for the current view: the Gantt layout, or the visible view scaled onto one page.</summary>
-    private PageSet BuildPages(Size pageSize)
+    /// <summary>Pages of the current view (the print preview uses the Page Setup paper size).</summary>
+    internal PageSet BuildPages(Size pageSize)
     {
         if (IsGanttView || CurrentViewElement?.Invoke() is not { ActualWidth: > 0 } element)
             return GanttPages.Build(this, pageSize);
@@ -211,7 +212,7 @@ public sealed partial class MainViewModel
     {
         try
         {
-            PageOutput.Print(BuildPages, $"{Project.Name} - {CurrentViewOption.Title}");
+            PageOutput.Print(BuildPages, $"{Project.Name} - {CurrentViewOption.Title}", Project.PageSetup.Landscape);
         }
         catch (Exception ex) when (ex is System.Printing.PrintSystemException or InvalidOperationException)
         {
@@ -226,7 +227,7 @@ public sealed partial class MainViewModel
             return;
         try
         {
-            PageOutput.SavePdf(BuildPages(PageOutput.A4Landscape), dialog.FileName, Project.Name);
+            PageOutput.SavePdf(BuildPages(GanttPages.PageSize(this)), dialog.FileName, Project.Name);
             Status = $"Saved {Path.GetFileName(dialog.FileName)}";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

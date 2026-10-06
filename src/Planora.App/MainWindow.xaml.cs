@@ -39,7 +39,11 @@ public partial class MainWindow : Window
     private readonly Backstage _backstage;
 
     /// <summary>Shows the File page (also used by the --backstage screenshot option).</summary>
-    public void ShowBackstage() => _backstage.Visibility = Visibility.Visible;
+    public void ShowBackstage(string page = "Info")
+    {
+        _backstage.StartPage = page;
+        _backstage.Visibility = Visibility.Visible;
+    }
 
     private void OnFileMenuOpened(object sender, EventArgs e)
     {

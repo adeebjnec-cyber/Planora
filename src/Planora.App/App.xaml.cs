@@ -53,7 +53,7 @@ public partial class App : Application
                     }
                     else
                     {
-                        Output.PageOutput.SavePdf(Output.GanttPages.Build(vm, Output.PageOutput.A4Landscape), exportPath, vm.Project.Name);
+                        Output.PageOutput.SavePdf(Output.GanttPages.Build(vm, Output.GanttPages.PageSize(vm)), exportPath, vm.Project.Name);
                     }
                 }
                 catch (Exception ex)
@@ -95,8 +95,8 @@ public partial class App : Application
                 window.ViewModel.SelectTask(window.ViewModel.Project.Tasks[row - 1]);
             if (options.TryGetValue("--theme", out var theme))
                 window.ViewModel.Theme = theme;
-            if (options.ContainsKey("--backstage"))
-                window.ShowBackstage();
+            if (options.TryGetValue("--backstage", out var backstagePage))
+                window.ShowBackstage(backstagePage is "1" or "" ? "Info" : backstagePage);
             if (options.ContainsKey("--timeline"))
                 window.ViewModel.ShowTimelinePane = true;
             if (options.TryGetValue("--selectresource", out var resRow) && int.TryParse(resRow, out var ri) && ri >= 1 && ri <= window.ViewModel.Project.Resources.Count)
