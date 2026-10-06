@@ -4,7 +4,7 @@ namespace Planora.Engine.Calendars;
 /// A calendar of working time: a work week plus exceptions (holidays, special days).
 /// A calendar may derive from a base calendar (e.g. a resource calendar based on the
 /// project's Standard calendar); anything not set locally is inherited from the base.
-/// Lookup order for a date: own exception, base exception, own work week, base work week.
+/// Lookup order for a date: own exception, base exception, own work weeks and default week, then the base's.
 /// </summary>
 public sealed class WorkingCalendar
 {
@@ -22,6 +22,9 @@ public sealed class WorkingCalendar
     public string Name { get; set; }
     public WorkingCalendar? BaseCalendar { get; }
     public List<CalendarException> Exceptions { get; } = new();
+
+    /// <summary>Date-ranged alternative working weeks (later ones win where they overlap).</summary>
+    public List<WorkWeek> WorkWeeks { get; } = new();
 
     /// <summary>Microsoft Project's "Standard" calendar: Mon-Fri 08:00-12:00, 13:00-17:00.</summary>
     public static WorkingCalendar CreateStandard(string name = "Standard")
@@ -72,7 +75,9 @@ public sealed class WorkingCalendar
                 copy._week[(int)day] = GetWorkWeekDay(day);
         }
         foreach (var e in Exceptions)
-            copy.Exceptions.Add(new CalendarException(e.Name, e.From, e.To, e.WorkingTimes) { RepeatYearly = e.RepeatYearly });
+            copy.Exceptions.Add(new CalendarException(e.Name, e.From, e.To, e.WorkingTimes) { RepeatYearly = e.RepeatYearly, Recurrence = e.Recurrence });
+        foreach (var w in WorkWeeks)
+            copy.WorkWeeks.Add(w.Copy());
         return copy;
     }
 
@@ -116,9 +121,19 @@ public sealed class WorkingCalendar
     {
         if (_intersection is var (first, second))
             return IntersectTimes(first.GetWorkingTimes(date), second.GetWorkingTimes(date));
-        return FindException(date)?.WorkingTimes ?? GetWorkWeekDay(date.DayOfWeek);
+        return FindException(date)?.WorkingTimes ?? WeekDayFor(date);
     }
 
+    /// <summary>A date's hours from the work weeks: a work week covering it, else the default week, else the base's.</summary>
+    private IReadOnlyList<WorkingTime> WeekDayFor(DateOnly date)
+    {
+        for (int i = WorkWeeks.Count - 1; i >= 0; i--)
+        {
+            if (WorkWeeks[i].Covers(date) && WorkWeeks[i].Day(date.DayOfWeek) is { } times)
+                return times;
+        }
+        return _week[(int)date.DayOfWeek] ?? BaseCalendar?.WeekDayFor(date) ?? Array.Empty<WorkingTime>();
+    }
     private static IReadOnlyList<WorkingTime> IntersectTimes(IReadOnlyList<WorkingTime> a, IReadOnlyList<WorkingTime> b)
     {
         var result = new List<WorkingTime>();

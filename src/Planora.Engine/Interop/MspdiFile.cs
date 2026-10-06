@@ -114,14 +114,35 @@ public static class MspdiFile
                 E("Name", e.Name),
                 E("Type", 1),
                 E("DayWorking", e.IsWorking),
-                e.IsWorking ? WorkingTimes(e.WorkingTimes) : null))));
+                e.IsWorking ? WorkingTimes(e.WorkingTimes) : null))),
+            c.WorkWeeks.Count == 0 ? null : new XElement(Ns + "WorkWeeks", c.WorkWeeks.Select(w => new XElement(Ns + "WorkWeek",
+                new XElement(Ns + "TimePeriod",
+                    E("FromDate", w.From.ToDateTime(TimeOnly.MinValue)),
+                    E("ToDate", w.To.ToDateTime(new TimeOnly(23, 59)))),
+                E("Name", w.Name),
+                new XElement(Ns + "WeekDays", Enum.GetValues<DayOfWeek>()
+                    .Where(d => w.Day(d) is not null)
+                    .Select(d => new XElement(Ns + "WeekDay",
+                        E("DayType", (int)d + 1),
+                        E("DayWorking", w.Day(d)!.Count > 0),
+                        w.Day(d)!.Count > 0 ? WorkingTimes(w.Day(d)!) : null)))))));
     }
 
-    /// <summary>Yearly exceptions are written as one exception per year for 20 years.</summary>
+    /// <summary>
+    /// Yearly exceptions are written as one exception per year for 20 years; patterned (recurring)
+    /// exceptions as one exception per occurrence.
+    /// </summary>
     private static IEnumerable<CalendarException> ExpandYearly(IEnumerable<CalendarException> exceptions)
     {
         foreach (var e in exceptions)
         {
+            if (e.Recurrence is not null)
+            {
+                int span = e.To.DayNumber - e.From.DayNumber;
+                foreach (var start in e.OccurrenceStarts().OrderBy(d => d))
+                    yield return new CalendarException(e.Name, start, start.AddDays(span), e.WorkingTimes);
+                continue;
+            }
             if (!e.RepeatYearly)
             {
                 yield return e;
@@ -589,16 +610,87 @@ public static class MspdiFile
             if (exception.Elements().FirstOrDefault(e => e.Name.LocalName == "TimePeriod") is not { } period)
                 continue;
             bool working = Text(exception, "DayWorking") == "1";
-            AddException(calendar, Text(exception, "Name") ?? "Exception", period, working ? ReadTimes(exception) : Array.Empty<WorkingTime>());
+            var added = AddException(calendar, Text(exception, "Name") ?? "Exception", period, working ? ReadTimes(exception) : Array.Empty<WorkingTime>());
+            if (added is not null && ReadRecurrence(exception, added) is { } recurring)
+            {
+                calendar.Exceptions.Remove(added);
+                calendar.Exceptions.Add(recurring);
+            }
+        }
+
+        foreach (var workWeek in Children(c, "WorkWeeks", "WorkWeek"))
+        {
+            if (workWeek.Elements().FirstOrDefault(e => e.Name.LocalName == "TimePeriod") is not { } period
+                || Date(period, "FromDate") is not { } from || Date(period, "ToDate") is not { } to || to < from)
+                continue;
+            var week = new WorkWeek(Text(workWeek, "Name") ?? "Work week", DateOnly.FromDateTime(from), DateOnly.FromDateTime(to));
+            foreach (var weekDay in Children(workWeek, "WeekDays", "WeekDay"))
+            {
+                if (Int(weekDay, "DayType") is { } dayType and >= 1 and <= 7)
+                    week.SetDay((DayOfWeek)(dayType - 1), Text(weekDay, "DayWorking") == "1" ? ReadTimes(weekDay).ToArray() : Array.Empty<WorkingTime>());
+            }
+            calendar.WorkWeeks.Add(week);
         }
         return calendar;
     }
 
-    private static void AddException(WorkingCalendar calendar, string name, XElement period, IReadOnlyList<WorkingTime> times)
+    /// <summary>
+    /// Microsoft Project stores a recurring exception as its whole date range plus a pattern
+    /// (Type 1 daily, 2/3 yearly, 4/5 monthly, 6 weekly). Each occurrence is one day.
+    /// </summary>
+    private static CalendarException? ReadRecurrence(XElement exception, CalendarException range)
+    {
+        int type = Int(exception, "Type") ?? 1;
+        int occurrences = Int(exception, "Occurrences") ?? 1;
+        // A single day, or every day of the range, is already said by the plain range.
+        if (range.From == range.To || type is < 1 or > 6 || (type == 1 && (Int(exception, "Period") ?? 1) == 1))
+            return null;
+
+        var pattern = new RecurrencePattern
+        {
+            Interval = Math.Max(1, Int(exception, "Period") ?? 1),
+            End = range.To,
+            Occurrences = Text(exception, "EnteredByOccurrences") == "1" ? occurrences : null,
+        };
+        int monthPosition = Int(exception, "MonthPosition") ?? 0;
+        int monthItem = Int(exception, "MonthItem") ?? 0;
+        switch (type)
+        {
+            case 1:
+                pattern.Frequency = RecurrenceFrequency.Daily;
+                break;
+            case 6:
+                pattern.Frequency = RecurrenceFrequency.Weekly;
+                int mask = Int(exception, "DaysOfWeek") ?? 0;
+                for (int d = 0; d < 7; d++)
+                {
+                    if ((mask & (1 << d)) != 0)
+                        pattern.DaysOfWeek.Add((DayOfWeek)d);
+                }
+                if (pattern.DaysOfWeek.Count == 0)
+                    pattern.DaysOfWeek.Add(range.From.DayOfWeek);
+                break;
+            case 4:
+            case 2:
+                pattern.Frequency = type == 4 ? RecurrenceFrequency.Monthly : RecurrenceFrequency.Yearly;
+                pattern.DayOfMonth = Int(exception, "MonthDay") ?? range.From.Day;
+                pattern.Month = (Int(exception, "Month") ?? range.From.Month - 1) + 1;
+                break;
+            default: // 3 and 5: "the second Tuesday"
+                pattern.Frequency = type == 5 ? RecurrenceFrequency.Monthly : RecurrenceFrequency.Yearly;
+                pattern.WeekOfMonth = monthPosition + 1;
+                pattern.DayOfWeek = monthItem is >= 3 and <= 9 ? (DayOfWeek)(monthItem - 3) : range.From.DayOfWeek;
+                pattern.Month = (Int(exception, "Month") ?? range.From.Month - 1) + 1;
+                break;
+        }
+        return new CalendarException(range.Name, range.From, range.From, range.WorkingTimes) { Recurrence = pattern };
+    }
+
+    private static CalendarException? AddException(WorkingCalendar calendar, string name, XElement period, IReadOnlyList<WorkingTime> times)
     {
         if (Date(period, "FromDate") is not { } from || Date(period, "ToDate") is not { } to)
-            return;
-        calendar.AddException(name, DateOnly.FromDateTime(from), DateOnly.FromDateTime(to), times.ToArray());
+            return null;
+        return calendar.AddException(name, DateOnly.FromDateTime(from), DateOnly.FromDateTime(to), times.ToArray());
     }
 
     private static IReadOnlyList<WorkingTime> ReadTimes(XElement parent)

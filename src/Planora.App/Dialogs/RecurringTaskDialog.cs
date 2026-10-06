@@ -7,12 +7,16 @@ using Planora.Engine.Model;
 
 namespace Planora.App.Dialogs;
 
-/// <summary>Recurring Task Information: create or edit a task that repeats on a pattern.</summary>
+/// <summary>
+/// Recurring Task Information: create or edit a task that repeats on a pattern. Also used on its own
+/// (pattern only) to edit a calendar exception's recurrence.
+/// </summary>
 public sealed class RecurringTaskDialog : Window
 {
     private static readonly string[] Ordinals = { "First", "Second", "Third", "Fourth", "Last" };
 
-    private readonly MainViewModel _owner;
+    private readonly MainViewModel? _owner;
+    private readonly bool _patternOnly;
     private readonly int? _editingId;
     private readonly int _insertIndex;
     private readonly TextBox _name = Box(260), _duration = Box(90), _interval = Box(50), _dayOfMonth = Box(50), _start = Box(140), _end = Box(140), _count = Box(60);
@@ -28,6 +32,22 @@ public sealed class RecurringTaskDialog : Window
     private readonly StackPanel _monthlyPanel = new();
     private readonly TextBlock _unit = new() { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0) };
 
+    /// <summary>Pattern-only editor: the result is in <see cref="Pattern"/> when the dialog returns true.</summary>
+    public RecurringTaskDialog(Window owner, RecurrencePattern? existing, DateOnly start, string title)
+    {
+        _patternOnly = true;
+        Title = title;
+        Owner = owner;
+        var pattern = existing ?? new RecurrencePattern
+        {
+            Frequency = RecurrenceFrequency.Weekly,
+            DaysOfWeek = { start.DayOfWeek },
+            Occurrences = 10,
+        };
+        pattern.Start = start;
+        Build(pattern, "", "");
+    }
+
     public RecurringTaskDialog(MainViewModel owner, ProjectTask? editing = null)
     {
         _owner = owner;
@@ -35,6 +55,25 @@ public sealed class RecurringTaskDialog : Window
         _insertIndex = owner.SelectedTasks.Count > 0 ? owner.Project.IndexOf(owner.SelectedTasks[0]) : owner.Project.Tasks.Count;
         Title = "Recurring Task Information";
         Owner = Application.Current.MainWindow;
+
+        // Defaults, or the existing pattern.
+        var pattern = editing?.Recurrence ?? new RecurrencePattern
+        {
+            Frequency = RecurrenceFrequency.Weekly,
+            DaysOfWeek = { (owner.Project.Tasks.Count > 0 ? owner.Project.Start : owner.Project.StartDate).DayOfWeek },
+            Start = DateOnly.FromDateTime(owner.Project.Tasks.Count > 0 ? owner.Project.Start : owner.Project.StartDate),
+            Occurrences = 10,
+            OccurrenceDurationMinutes = 60,
+        };
+        Build(pattern, editing?.Name ?? "Status meeting",
+            DurationText.Format(pattern.OccurrenceDurationMinutes, owner.Project.Options, pattern.OccurrenceDurationMinutes < owner.Project.Options.MinutesPerDay ? DurationUnit.Hours : DurationUnit.Days));
+    }
+
+    /// <summary>The edited pattern (pattern-only mode).</summary>
+    public RecurrencePattern? Pattern { get; private set; }
+
+    private void Build(RecurrencePattern pattern, string name, string duration)
+    {
         Style = (Style)Application.Current.Resources["DialogWindow"];
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
@@ -56,17 +95,8 @@ public sealed class RecurringTaskDialog : Window
         _byDay.GroupName = _byWeekday.GroupName = "monthly";
         _endAfter.GroupName = _endBy.GroupName = "range";
 
-        // Defaults, or the existing pattern.
-        var pattern = editing?.Recurrence ?? new RecurrencePattern
-        {
-            Frequency = RecurrenceFrequency.Weekly,
-            DaysOfWeek = { (_owner.Project.Tasks.Count > 0 ? _owner.Project.Start : _owner.Project.StartDate).DayOfWeek },
-            Start = DateOnly.FromDateTime(_owner.Project.Tasks.Count > 0 ? _owner.Project.Start : _owner.Project.StartDate),
-            Occurrences = 10,
-            OccurrenceDurationMinutes = 60,
-        };
-        _name.Text = editing?.Name ?? "Status meeting";
-        _duration.Text = DurationText.Format(pattern.OccurrenceDurationMinutes, owner.Project.Options, pattern.OccurrenceDurationMinutes < owner.Project.Options.MinutesPerDay ? DurationUnit.Hours : DurationUnit.Days);
+        _name.Text = name;
+        _duration.Text = duration;
         _interval.Text = pattern.Interval.ToString(CultureInfo.CurrentCulture);
         (pattern.Frequency switch { RecurrenceFrequency.Daily => _daily, RecurrenceFrequency.Monthly => _monthly, RecurrenceFrequency.Yearly => _yearly, _ => _weekly }).IsChecked = true;
         foreach (var day in pattern.DaysOfWeek)
@@ -93,13 +123,29 @@ public sealed class RecurringTaskDialog : Window
         var cancel = new Button { Content = "Cancel", IsCancel = true, MinWidth = 80, Margin = new Thickness(6, 0, 0, 0), Padding = new Thickness(10, 4, 10, 4) };
         ok.Click += (_, _) => Apply();
 
+        var noRepeat = new Button { Content = "Does not repeat", MinWidth = 80, Margin = new Thickness(0, 0, 6, 0), Padding = new Thickness(10, 4, 10, 4) };
+        noRepeat.Click += (_, _) =>
+        {
+            Pattern = null;
+            DialogResult = true;
+        };
+        var nameRow = Row(Label("Task name:"), _name, Label("Duration:"), _duration);
+        if (_patternOnly)
+        {
+            nameRow.Visibility = Visibility.Collapsed;
+            _skipNonWorking.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            noRepeat.Visibility = Visibility.Collapsed;
+        }
         Content = new StackPanel
         {
             Margin = new Thickness(14),
             Width = 520,
             Children =
             {
-                Row(Label("Task name:"), _name, Label("Duration:"), _duration),
+                nameRow,
                 Heading("Recurrence pattern"),
                 new StackPanel
                 {
@@ -124,7 +170,7 @@ public sealed class RecurringTaskDialog : Window
                 Row(_endAfter, _count, Label("occurrences")),
                 Row(_endBy, _end),
                 _skipNonWorking,
-                new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 14, 0, 0), Children = { ok, cancel } },
+                new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 14, 0, 0), Children = { noRepeat, ok, cancel } },
             },
         };
         UpdatePanels();
@@ -142,16 +188,19 @@ public sealed class RecurringTaskDialog : Window
 
     private void Apply()
     {
-        var options = _owner.Project.Options;
-        if (string.IsNullOrWhiteSpace(_name.Text))
+        ParsedDuration duration = default;
+        if (!_patternOnly)
         {
-            Warn("Enter a task name.");
-            return;
-        }
-        if (!DurationText.TryParse(_duration.Text, options, out var duration, DurationUnit.Hours))
-        {
-            Warn($"'{_duration.Text}' is not a valid duration.");
-            return;
+            if (string.IsNullOrWhiteSpace(_name.Text))
+            {
+                Warn("Enter a task name.");
+                return;
+            }
+            if (!DurationText.TryParse(_duration.Text, _owner!.Project.Options, out duration, DurationUnit.Hours))
+            {
+                Warn($"'{_duration.Text}' is not a valid duration.");
+                return;
+            }
         }
         if (!int.TryParse(_interval.Text, out var interval) || interval < 1)
         {
@@ -208,8 +257,15 @@ public sealed class RecurringTaskDialog : Window
             return;
         }
 
+        if (_patternOnly)
+        {
+            Pattern = pattern;
+            DialogResult = true;
+            return;
+        }
+
         var name = _name.Text.Trim();
-        bool ok = _owner.TryEdit(_editingId is null ? "Insert recurring task" : "Edit recurring task", p =>
+        bool ok = _owner!.TryEdit(_editingId is null ? "Insert recurring task" : "Edit recurring task", p =>
         {
             if (_editingId is { } id)
             {

@@ -100,6 +100,14 @@ public static class ProjectFile
                     To = e.To,
                     Times = e.WorkingTimes.Select(TimeDto.Of).ToList(),
                     RepeatYearly = e.RepeatYearly,
+                    Recurrence = e.Recurrence,
+                }).ToList(),
+                WorkWeeks = c.WorkWeeks.Select(w => new WorkWeekDto
+                {
+                    Name = w.Name,
+                    From = w.From,
+                    To = w.To,
+                    Days = Enum.GetValues<DayOfWeek>().Select(d => w.Day(d)?.Select(TimeDto.Of).ToList()).ToList(),
                 }).ToList(),
             }).ToList(),
             Resources = project.Resources.Select(r => new ResourceDto
@@ -253,7 +261,21 @@ public static class ProjectFile
                     calendar.SetWorkWeekDay((DayOfWeek)d);
             }
             foreach (var e in c.Exceptions)
-                calendar.AddException(e.Name, e.From, e.To, e.Times.Select(t => t.ToWorkingTime()).ToArray()).RepeatYearly = e.RepeatYearly;
+            {
+                var exception = calendar.AddException(e.Name, e.From, e.To, e.Times.Select(t => t.ToWorkingTime()).ToArray());
+                exception.RepeatYearly = e.RepeatYearly;
+                exception.Recurrence = e.Recurrence;
+            }
+            foreach (var w in c.WorkWeeks)
+            {
+                var week = new WorkWeek(w.Name, w.From, w.To);
+                for (int d = 0; d < Math.Min(7, w.Days.Count); d++)
+                {
+                    if (w.Days[d] is { } times)
+                        week.SetDay((DayOfWeek)d, times.Select(t => t.ToWorkingTime()).ToArray());
+                }
+                calendar.WorkWeeks.Add(week);
+            }
             calendars.Add(calendar);
         }
 
@@ -522,6 +544,17 @@ public static class ProjectFile
         /// <summary>Sunday..Saturday; null entries inherit from the base calendar.</summary>
         public List<List<TimeDto>?> Week { get; set; } = new();
         public List<ExceptionDto> Exceptions { get; set; } = new();
+        public List<WorkWeekDto> WorkWeeks { get; set; } = new();
+    }
+
+    private sealed class WorkWeekDto
+    {
+        public string Name { get; set; } = "";
+        public DateOnly From { get; set; }
+        public DateOnly To { get; set; }
+
+        /// <summary>Sunday..Saturday; null entries use the default week.</summary>
+        public List<List<TimeDto>?> Days { get; set; } = new();
     }
 
     private sealed class ExceptionDto
@@ -531,6 +564,7 @@ public static class ProjectFile
         public DateOnly To { get; set; }
         public List<TimeDto> Times { get; set; } = new();
         public bool RepeatYearly { get; set; }
+        public RecurrencePattern? Recurrence { get; set; }
     }
 
     private sealed class TimeDto

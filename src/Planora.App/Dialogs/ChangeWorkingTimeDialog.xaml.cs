@@ -37,14 +37,41 @@ public partial class ChangeWorkingTimeDialog : Window
 
     private void OnCalendarChanged(object sender, SelectionChangedEventArgs e)
     {
-        WeekGrid.CommitEdit(DataGridEditingUnit.Row, true);
-        ExceptionGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        CommitGrids();
         if (Selected is not { } model)
             return;
         WeekGrid.ItemsSource = model.Week;
         ExceptionGrid.ItemsSource = model.Exceptions;
+        WorkWeekGrid.ItemsSource = model.WorkWeeks;
         WeekGrid.Columns[1].Visibility = model.Base is null ? Visibility.Collapsed : Visibility.Visible;
         BaseInfo.Text = model.Base is null ? "Base calendar." : $"Based on: {model.Base.Name}";
+    }
+
+    private void CommitGrids()
+    {
+        foreach (var grid in new[] { WeekGrid, ExceptionGrid, WorkWeekGrid, WorkWeekDays })
+            grid.CommitEdit(DataGridEditingUnit.Row, true);
+    }
+
+    /// <summary>Exception "Details": its recurrence pattern (daily, weekly, monthly, yearly).</summary>
+    private void OnExceptionDetails(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not ExceptionRow row)
+            return;
+        ExceptionGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        if (!DateText.TryParseDay(row.Start, out var start))
+        {
+            MessageBox.Show(this, "Enter the exception's start date first.", "Planora", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var dialog = new RecurringTaskDialog(this, row.Recurrence, start, $"Details for '{row.Name}'");
+        if (dialog.ShowDialog() == true)
+        {
+            row.Recurrence = dialog.Pattern;
+            if (dialog.Pattern is not null)
+                row.RepeatYearly = false;
+            ExceptionGrid.Items.Refresh();
+        }
     }
 
     private void OnCreateCalendar(object sender, RoutedEventArgs e)
@@ -78,8 +105,7 @@ public partial class ChangeWorkingTimeDialog : Window
 
     private void OnOk(object sender, RoutedEventArgs e)
     {
-        WeekGrid.CommitEdit(DataGridEditingUnit.Row, true);
-        ExceptionGrid.CommitEdit(DataGridEditingUnit.Row, true);
+        CommitGrids();
 
         // Validate everything up front so errors name the calendar.
         try
@@ -144,7 +170,21 @@ public partial class ChangeWorkingTimeDialog : Window
                     Finish = DateText.FormatDay(e.To),
                     WorkingTimes = e.IsWorking ? WorkingTimeText.Format(e.WorkingTimes) : "",
                     RepeatYearly = e.RepeatYearly,
+                    Recurrence = e.Recurrence,
                 });
+            }
+            foreach (var w in calendar.WorkWeeks)
+            {
+                var row = new WorkWeekRow { Name = w.Name, Start = DateText.FormatDay(w.From), Finish = DateText.FormatDay(w.To) };
+                foreach (var day in row.Days)
+                {
+                    if (w.Day(day.Day) is { } times)
+                    {
+                        day.UseBase = false;
+                        day.WorkingTimes = times.Count == 0 ? "" : WorkingTimeText.Format(times);
+                    }
+                }
+                WorkWeeks.Add(row);
             }
         }
 
@@ -155,6 +195,7 @@ public partial class ChangeWorkingTimeDialog : Window
         public bool IsNew { get; init; }
         public ObservableCollection<WeekDayRow> Week { get; } = new();
         public ObservableCollection<ExceptionRow> Exceptions { get; } = new();
+        public ObservableCollection<WorkWeekRow> WorkWeeks { get; } = new();
 
         public void Validate() => Build(Base);
 
@@ -188,10 +229,34 @@ public partial class ChangeWorkingTimeDialog : Window
                     throw new FormatException($"{Name}: exception '{row.Name}' has an invalid finish date.");
                 if (to < from)
                     throw new FormatException($"{Name}: exception '{row.Name}' finishes before it starts.");
-                exceptions.Add(new CalendarException(row.Name ?? "", from, to, Parse(row.WorkingTimes, $"{Name}, {row.Name}")) { RepeatYearly = row.RepeatYearly });
+                var exception = new CalendarException(row.Name ?? "", from, to, Parse(row.WorkingTimes, $"{Name}, {row.Name}")) { RepeatYearly = row.RepeatYearly };
+                if (row.Recurrence is { } pattern)
+                {
+                    pattern.Start = from;
+                    exception.Recurrence = pattern;
+                }
+                exceptions.Add(exception);
             }
+
+            var weeks = new List<WorkWeek>();
+            foreach (var row in WorkWeeks)
+            {
+                if (string.IsNullOrWhiteSpace(row.Name) && string.IsNullOrWhiteSpace(row.Start))
+                    continue;
+                if (!DateText.TryParseDay(row.Start, out var from) || !DateText.TryParseDay(row.Finish, out var to))
+                    throw new FormatException($"{Name}: work week '{row.Name}' needs valid start and finish dates.");
+                if (to < from)
+                    throw new FormatException($"{Name}: work week '{row.Name}' finishes before it starts.");
+                var week = new WorkWeek(row.Name ?? "", from, to);
+                foreach (var day in row.Days.Where(d => !d.UseBase))
+                    week.SetDay(day.Day, Parse(day.WorkingTimes, $"{Name}, {row.Name}, {day.DayName}").ToArray());
+                weeks.Add(week);
+            }
+
             calendar.Exceptions.Clear();
             calendar.Exceptions.AddRange(exceptions);
+            calendar.WorkWeeks.Clear();
+            calendar.WorkWeeks.AddRange(weeks);
         }
 
         private static IReadOnlyList<WorkingTime> Parse(string? text, string where)
@@ -222,5 +287,44 @@ public partial class ChangeWorkingTimeDialog : Window
         public string? Finish { get; set; }
         public string? WorkingTimes { get; set; }
         public bool RepeatYearly { get; set; }
+        public RecurrencePattern? Recurrence { get; set; }
+
+        public string RepeatText => Recurrence is { } p ? Describe(p) : RepeatYearly ? "Every year" : "";
+
+        private static string Describe(RecurrencePattern p)
+        {
+            var culture = CultureInfo.CurrentCulture.DateTimeFormat;
+            string Every(string unit) => p.Interval == 1 ? $"Every {unit}" : $"Every {p.Interval} {unit}s";
+            string day = p.WeekOfMonth is { } w
+                ? $"{(w >= 5 ? "last" : new[] { "first", "second", "third", "fourth" }[w - 1])} {culture.GetDayName(p.DayOfWeek)}"
+                : $"day {p.DayOfMonth ?? p.Start.Day}";
+            string what = p.Frequency switch
+            {
+                RecurrenceFrequency.Daily => Every("day"),
+                RecurrenceFrequency.Weekly => $"{Every("week")} on {string.Join(", ", p.DaysOfWeek.Select(d => culture.GetAbbreviatedDayName(d)))}",
+                RecurrenceFrequency.Monthly => $"{Every("month")}, {day}",
+                _ => $"{Every("year")}, {day} of {culture.GetMonthName(p.Month)}",
+            };
+            return p.Occurrences is { } n ? $"{what}, {n} times" : p.End is { } end ? $"{what}, until {DateText.FormatDay(end)}" : what;
+        }
+    }
+
+    /// <summary>A date-ranged work week with its seven days (UseBase = use the default week).</summary>
+    public sealed class WorkWeekRow
+    {
+        public WorkWeekRow()
+        {
+            var culture = CultureInfo.CurrentCulture.DateTimeFormat;
+            for (int i = 0; i < 7; i++)
+            {
+                var day = (DayOfWeek)(((int)culture.FirstDayOfWeek + i) % 7);
+                Days.Add(new WeekDayRow { Day = day, DayName = culture.GetDayName(day), UseBase = true });
+            }
+        }
+
+        public string? Name { get; set; }
+        public string? Start { get; set; }
+        public string? Finish { get; set; }
+        public ObservableCollection<WeekDayRow> Days { get; } = new();
     }
 }

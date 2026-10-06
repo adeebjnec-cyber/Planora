@@ -28,8 +28,47 @@ public sealed class CalendarException
     /// <summary>Repeats on the same dates every year from <see cref="From"/>'s year onward (e.g. public holidays).</summary>
     public bool RepeatYearly { get; set; }
 
+    /// <summary>
+    /// Repeats the exception on a pattern (daily, weekly, monthly, yearly) starting at <see cref="From"/>,
+    /// as Microsoft Project's exception "Recurrence pattern". Each occurrence lasts as long as From..To.
+    /// </summary>
+    public Model.RecurrencePattern? Recurrence
+    {
+        get => _recurrence;
+        set
+        {
+            _recurrence = value;
+            _occurrences = null;
+        }
+    }
+
+    private Model.RecurrencePattern? _recurrence;
+    private HashSet<DateOnly>? _occurrences;
+
+    /// <summary>Start dates of all occurrences (the exception's own range when it does not repeat).</summary>
+    public IEnumerable<DateOnly> OccurrenceStarts()
+    {
+        if (_recurrence is null)
+            return new[] { From };
+        _recurrence.Start = From;
+        return _occurrences ??= _recurrence.Dates().ToHashSet();
+    }
+
     public bool Covers(DateOnly date)
     {
+        if (_recurrence is not null)
+        {
+            if (date < From)
+                return false;
+            int span = To.DayNumber - From.DayNumber;
+            var starts = (HashSet<DateOnly>)OccurrenceStarts();
+            for (int back = 0; back <= span; back++)
+            {
+                if (starts.Contains(date.AddDays(-back)))
+                    return true;
+            }
+            return false;
+        }
         if (!RepeatYearly)
             return date >= From && date <= To;
         if (date < From)
