@@ -164,6 +164,17 @@ public sealed class Project
         RebuildHierarchy();
     }
 
+    /// <summary>Removes a single task, moving its subtasks up one outline level (used when copying part of an outline).</summary>
+    internal void RemoveTaskKeepChildren(ProjectTask task)
+    {
+        foreach (var descendant in Subtree(task).Skip(1).ToList())
+            descendant.OutlineLevel--;
+        _tasks.Remove(task);
+        foreach (var t in _tasks)
+            t.Predecessors.RemoveAll(l => l.PredecessorId == task.Id);
+        RebuildHierarchy();
+    }
+
     /// <summary>Removes a task, its subtasks, and every link pointing at them.</summary>
     public void RemoveTask(ProjectTask task)
     {
