@@ -443,7 +443,12 @@ public sealed partial class MainViewModel : ObservableObject
             return;
         // Open accepts every importable format; non-Planora files open as new, unsaved projects.
         var dialog = new OpenFileDialog { Filter = ImportFilter, DefaultExt = ProjectFile.Extension };
-        if (dialog.ShowDialog() == true)
+        if (dialog.ShowDialog() != true)
+            return;
+        // Spreadsheets go through the Import Wizard so their columns can be mapped to fields.
+        if (IsSpreadsheet(dialog.FileName))
+            ImportSpreadsheet(dialog.FileName);
+        else
             OpenFile(dialog.FileName);
     }
 

@@ -266,6 +266,56 @@ public static class SpreadsheetFile
         return index - 1;
     }
 
+    /// <summary>The fields a spreadsheet column can be imported into (the import map's targets), besides custom fields.</summary>
+    public static readonly IReadOnlyList<string> ImportTargets = new[]
+    {
+        "Task Name", "Duration", "Start", "Finish", "Predecessors", "Outline Level", "Resource Names",
+        "% Complete", "Notes", "Milestone", "Deadline", "Priority", "Fixed Cost",
+    };
+
+    private static readonly Dictionary<string, string[]> Synonyms = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Task Name"] = new[] { "Task Name", "Name", "Task", "Activity", "Activity Name", "Description", "Summary", "Title" },
+        ["Duration"] = new[] { "Duration", "Days", "Length", "Original Duration" },
+        ["Start"] = new[] { "Start", "Start Date", "Begin", "Planned Start" },
+        ["Finish"] = new[] { "Finish", "Finish Date", "End", "End Date", "Due", "Due Date", "Planned Finish" },
+        ["Predecessors"] = new[] { "Predecessors", "Depends On", "Dependencies", "Predecessor" },
+        ["Outline Level"] = new[] { "Outline Level", "Level", "Indent" },
+        ["Resource Names"] = new[] { "Resource Names", "Resources", "Assigned To", "Owner", "Assignee", "Responsible" },
+        ["% Complete"] = new[] { "% Complete", "Percent Complete", "Progress", "% Done", "Complete" },
+        ["Notes"] = new[] { "Notes", "Note", "Comments", "Remarks" },
+        ["Milestone"] = new[] { "Milestone" },
+        ["Deadline"] = new[] { "Deadline" },
+        ["Priority"] = new[] { "Priority" },
+        ["Fixed Cost"] = new[] { "Fixed Cost", "Cost", "Budget" },
+    };
+
+    /// <summary>The import target a column header most likely means, or null to skip it.</summary>
+    public static string? DefaultTarget(string header)
+    {
+        var h = header.Trim();
+        if (CustomField.TypeOfKey(h) is not null)
+            return h;
+        foreach (var (target, names) in Synonyms)
+        {
+            if (names.Any(n => string.Equals(n, h, StringComparison.OrdinalIgnoreCase)))
+                return target;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Applies an import map: the result's header row names each column's target (blank for skipped
+    /// columns), ready for <see cref="Import"/>. Without a header row, every row is data.
+    /// </summary>
+    public static List<string[]> ApplyMap(IReadOnlyList<string[]> rows, IReadOnlyList<string?> targets, bool firstRowIsHeader)
+    {
+        var result = new List<string[]> { targets.Select(t => t ?? "").ToArray() };
+        foreach (var row in rows.Skip(firstRowIsHeader ? 1 : 0))
+            result.Add(row);
+        return result;
+    }
+
     /// <summary>
     /// Builds a project from rows whose first row names the columns. Recognised columns: Task Name/Name,
     /// Duration, Start, Finish, Predecessors (row numbers within the sheet), Outline Level, Resource Names,

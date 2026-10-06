@@ -97,10 +97,48 @@ public sealed partial class MainViewModel
         try
         {
             var path = dialog.FileName;
+            if (IsSpreadsheet(path))
+            {
+                ImportSpreadsheet(path);
+                return;
+            }
             var project = LoadAnyProject(path);
 
             Document = new ProjectDocument(project);
             Status = $"Imported {Path.GetFileName(path)}";
+        }
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or InvalidOperationException)
+        {
+            ShowError($"Could not import the file: {ex.Message}");
+        }
+    }
+
+    internal static bool IsSpreadsheet(string path) =>
+        Path.GetExtension(path).ToLowerInvariant() is ".xlsx" or ".csv";
+
+    /// <summary>Opens an Excel or CSV file through the Import Wizard (column-to-field mapping).</summary>
+    internal void ImportSpreadsheet(string path)
+    {
+        try
+        {
+            var rows = Path.GetExtension(path).Equals(".csv", StringComparison.OrdinalIgnoreCase) ? SpreadsheetFile.LoadCsv(path) : SpreadsheetFile.LoadXlsx(path);
+            if (rows.Count == 0)
+            {
+                ShowError("The file is empty.");
+                return;
+            }
+            var wizard = new ImportMapDialog(rows, Path.GetFileName(path));
+            if (wizard.ShowDialog() != true)
+                return;
+            var project = SpreadsheetFile.Import(wizard.MappedRows, Path.GetFileNameWithoutExtension(path));
+            foreach (var (key, alias) in wizard.Aliases)
+            {
+                project.CustomFields.RemoveAll(c => c.Key == key);
+                project.CustomFields.Add(new Engine.Fields.CustomField(key, alias));
+            }
+            Document = new ProjectDocument(project);
+            DefinitionsChanged();
+            Status = $"Imported {Path.GetFileName(path)}: {project.Tasks.Count} tasks";
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or InvalidOperationException)
         {

@@ -117,4 +117,30 @@ public class SpreadsheetFileTests
             File.Delete(path);
         }
     }
+
+    [Fact]
+    public void ImportMapRenamesColumnsToFields()
+    {
+        Assert.Equal("Task Name", SpreadsheetFile.DefaultTarget("Activity"));
+        Assert.Equal("Resource Names", SpreadsheetFile.DefaultTarget("assigned to"));
+        Assert.Equal("Text4", SpreadsheetFile.DefaultTarget("Text4"));
+        Assert.Null(SpreadsheetFile.DefaultTarget("Region"));
+
+        var rows = new List<string[]>
+        {
+            new[] { "Activity", "Days", "Depends On", "Region" },
+            new[] { "Survey", "3", "", "North" },
+            new[] { "Plans", "5", "1", "South" },
+        };
+        var mapped = SpreadsheetFile.ApplyMap(rows, new[] { "Task Name", "Duration", "Predecessors", "Text2" }, firstRowIsHeader: true);
+        var p = SpreadsheetFile.Import(mapped, "Imported");
+        Assert.Equal(new[] { "Survey", "Plans" }, p.Tasks.Select(t => t.Name));
+        Assert.Equal(5 * 480, p.Tasks[1].DurationMinutes);
+        Assert.Single(p.Tasks[1].Predecessors);
+        Assert.Equal("South", p.Tasks[1].CustomValues["Text2"]);
+
+        // Without a header row every row is data.
+        var plain = SpreadsheetFile.ApplyMap(rows.Skip(1).ToList(), new[] { "Task Name", null, null, null }, firstRowIsHeader: false);
+        Assert.Equal(2, SpreadsheetFile.Import(plain, "Plain").Tasks.Count);
+    }
 }

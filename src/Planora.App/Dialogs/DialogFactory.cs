@@ -41,6 +41,13 @@ internal static class DialogFactory
             "timescale" => new TimescaleDialog(vm),
             "gridlines" => new GridlinesDialog(vm),
             "reportdesigner" => new ReportDesignerDialog(vm, null),
+            "importmap" => new ImportMapDialog(new List<string[]>
+            {
+                new[] { "Activity", "Days", "Assigned To", "Department", "Depends On", "Region" },
+                new[] { "Survey site", "3", "Asha", "Facilities", "", "North" },
+                new[] { "Draw plans", "5", "Ravi", "Design", "1", "North" },
+                new[] { "Approve plans", "1", "Asha", "Facilities", "2", "South" },
+            }, "plan.xlsx"),
             _ => throw new ArgumentException($"Unknown dialog '{name}'."),
         };
     }
