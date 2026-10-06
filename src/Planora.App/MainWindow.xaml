@@ -256,6 +256,7 @@
                         <RibbonMenuItem Header="Groups..." Command="{Binding EditGroupCommand}" />
                         <RibbonMenuItem Header="Custom Fields..." Command="{Binding CustomFieldsCommand}" />
                         <RibbonMenuItem Header="Sort by ID" Command="{Binding SortByIdCommand}" />
+                        <RibbonMenuItem Header="Organizer..." Command="{Binding OrganizerCommand}" />
                     </RibbonMenuButton>
                 </RibbonGroup>
                 <RibbonGroup Header="Zoom">

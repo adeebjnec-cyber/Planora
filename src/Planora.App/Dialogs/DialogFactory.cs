@@ -43,6 +43,7 @@ internal static class DialogFactory
             "reportdesigner" => new ReportDesignerDialog(vm, null),
             "macros" => new MacrosDialog(vm),
             "pagesetup" => new PageSetupDialog(vm),
+            "organizer" => new OrganizerDialog(vm),
             "importmap" => new ImportMapDialog(new List<string[]>
             {
                 new[] { "Activity", "Days", "Assigned To", "Department", "Depends On", "Region" },

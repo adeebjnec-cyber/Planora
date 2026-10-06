@@ -13,6 +13,7 @@ public sealed partial class MainViewModel
     public ICommand GridlinesCommand { get; private set; } = null!;
     public ICommand MacrosCommand { get; private set; } = null!;
     public ICommand PageSetupCommand { get; private set; } = null!;
+    public ICommand OrganizerCommand { get; private set; } = null!;
 
     private Engine.Scheduling.TaskPathKind _taskPath;
 
@@ -47,5 +48,6 @@ public sealed partial class MainViewModel
         GridlinesCommand = new RelayCommand(() => ShowDialog(new GridlinesDialog(this)));
         MacrosCommand = new RelayCommand(() => ShowDialog(new MacrosDialog(this)));
         PageSetupCommand = new RelayCommand(() => ShowDialog(new PageSetupDialog(this)));
+        OrganizerCommand = new RelayCommand(() => ShowDialog(new OrganizerDialog(this)));
     }
 }
