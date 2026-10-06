@@ -77,6 +77,23 @@
                 <Separator />
                 <MenuItem Header="_Critical Path" IsCheckable="True" IsChecked="{Binding ShowCriticalPath}" />
                 <MenuItem Header="_Baseline" IsCheckable="True" IsChecked="{Binding ShowBaseline}" />
+                <Separator />
+                <MenuItem Header="_Sort..." Command="{Binding SortCommand}" />
+                <MenuItem Header="Sort by _ID" Command="{Binding SortByIdCommand}" />
+                <MenuItem Header="Edit _Tables..." Command="{Binding EditTableCommand}" />
+                <MenuItem Header="Edit _Filters..." Command="{Binding EditFilterCommand}" />
+                <MenuItem Header="Edit _Groups..." Command="{Binding EditGroupCommand}" />
+                <MenuItem Header="Custom Fiel_ds..." Command="{Binding CustomFieldsCommand}" />
+                <Separator />
+                <MenuItem Header="Sa_ve View..." Command="{Binding SaveViewCommand}" />
+                <MenuItem Header="Saved _Views" ItemsSource="{Binding SavedViewNames}">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="MenuItem">
+                            <Setter Property="Command" Value="{Binding DataContext.ApplySavedViewCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+                            <Setter Property="CommandParameter" Value="{Binding}" />
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
             </MenuItem>
         </Menu>
 
@@ -142,7 +159,26 @@
                 <StackPanel VerticalAlignment="Center" Margin="4,0">
                     <CheckBox Content="Critical path" IsChecked="{Binding ShowCriticalPath}" Margin="0,2" />
                     <CheckBox Content="Baseline" IsChecked="{Binding ShowBaseline}" Margin="0,2" />
-                </StackPanel>
+                </StackPanel>                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Grid VerticalAlignment="Center" Margin="4,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="150" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Table:" VerticalAlignment="Center" Margin="0,0,4,0" />
+                    <ComboBox Grid.Column="1" ItemsSource="{Binding TableNames}" SelectedItem="{Binding CurrentTableName}" Margin="0,1" />
+                    <TextBlock Grid.Column="2" Text="Filter:" VerticalAlignment="Center" Margin="10,0,4,0" />
+                    <ComboBox Grid.Column="3" ItemsSource="{Binding FilterNames}" SelectedItem="{Binding CurrentFilterName}" Margin="0,1" />
+                    <TextBlock Grid.Row="1" Text="Group:" VerticalAlignment="Center" Margin="0,0,4,0" />
+                    <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding GroupNames}" SelectedItem="{Binding CurrentGroupName}" Margin="0,1" />
+                    <Button Grid.Row="1" Grid.Column="3" Content="Sort..." Command="{Binding SortCommand}" HorizontalAlignment="Left" Padding="10,1" Margin="0,1" />
+                </Grid>
             </WrapPanel>
         </Border>
 

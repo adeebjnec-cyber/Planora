@@ -149,6 +149,8 @@ public sealed class GanttChart : TimelineElement
         {
             if (rows[i].Task is { } task)
                 DrawTask(dc, task, i);
+            else if (rows[i].Group is { } group && group.AllTasks.Any())
+                DrawGroupBar(dc, group, i);
         }
 
         DrawLinks(dc, rowIndex, firstRow, lastRow);
@@ -271,6 +273,18 @@ public sealed class GanttChart : TimelineElement
             var text = Text(resources, 11);
             dc.DrawText(text, new Point(barEnd + 5, center - text.Height / 2));
         }
+    }
+
+    /// <summary>Group header rows get a roll-up bar spanning their tasks, like Microsoft Project's group summaries.</summary>
+    private void DrawGroupBar(DrawingContext dc, Engine.Views.TaskGroup group, int row)
+    {
+        double top = RowTop(row);
+        dc.DrawRectangle(Drawing.HeaderBackground, null, new Rect(0, top, ActualWidth, RowHeight));
+        double x1 = XOf(group.Start), x2 = XOf(group.Finish);
+        double barTop = top + RowHeight * 0.3;
+        dc.DrawRectangle(Drawing.MutedText, null, new Rect(x1, barTop, Math.Max(1, x2 - x1), 5));
+        DrawSummaryCap(dc, x1, barTop + 5);
+        DrawSummaryCap(dc, x2, barTop + 5);
     }
 
     private static void DrawSummaryCap(DrawingContext dc, double x, double y)

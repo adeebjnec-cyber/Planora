@@ -1,6 +1,7 @@
 using System.Globalization;
 using Planora.App.Infrastructure;
 using Planora.Engine.Model;
+using Planora.Engine.Views;
 
 namespace Planora.App.ViewModels;
 
@@ -19,10 +20,24 @@ public sealed class TaskRowViewModel : ObservableObject
         Task = task;
     }
 
-    /// <summary>The task shown in this row; null for the blank "new task" row.</summary>
+    /// <summary>A group header row (when the sheet is grouped).</summary>
+    public TaskRowViewModel(MainViewModel owner, TaskGroup group)
+    {
+        _owner = owner;
+        Group = group;
+    }
+
+    /// <summary>The task shown in this row; null for group headers and the blank "new task" row.</summary>
     public ProjectTask? Task { get; private set; }
 
-    public bool IsPlaceholder => Task is null;
+    /// <summary>The group shown in this row, for group header rows.</summary>
+    public TaskGroup? Group { get; }
+
+    public bool IsPlaceholder => Task is null && Group is null;
+    public bool IsGroupHeader => Group is not null;
+
+    /// <summary>Indent level inside a grouped sheet: tasks sit one level below their innermost group.</summary>
+    internal int GroupDepth { get; set; } = -1;
 
     private Project Project => _owner.Document.Project;
     private ScheduleOptions Options => Project.Options;
@@ -39,7 +54,49 @@ public sealed class TaskRowViewModel : ObservableObject
 
     public string RowNumber => Task is null ? "" : (Project.IndexOf(Task) + 1).ToString(CultureInfo.CurrentCulture);
     public int OutlineLevel => Task?.OutlineLevel ?? 1;
-    public double IndentWidth => (OutlineLevel - 1) * 16;
+
+    public double IndentWidth => Group is not null ? Group.Level * 16
+        : GroupDepth >= 0 ? (GroupDepth + 1) * 16
+        : _owner.ShowsOutline ? (OutlineLevel - 1) * 16 : 0;
+
+    /// <summary>
+    /// Any field's display text, by field key (used by table columns). Custom fields can be set through
+    /// this indexer; dates use the sheet's short date format.
+    /// </summary>
+    public string this[string key]
+    {
+        get
+        {
+            if (Group is { } g)
+            {
+                return key switch
+                {
+                    "Name" => g.Label,
+                    "Start" => DateText.Format(g.Start),
+                    "Finish" => DateText.Format(g.Finish),
+                    "Duration" => DurationText.Format(Math.Max(0, Project.Calendar.WorkingMinutesBetween(g.Start, g.Finish)), Options),
+                    "Work" => DurationText.Format(g.WorkMinutes, Options, DurationUnit.Hours),
+                    "Cost" => g.Cost.ToString("C", CultureInfo.CurrentCulture),
+                    "PercentComplete" => $"{g.PercentComplete:0.#}%",
+                    _ => "",
+                };
+            }
+            if (Task is null || Engine.Fields.TaskFields.Find(Project, key) is not { } field)
+                return "";
+            return field.Get(Project, Task) is DateTime date ? DateText.Format(date) : field.Format(Project, Task);
+        }
+        set
+        {
+            if (Task is null || Engine.Fields.CustomField.TypeOfKey(key) is null || value == this[key])
+                return;
+            int id = Task.Id;
+            _owner.TryEdit("Change " + Engine.Fields.TaskFields.Get(Project, key).Name, p =>
+            {
+                if (!Engine.Fields.TaskFields.TrySetCustom(p, p.GetRequiredTask(id), key, value))
+                    throw new FormatException($"'{value}' is not a valid value for {Engine.Fields.TaskFields.Get(p, key).Name}.");
+            });
+        }
+    }
     public bool IsSummary => Task?.IsSummary ?? false;
     public bool IsCritical => Task?.IsCritical ?? false;
     public bool IsManual => Task?.Mode == TaskMode.ManuallyScheduled;
@@ -49,8 +106,8 @@ public sealed class TaskRowViewModel : ObservableObject
     public bool HasConstraint => Task is { ConstraintType: not (ConstraintType.AsSoonAsPossible or ConstraintType.AsLateAsPossible) };
     public bool IsRecurring => Task?.IsRecurring ?? false;
     public string TotalSlack => Task is null ? "" : DurationText.Format(Task.TotalFloatMinutes, Options);
-    public string Work => Task is null ? "" : DurationText.Format(Task.WorkMinutes, Options, DurationUnit.Hours);
-    public string Cost => Task is null ? "" : Task.Cost.ToString("C", CultureInfo.CurrentCulture);
+    public string Work => Group is not null ? this["Work"] : Task is null ? "" : DurationText.Format(Task.WorkMinutes, Options, DurationUnit.Hours);
+    public string Cost => Group is not null ? this["Cost"] : Task is null ? "" : Task.Cost.ToString("C", CultureInfo.CurrentCulture);
 
     /// <summary>"Indicators" column: short markers for notes, constraints, deadlines, recurrence.</summary>
     public string Indicators
@@ -73,9 +130,11 @@ public sealed class TaskRowViewModel : ObservableObject
 
     public string Name
     {
-        get => Task?.Name ?? "";
+        get => Group?.Label ?? Task?.Name ?? "";
         set
         {
+            if (Group is not null)
+                return;
             if (Task is null)
             {
                 if (!string.IsNullOrWhiteSpace(value))
@@ -108,7 +167,7 @@ public sealed class TaskRowViewModel : ObservableObject
 
     public string Duration
     {
-        get => Task is null ? "" : DurationText.Format(Task.DurationMinutes, Options, isElapsed: Task.IsElapsedDuration, isEstimated: Task.IsEstimated);
+        get => Group is not null ? this["Duration"] : Task is null ? "" : DurationText.Format(Task.DurationMinutes, Options, isElapsed: Task.IsElapsedDuration, isEstimated: Task.IsEstimated);
         set
         {
             if (Task is null || value == Duration)
@@ -138,7 +197,7 @@ public sealed class TaskRowViewModel : ObservableObject
 
     public string Start
     {
-        get => Task is null ? "" : FormatDate(Task.Start);
+        get => Group is not null ? this["Start"] : Task is null ? "" : FormatDate(Task.Start);
         set
         {
             if (Task is null || value == Start || Task.IsSummary)
@@ -173,7 +232,7 @@ public sealed class TaskRowViewModel : ObservableObject
 
     public string Finish
     {
-        get => Task is null ? "" : FormatDate(Task.Finish);
+        get => Group is not null ? this["Finish"] : Task is null ? "" : FormatDate(Task.Finish);
         set
         {
             if (Task is null || value == Finish || Task.IsSummary)
@@ -234,7 +293,7 @@ public sealed class TaskRowViewModel : ObservableObject
 
     public string PercentComplete
     {
-        get => Task is null ? "" : $"{Task.PercentComplete:0.#}%";
+        get => Group is not null ? this["PercentComplete"] : Task is null ? "" : $"{Task.PercentComplete:0.#}%";
         set
         {
             if (Task is null || value == PercentComplete)

@@ -32,13 +32,16 @@ public partial class GanttView : UserControl
         if (_viewModel is not null)
         {
             _viewModel.ScrollToTaskRequested -= OnScrollToTask;
+            _viewModel.TableChanged -= OnTableChanged;
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         }
         _viewModel = viewModel;
         Gantt.ViewModel = viewModel;
+        RebuildColumns();
         if (viewModel is not null)
         {
             viewModel.ScrollToTaskRequested += OnScrollToTask;
+            viewModel.TableChanged += OnTableChanged;
             viewModel.PropertyChanged += OnViewModelPropertyChanged;
         }
     }
@@ -134,11 +137,65 @@ public partial class GanttView : UserControl
         }
     }
 
-    /// <summary>The blank row only accepts a task name.</summary>
+    /// <summary>The blank row only accepts a task name; group header rows are read-only.</summary>
     private void OnSheetBeginningEdit(object? sender, DataGridBeginningEditEventArgs e)
     {
-        if (e.Row.Item is TaskRowViewModel { IsPlaceholder: true } && e.Column.Header as string != "Task Name")
+        if (e.Row.Item is TaskRowViewModel { IsGroupHeader: true } ||
+            e.Row.Item is TaskRowViewModel { IsPlaceholder: true } && e.Column != NameColumn)
             e.Cancel = true;
+    }
+
+    // ---- Table columns ----
+
+    /// <summary>Fields edited through the row's dedicated properties (with Microsoft Project's editing rules).</summary>
+    private static readonly Dictionary<string, string> EditableProperties = new()
+    {
+        ["Duration"] = nameof(TaskRowViewModel.Duration),
+        ["Start"] = nameof(TaskRowViewModel.Start),
+        ["Finish"] = nameof(TaskRowViewModel.Finish),
+        ["Predecessors"] = nameof(TaskRowViewModel.Predecessors),
+        ["ResourceNames"] = nameof(TaskRowViewModel.ResourceNames),
+        ["PercentComplete"] = nameof(TaskRowViewModel.PercentComplete),
+    };
+
+    private void OnTableChanged(object? sender, EventArgs e) => RebuildColumns();
+
+    /// <summary>Replaces the table columns after the fixed ones (row number, indicators, mode) with the current table's.</summary>
+    private void RebuildColumns()
+    {
+        if (_viewModel is null)
+            return;
+        TaskSheet.CommitEdit(DataGridEditingUnit.Row, true);
+        while (TaskSheet.Columns.Count > 3)
+            TaskSheet.Columns.RemoveAt(3);
+
+        var project = _viewModel.Project;
+        var editorStyle = (Style)FindResource("CellEditor");
+        foreach (var column in _viewModel.CurrentTable.Columns)
+        {
+            var field = Engine.Fields.TaskFields.Find(project, column.FieldKey);
+            if (field is null)
+                continue;
+            var header = column.Title ?? field.Name;
+            if (field.Key == "Name")
+            {
+                NameColumn.Header = header;
+                NameColumn.Width = column.Width;
+                TaskSheet.Columns.Add(NameColumn);
+                continue;
+            }
+
+            bool editable = EditableProperties.TryGetValue(field.Key, out var property) || field.IsCustom;
+            var binding = new System.Windows.Data.Binding(property ?? $"[{field.Key}]");
+            TaskSheet.Columns.Add(new DataGridTextColumn
+            {
+                Header = header,
+                Binding = binding,
+                Width = column.Width,
+                IsReadOnly = !editable,
+                EditingElementStyle = editorStyle,
+            });
+        }
     }
 
     private void OnEditorLoaded(object sender, RoutedEventArgs e)

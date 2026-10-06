@@ -772,6 +772,11 @@ public static class ProjectScheduler
                 ? children.Sum(c => c.DurationMinutes * c.PercentComplete) / totalDuration
                 : children.Average(c => c.PercentComplete);
 
+            // Actual dates roll up: started when any subtask started, finished when all have finished.
+            var started = children.Where(c => c.ActualStart is not null).ToList();
+            summary.ActualStart = started.Count > 0 ? started.Min(c => c.ActualStart) : null;
+            summary.ActualFinish = children.All(c => c.ActualFinish is not null) ? children.Max(c => c.ActualFinish) : null;
+
             summary.Segments = new[] { new TaskSegment(summary.Start, summary.Finish) };
             summary.CompleteThrough = summary.PercentComplete switch
             {

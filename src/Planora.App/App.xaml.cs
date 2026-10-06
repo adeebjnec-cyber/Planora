@@ -33,6 +33,12 @@ public partial class App : Application
                 window.ViewModel.LoadSample();
             if (options.TryGetValue("--view", out var view))
                 window.ViewModel.CurrentView = Enum.Parse<ViewModels.ViewKind>(view, ignoreCase: true);
+            if (options.TryGetValue("--table", out var table))
+                window.ViewModel.CurrentTableName = table;
+            if (options.TryGetValue("--filter", out var filter))
+                window.ViewModel.CurrentFilterName = filter;
+            if (options.TryGetValue("--group", out var group))
+                window.ViewModel.CurrentGroupName = group;
             window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
             {
                 if (options.TryGetValue("--dialog", out var dialogName))

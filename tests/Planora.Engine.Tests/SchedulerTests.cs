@@ -270,6 +270,30 @@ public class SchedulerTests
     }
 
     [Fact]
+    public void SummaryActualDatesRollUp()
+    {
+        var p = NewProject();
+        var phase = p.AddTask("Phase");
+        var a = p.AddTask("A", Day);
+        var b = p.AddTask("B", Day);
+        p.Indent(a);
+        p.Indent(b);
+        p.Link(a, b);
+        a.ActualStart = D(5, 8);
+        a.ActualFinish = D(5, 17);
+        a.PercentComplete = 100;
+
+        ProjectScheduler.Schedule(p);
+        Assert.Equal(D(5, 8), phase.ActualStart);
+        Assert.Null(phase.ActualFinish);
+
+        b.ActualStart = D(6, 8);
+        b.ActualFinish = D(6, 17);
+        ProjectScheduler.Schedule(p);
+        Assert.Equal(D(6, 17), phase.ActualFinish);
+    }
+
+    [Fact]
     public void LinkIntoSummaryDelaysAllItsChildren()
     {
         var p = NewProject();

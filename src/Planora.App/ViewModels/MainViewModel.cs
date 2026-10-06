@@ -53,6 +53,7 @@ public sealed partial class MainViewModel : ObservableObject
         ScrollToTaskCommand = new RelayCommand(() => ScrollToTaskRequested?.Invoke(this, EventArgs.Empty), () => SelectedTasks.Count > 0);
         InitializeViewCommands();
         InitializeDialogCommands();
+        InitializeOrganizeCommands();
 
         _autosaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(2) };
         _autosaveTimer.Tick += (_, _) => Autosave();
@@ -75,6 +76,8 @@ public sealed partial class MainViewModel : ObservableObject
             _document.Changed += OnDocumentChanged;
             OnPropertyChanged();
             OnPropertyChanged(nameof(WindowTitle));
+            NotifyDefinitionLists();
+            TableChanged?.Invoke(this, EventArgs.Empty);
             SyncRows();
             UpdateStatus();
             Refreshed?.Invoke(this, EventArgs.Empty);
@@ -458,6 +461,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OnDocumentChanged(object? sender, EventArgs e)
     {
+        NotifyDefinitionLists();
         SyncRows();
         UpdateStatus();
         OnPropertyChanged(nameof(WindowTitle));
@@ -470,17 +474,22 @@ public sealed partial class MainViewModel : ObservableObject
     /// </summary>
     private void SyncRows()
     {
-        var tasks = Project.Tasks;
         var existing = Rows.Where(r => r.Task is not null).ToDictionary(r => r.Task!.Id);
-        var placeholder = Rows.FirstOrDefault(r => r.IsPlaceholder) ?? new TaskRowViewModel(this, null);
+        var placeholder = Rows.FirstOrDefault(r => r.IsPlaceholder) ?? new TaskRowViewModel(this, (ProjectTask?)null);
 
-        var wanted = new List<TaskRowViewModel>(tasks.Count + 1);
-        foreach (var task in tasks)
+        // Rows follow the current filter, sort and group; group headers are rebuilt each time.
+        var wanted = new List<TaskRowViewModel>(Project.Tasks.Count + 1);
+        foreach (var (task, group, depth) in DisplayItems())
         {
-            if (existing.TryGetValue(task.Id, out var row))
-                row.Rebind(task);
-            else
+            if (group is not null)
+            {
+                wanted.Add(new TaskRowViewModel(this, group));
+                continue;
+            }
+            if (!existing.TryGetValue(task!.Id, out var row))
                 row = new TaskRowViewModel(this, task);
+            row.GroupDepth = depth;
+            row.Rebind(task);
             wanted.Add(row);
         }
         placeholder.Refresh();

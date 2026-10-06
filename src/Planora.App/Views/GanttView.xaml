@@ -26,6 +26,10 @@
                         <DataTrigger Binding="{Binding IsInactive}" Value="True">
                             <Setter Property="Foreground" Value="#999999" />
                         </DataTrigger>
+                        <DataTrigger Binding="{Binding IsGroupHeader}" Value="True">
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="Background" Value="#E8EEF6" />
+                        </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
@@ -49,6 +53,9 @@
                                             <DataTrigger Binding="{Binding IsPlaceholder}" Value="True">
                                                 <Setter Property="Text" Value="" />
                                             </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsGroupHeader}" Value="True">
+                                                <Setter Property="Text" Value="" />
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </TextBlock.Style>
@@ -56,7 +63,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTemplateColumn Header="Task Name" Width="220">
+                <DataGridTemplateColumn x:Name="NameColumn" Header="Task Name" Width="220">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate DataType="vm:TaskRowViewModel">
                             <TextBlock Text="{Binding Name}" Margin="{Binding IndentWidth, Converter={StaticResource IndentConverter}}"
@@ -70,14 +77,6 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="80" EditingElementStyle="{StaticResource CellEditor}" />
-                <DataGridTextColumn Header="Start" Binding="{Binding Start}" Width="100" EditingElementStyle="{StaticResource CellEditor}" />
-                <DataGridTextColumn Header="Finish" Binding="{Binding Finish}" Width="100" EditingElementStyle="{StaticResource CellEditor}" />
-                <DataGridTextColumn Header="Predecessors" Binding="{Binding Predecessors}" Width="90" EditingElementStyle="{StaticResource CellEditor}" />
-                <DataGridTextColumn Header="Resource Names" Binding="{Binding ResourceNames}" Width="130" EditingElementStyle="{StaticResource CellEditor}" />
-                <DataGridTextColumn Header="% Complete" Binding="{Binding PercentComplete}" Width="80" EditingElementStyle="{StaticResource CellEditor}" />
-                <DataGridTextColumn Header="Total Slack" Binding="{Binding TotalSlack}" Width="80" IsReadOnly="True" />
-                <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="90" IsReadOnly="True" />
             </DataGrid.Columns>
         </DataGrid>
 

@@ -22,6 +22,11 @@ internal static class DialogFactory
             "calendar" => new ChangeWorkingTimeDialog(vm),
             "baseline" => new BaselineDialog(vm, clear: false),
             "level" => new LevelingDialog(vm),
+            "sort" => new SortDialog(vm),
+            "fields" => new CustomFieldsDialog(vm),
+            "tableedit" => new TableEditorDialog(vm),
+            "filteredit" => new FilterEditorDialog(vm),
+            "groupedit" => new GroupEditorDialog(vm),
             _ => throw new ArgumentException($"Unknown dialog '{name}'."),
         };
     }
