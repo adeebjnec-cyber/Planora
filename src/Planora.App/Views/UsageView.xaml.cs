@@ -32,6 +32,12 @@ public partial class UsageView : UserControl
                 _viewModel?.ShowAssignmentInformation(assignment);
         };
 
+        Sheet.SelectionChanged += (_, _) =>
+        {
+            // In Resource Usage, picking a resource (or one of its assignments) selects that resource.
+            if (_byResource && Sheet.SelectedItem is UsageRow { Resource: { } resource })
+                _viewModel?.SetResourceSelection(new[] { resource });
+        };
         TimeGrid.CellEditRequested += (_, e) => BeginCellEdit(e.Row, e.From, e.To, e.Cell);
         TimeGrid.ExtentChanged += (_, _) => UpdateScrollBar();
         TimeGrid.SizeChanged += (_, _) => UpdateScrollBar();

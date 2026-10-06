@@ -62,7 +62,17 @@ public sealed partial class MainViewModel
     public bool ShowTaskForm
     {
         get => _showTaskForm;
-        set => SetProperty(ref _showTaskForm, value);
+        set
+        {
+            if (SetProperty(ref _showTaskForm, value))
+                NotifyDetailsPanes();
+        }
+    }
+
+    private void NotifyDetailsPanes()
+    {
+        OnPropertyChanged(nameof(ShowResourceForm));
+        OnPropertyChanged(nameof(ShowTaskDetailsForm));
     }
 
     public ViewKind CurrentView
@@ -73,6 +83,7 @@ public sealed partial class MainViewModel
             if (!SetProperty(ref _currentView, value))
                 return;
             OnPropertyChanged(nameof(CurrentViewOption));
+            NotifyDetailsPanes();
             // The Tracking Gantt is the Gantt Chart with baselines shown.
             if (value == ViewKind.TrackingGantt)
                 ShowBaseline = true;
@@ -114,11 +125,20 @@ public sealed partial class MainViewModel
         });
     }
 
+    /// <summary>Raised when the resource selection changes (the Resource Form follows it).</summary>
+    public event EventHandler? ResourceSelectionChanged;
+
     public void SetResourceSelection(IEnumerable<Resource> resources)
     {
         SelectedResources.Clear();
         SelectedResources.AddRange(resources);
+        ResourceSelectionChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>The Details pane shows the Resource Form under resource views and the Task Form elsewhere.</summary>
+    public bool ShowResourceForm => ShowTaskForm && CurrentView is ViewKind.ResourceSheet or ViewKind.ResourceUsage or ViewKind.ResourceGraph;
+
+    public bool ShowTaskDetailsForm => ShowTaskForm && !ShowResourceForm;
 
     internal void AddResourceFromPlaceholder(string name)
     {

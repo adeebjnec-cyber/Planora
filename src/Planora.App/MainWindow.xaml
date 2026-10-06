@@ -348,7 +348,8 @@
             <Border x:Name="TimelinePane" Height="185" BorderBrush="{DynamicResource ChromeBorder}" BorderThickness="0,0,0,1"
                     Visibility="{Binding ShowTimelinePane, Converter={StaticResource BoolToVisibility}}" />
             <ContentControl x:Name="ViewHost" Grid.Row="1" />
-            <views:TaskFormPanel Grid.Row="2" Height="230" Visibility="{Binding ShowTaskForm, Converter={StaticResource BoolToVisibility}}" />
+            <views:TaskFormPanel Grid.Row="2" Height="230" Visibility="{Binding ShowTaskDetailsForm, Converter={StaticResource BoolToVisibility}}" />
+            <views:ResourceFormPanel Grid.Row="2" Height="230" Visibility="{Binding ShowResourceForm, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
     </DockPanel>
 </Window>

@@ -99,6 +99,8 @@ public partial class App : Application
                 window.ShowBackstage();
             if (options.ContainsKey("--timeline"))
                 window.ViewModel.ShowTimelinePane = true;
+            if (options.TryGetValue("--selectresource", out var resRow) && int.TryParse(resRow, out var ri) && ri >= 1 && ri <= window.ViewModel.Project.Resources.Count)
+                window.ViewModel.SetResourceSelection(new[] { window.ViewModel.Project.Resources[ri - 1] });
             if (options.ContainsKey("--details"))
                 window.ViewModel.ShowTaskForm = true;
             if (options.TryGetValue("--usagedetails", out var usage) && int.TryParse(usage, out var flags))
