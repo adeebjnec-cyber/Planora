@@ -93,6 +93,8 @@ public partial class App : Application
                 window.ViewModel.CurrentGroupName = group;
             if (options.TryGetValue("--select", out var select) && int.TryParse(select, out var row) && row >= 1 && row <= window.ViewModel.Project.Tasks.Count)
                 window.ViewModel.SelectTask(window.ViewModel.Project.Tasks[row - 1]);
+            if (options.TryGetValue("--taskpath", out var pathFlags) && int.TryParse(pathFlags, out var pf))
+                window.ViewModel.TaskPath = (Engine.Scheduling.TaskPathKind)pf;
             if (options.TryGetValue("--theme", out var theme))
                 window.ViewModel.Theme = theme;
             if (options.TryGetValue("--backstage", out var backstagePage))

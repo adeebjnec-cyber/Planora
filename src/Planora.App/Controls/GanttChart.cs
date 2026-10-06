@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Planora.App.ViewModels;
 using Planora.Engine.Model;
+using Planora.Engine.Scheduling;
 using Planora.Engine.Views;
 
 namespace Planora.App.Controls;
@@ -48,6 +49,11 @@ public sealed class GanttChart : TimelineElement
     private static readonly Pen TodayPen = FrozenPen(Color.FromRgb(0x2E, 0x9E, 0x4F), 1.5);
     private static readonly Pen StatusPen = FrozenPen(Color.FromRgb(0x80, 0x40, 0xC0), 1.5, dashed: true);
     private static readonly Pen ProgressLinePen = FrozenPen(Color.FromRgb(0xD0, 0x30, 0x30), 1.5);
+    private static readonly Brush PathPredecessor = Frozen(Color.FromRgb(0xF8, 0xC4, 0x71));
+    private static readonly Brush PathDriving = Frozen(Color.FromRgb(0xE6, 0x7E, 0x22));
+    private static readonly Brush PathSuccessor = Frozen(Color.FromRgb(0xD7, 0xBD, 0xE2));
+    private static readonly Brush PathDriven = Frozen(Color.FromRgb(0x8E, 0x44, 0xAD));
+    private Dictionary<ProjectTask, TaskPathKind>? _pathMap;
     private static readonly Pen ProjectLinePen = FrozenPen(Color.FromRgb(0x40, 0x40, 0x90), 1, dashed: true);
     private static readonly Pen DragLinkPen = FrozenPen(Color.FromRgb(0x20, 0x20, 0x20), 1.5, dashed: true);
     private static readonly Typeface Font = new("Segoe UI");
@@ -139,6 +145,9 @@ public sealed class GanttChart : TimelineElement
                 rowIndex[t] = i;
         }
 
+        _pathMap = _viewModel.TaskPath == TaskPathKind.None || _viewModel.SelectedTasks.Count == 0
+            ? null
+            : Engine.Scheduling.TaskPath.Find(Project, _viewModel.SelectedTasks, _viewModel.TaskPath);
         var visibleFrom = DateAt(0);
         var visibleTo = DateAt(ActualWidth);
         int firstRow = Math.Max(0, (int)(_verticalOffset / RowHeight));
@@ -314,6 +323,14 @@ public sealed class GanttChart : TimelineElement
         var kind = KindOf(task);
         var barStyle = format.StyleFor(project, task, kind);
         var fill = BrushOf(barStyle.Fill, TaskFill);
+        // Task Path highlighting overrides the bar colour (driving/driven in the stronger colours).
+        if (_pathMap is not null && _pathMap.TryGetValue(task, out var path))
+        {
+            fill = path.HasFlag(TaskPathKind.DrivingPredecessors) ? PathDriving
+                : path.HasFlag(TaskPathKind.DrivenSuccessors) ? PathDriven
+                : path.HasFlag(TaskPathKind.Predecessors) ? PathPredecessor
+                : PathSuccessor;
+        }
         double barStart, barEnd;
         if (kind == BarKind.Summary)
         {

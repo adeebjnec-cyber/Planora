@@ -212,6 +212,16 @@
                         <CheckBox Content="Progress Lines" IsChecked="{Binding ShowProgressLines}" Margin="0,2" />
                     </StackPanel>
                 </RibbonGroup>
+                <RibbonGroup Header="Task Path">
+                    <StackPanel Margin="4,2">
+                        <CheckBox Content="Predecessors" IsChecked="{Binding ShowPathPredecessors}" Margin="0,1" ToolTip="Highlight every task the selected task depends on" />
+                        <CheckBox Content="Driving Predecessors" IsChecked="{Binding ShowPathDrivingPredecessors}" Margin="0,1" ToolTip="Highlight the predecessors that set the selected task's dates" />
+                    </StackPanel>
+                    <StackPanel Margin="4,2">
+                        <CheckBox Content="Successors" IsChecked="{Binding ShowPathSuccessors}" Margin="0,1" ToolTip="Highlight every task that depends on the selected task" />
+                        <CheckBox Content="Driven Successors" IsChecked="{Binding ShowPathDrivenSuccessors}" Margin="0,1" ToolTip="Highlight the successors whose dates the selected task sets" />
+                    </StackPanel>
+                </RibbonGroup>
                 <RibbonGroup Header="Columns">
                     <RibbonButton Label="Edit Table" LargeImageSource="{infra:Glyph &#xE8A1;}" Command="{Binding EditTableCommand}" ToolTipTitle="Insert, remove and arrange columns" />
                     <RibbonButton Label="Custom Fields" SmallImageSource="{infra:Glyph &#xE8EC;}" Command="{Binding CustomFieldsCommand}" />
