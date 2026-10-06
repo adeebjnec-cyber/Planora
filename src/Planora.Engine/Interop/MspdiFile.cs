@@ -93,6 +93,9 @@ public static class MspdiFile
             new XElement(Ns + "Tasks", project.Tasks.Select(t => WriteTask(project, t, calendarUid))),
             new XElement(Ns + "Resources", project.Resources.Select(r => WriteResource(r, calendarUid))),
             new XElement(Ns + "Assignments", project.Assignments.Select((a, i) => WriteAssignment(a, i + 1))));
+        // Splits are written as the assignments' time-phased work.
+        var assignmentList = root.Element(Ns + "Assignments")!;
+        assignmentList.Add(MspdiSplits.Write(Ns, project, assignmentList));
         var document = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), root);
         // Microsoft Project validates against its schema: put every element in schema order.
         MspdiSchema.Normalize(document);
@@ -638,6 +641,8 @@ public static class MspdiFile
             }
         }
 
+        // Splits come from the assignments' time-phased work, which needs the schedule's calendars only.
+        MspdiSplits.Read(root, project);
         return project;
     }
 

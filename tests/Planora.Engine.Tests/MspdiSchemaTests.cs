@@ -71,12 +71,47 @@ public class MspdiSchemaTests
     [Fact]
     public void SchemaOrderingStillRoundTrips()
     {
-        // Splits are not written to Microsoft Project XML (it keeps them as timephased data).
-        var p = Rich(split: false);
+        var p = Rich();
         var loaded = MspdiFile.Read(MspdiFile.Write(p));
         ProjectScheduler.Schedule(loaded);
         Assert.Equal(p.Tasks.Select(t => (t.Name, t.Start, t.Finish)), loaded.Tasks.Select(t => (t.Name, t.Start, t.Finish)));
         Assert.Equal(p.Calendar.WorkWeeks.Count, loaded.Calendar.WorkWeeks.Count);
         Assert.Equal("x", loaded.Tasks[1].CustomValues["Text1"]);
+    }
+
+    [Fact]
+    public void SplitsRoundTripAsTimephasedWorkThatMpxjReads()
+    {
+        var p = new Project("Split", new DateTime(2026, 1, 5, 8, 0, 0));
+        var bob = p.AddResource("Bob");
+        var assigned = p.AddTask("Assigned", 3 * 480);
+        var alone = p.AddTask("Unassigned", 2 * 480);
+        p.Assign(assigned, bob);
+        assigned.Split(480, 480);
+        alone.Split(240, 960);
+        ProjectScheduler.Schedule(p);
+        TaskProgress.SetPercentComplete(assigned, 20);
+        ProjectScheduler.Schedule(p);
+
+        var loaded = MspdiFile.Read(MspdiFile.Write(p));
+        ProjectScheduler.Schedule(loaded);
+        Assert.Equal(p.Tasks.Select(t => t.Segments.ToList()), loaded.Tasks.Select(t => t.Segments.ToList()));
+
+        var path = Path.Combine(Path.GetTempPath(), $"planora-split-{Guid.NewGuid():N}.xml");
+        try
+        {
+            MspdiFile.Save(p, path);
+            var file = new org.mpxj.mspdi.MSPDIReader().read(path);
+            foreach (var task in p.Tasks)
+            {
+                var mpxj = file.getTasks().toArray().OfType<org.mpxj.Task>().First(x => x.getName() == task.Name);
+                var splits = mpxj.getWorkSplits().toArray().OfType<org.mpxj.LocalDateTimeRange>().ToList();
+                Assert.Equal(task.Segments.Count, splits.Count);
+            }
+        }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 }
