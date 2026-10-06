@@ -26,6 +26,11 @@ public partial class UsageView : UserControl
         NameColumn.Header = byResource ? "Resource Name" : "Task Name";
         DataContextChanged += (_, _) => Attach(DataContext as MainViewModel);
         Loaded += OnLoaded;
+        Sheet.MouseDoubleClick += (_, _) =>
+        {
+            if (Sheet.SelectedItem is UsageRow { Assignment: { } assignment })
+                _viewModel?.ShowAssignmentInformation(assignment);
+        };
 
         TimeGrid.ExtentChanged += (_, _) => UpdateScrollBar();
         TimeGrid.SizeChanged += (_, _) => UpdateScrollBar();
@@ -139,6 +144,7 @@ public partial class UsageView : UserControl
             Level = level,
             Task = a.Task,
             Resource = a.Resource,
+            Assignment = a,
             Details = material ? "Units" : a.Resource.Type == ResourceType.Cost ? "Cost" : "Work",
             TotalWork = material
                 ? $"{a.Units:0.##} {a.Resource.MaterialLabel}".Trim()

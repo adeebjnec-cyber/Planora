@@ -123,10 +123,10 @@ public sealed class Project
         return task;
     }
 
-    /// <summary>Appends a recurring task: a summary task whose subtasks are the generated occurrences.</summary>
-    public ProjectTask AddRecurringTask(string name, RecurrencePattern pattern)
+    /// <summary>Adds a recurring task (at the end, or before row <paramref name="index"/>): a summary task whose subtasks are the generated occurrences.</summary>
+    public ProjectTask AddRecurringTask(string name, RecurrencePattern pattern, int? index = null)
     {
-        var summary = AddTask(name);
+        var summary = index is { } at ? InsertTask(Math.Clamp(at, 0, _tasks.Count), name) : AddTask(name);
         try
         {
             SetRecurrence(summary, pattern);

@@ -143,6 +143,7 @@ public partial class ChangeWorkingTimeDialog : Window
                     Start = DateText.FormatDay(e.From),
                     Finish = DateText.FormatDay(e.To),
                     WorkingTimes = e.IsWorking ? WorkingTimeText.Format(e.WorkingTimes) : "",
+                    RepeatYearly = e.RepeatYearly,
                 });
             }
         }
@@ -187,7 +188,7 @@ public partial class ChangeWorkingTimeDialog : Window
                     throw new FormatException($"{Name}: exception '{row.Name}' has an invalid finish date.");
                 if (to < from)
                     throw new FormatException($"{Name}: exception '{row.Name}' finishes before it starts.");
-                exceptions.Add(new CalendarException(row.Name ?? "", from, to, Parse(row.WorkingTimes, $"{Name}, {row.Name}")));
+                exceptions.Add(new CalendarException(row.Name ?? "", from, to, Parse(row.WorkingTimes, $"{Name}, {row.Name}")) { RepeatYearly = row.RepeatYearly });
             }
             calendar.Exceptions.Clear();
             calendar.Exceptions.AddRange(exceptions);
@@ -220,5 +221,6 @@ public partial class ChangeWorkingTimeDialog : Window
         public string? Start { get; set; }
         public string? Finish { get; set; }
         public string? WorkingTimes { get; set; }
+        public bool RepeatYearly { get; set; }
     }
 }

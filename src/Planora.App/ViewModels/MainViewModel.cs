@@ -20,6 +20,7 @@ public sealed partial class MainViewModel : ObservableObject
     private const string FileFilter = "Planora project (*.planora)|*.planora|All files (*.*)|*.*";
 
     private readonly DispatcherTimer _autosaveTimer;
+    private readonly AppSettings _settings = AppSettings.Load();
     private ProjectDocument _document;
     private string _status = "Ready";
     private int _zoomIndex = 4;
@@ -55,12 +56,29 @@ public sealed partial class MainViewModel : ObservableObject
         InitializeDialogCommands();
         InitializeOrganizeCommands();
         InitializeOutputCommands();
+        InitializeExtraCommands();
 
-        _autosaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(2) };
+        _autosaveTimer = new DispatcherTimer();
         _autosaveTimer.Tick += (_, _) => Autosave();
-        _autosaveTimer.Start();
+        AutosaveMinutes = _settings.AutosaveMinutes;
     }
 
+    /// <summary>Minutes between autosaves of unsaved changes; 0 turns autosave off.</summary>
+    public int AutosaveMinutes
+    {
+        get => _settings.AutosaveMinutes;
+        set
+        {
+            _settings.AutosaveMinutes = Math.Clamp(value, 0, 120);
+            _settings.Save();
+            _autosaveTimer.Stop();
+            if (_settings.AutosaveMinutes > 0)
+            {
+                _autosaveTimer.Interval = TimeSpan.FromMinutes(_settings.AutosaveMinutes);
+                _autosaveTimer.Start();
+            }
+        }
+    }
     /// <summary>Raised after every change, so custom-drawn views (the Gantt chart) repaint.</summary>
     public event EventHandler? Refreshed;
 

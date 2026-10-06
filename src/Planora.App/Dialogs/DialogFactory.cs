@@ -27,6 +27,11 @@ internal static class DialogFactory
             "tableedit" => new TableEditorDialog(vm),
             "filteredit" => new FilterEditorDialog(vm),
             "groupedit" => new GroupEditorDialog(vm),
+            "recurring" => new RecurringTaskDialog(vm),
+            "split" => new SplitTaskDialog(vm, task),
+            "options" => new OptionsDialog(vm),
+            "budgets" => new BudgetDialog(vm),
+            "assignment" => new AssignmentInformationDialog(vm, task.Assignments.First()),
             _ => throw new ArgumentException($"Unknown dialog '{name}'."),
         };
     }

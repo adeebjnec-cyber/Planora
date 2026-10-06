@@ -192,7 +192,7 @@ public partial class GanttView : UserControl
                 continue;
             }
 
-            bool editable = EditableProperties.TryGetValue(field.Key, out var property) || field.IsCustom;
+            bool editable = EditableProperties.TryGetValue(field.Key, out var property) || field.IsCustom && !field.IsCalculated;
             var binding = new System.Windows.Data.Binding(property ?? $"[{field.Key}]");
             TaskSheet.Columns.Add(new DataGridTextColumn
             {

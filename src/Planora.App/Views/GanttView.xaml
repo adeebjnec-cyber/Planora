@@ -26,6 +26,9 @@
                         <DataTrigger Binding="{Binding IsInactive}" Value="True">
                             <Setter Property="Foreground" Value="#999999" />
                         </DataTrigger>
+                        <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                            <Setter Property="Background" Value="#FFF4B8" />
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding IsGroupHeader}" Value="True">
                             <Setter Property="FontWeight" Value="SemiBold" />
                             <Setter Property="Background" Value="#E8EEF6" />

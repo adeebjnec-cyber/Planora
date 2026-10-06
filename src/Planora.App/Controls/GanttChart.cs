@@ -46,6 +46,7 @@ public sealed class GanttChart : TimelineElement
     private static readonly Pen GridPen = FrozenPen(Color.FromRgb(0xD8, 0xD8, 0xD8), 1);
     private static readonly Pen TodayPen = FrozenPen(Color.FromRgb(0x2E, 0x9E, 0x4F), 1.5);
     private static readonly Pen StatusPen = FrozenPen(Color.FromRgb(0x80, 0x40, 0xC0), 1.5, dashed: true);
+    private static readonly Pen ProgressLinePen = FrozenPen(Color.FromRgb(0xD0, 0x30, 0x30), 1.5);
     private static readonly Pen DragLinkPen = FrozenPen(Color.FromRgb(0x20, 0x20, 0x20), 1.5, dashed: true);
     private static readonly Typeface Font = new("Segoe UI");
 
@@ -157,6 +158,8 @@ public sealed class GanttChart : TimelineElement
         }
 
         DrawLinks(dc, rowIndex, firstRow, lastRow);
+        if (_viewModel.ShowProgressLines)
+            DrawProgressLines(dc, rows, firstRow, lastRow);
         DrawDragFeedback(dc, rowIndex);
         dc.Pop();
 
@@ -199,7 +202,7 @@ public sealed class GanttChart : TimelineElement
         double top = RowTop(row);
         double center = top + RowHeight / 2;
 
-        if (_viewModel!.ShowBaseline && task.Baselines[0] is { } baseline)
+        if (_viewModel!.ShowBaseline && task.Baselines[_viewModel.GanttBaselineIndex] is { } baseline)
         {
             double bx = XOf(baseline.Start);
             dc.DrawRectangle(BaselineFill, null, new Rect(bx, top + RowHeight * 0.72, Math.Max(2, XOf(baseline.Finish) - bx), 4));
@@ -278,6 +281,44 @@ public sealed class GanttChart : TimelineElement
         }
     }
 
+    /// <summary>Working minutes of a task's own work before a moment (split gaps excluded), snapped to whole hours.</summary>
+    private long? WorkBefore(ProjectTask task, DateTime moment)
+    {
+        var cal = task.Calendar ?? Project!.Calendar;
+        double minutes = 0;
+        foreach (var segment in task.Segments)
+        {
+            if (moment <= segment.Start)
+                break;
+            var end = moment < segment.Finish ? moment : segment.Finish;
+            minutes += cal.WorkingTimeBetween(segment.Start, end).TotalMinutes;
+        }
+        return (long)Math.Round(minutes / 60) * 60;
+    }
+
+    /// <summary>
+    /// Progress lines, as in Microsoft Project: from the status date at the top, the line bends to each
+    /// in-progress or late task's progress point; tasks that are done or not yet due stay on the status date.
+    /// </summary>
+    private void DrawProgressLines(DrawingContext dc, IReadOnlyList<TaskRowViewModel> rows, int firstRow, int lastRow)
+    {
+        var statusDate = Project!.StatusDate ?? DateTime.Now;
+        double statusX = XOf(statusDate);
+        var points = new List<Point> { new(statusX, HeaderHeight) };
+        for (int i = firstRow; i <= lastRow; i++)
+        {
+            if (rows[i].Task is not { IsSummary: false } task)
+                continue;
+            double y = RowTop(i) + RowHeight / 2;
+            bool due = task.Start < statusDate && task.PercentComplete < 100;
+            points.Add(new Point(due ? XOf(task.CompleteThrough) : statusX, y));
+        }
+        points.Add(new Point(statusX, ActualHeight));
+        for (int i = 1; i < points.Count; i++)
+            dc.DrawLine(ProgressLinePen, points[i - 1], points[i]);
+        foreach (var point in points.Skip(1).Take(points.Count - 2).Where(pt => Math.Abs(pt.X - statusX) > 0.5))
+            dc.DrawEllipse(ProgressLinePen.Brush, null, point, 3, 3);
+    }
     /// <summary>Group header rows get a roll-up bar spanning their tasks, like Microsoft Project's group summaries.</summary>
     private void DrawGroupBar(DrawingContext dc, Engine.Views.TaskGroup group, int row)
     {
@@ -508,6 +549,15 @@ public sealed class GanttChart : TimelineElement
         if (TaskAt(p) is not { } task)
             return;
 
+        if (_viewModel is { IsSplitMode: true })
+        {
+            if (MainViewModel.CanSplit(task) && WorkBefore(task, DateAt(p.X)) is { } offset && offset > 0 && offset < task.DurationMinutes)
+                _viewModel.SplitTask(task, offset, Project!.Options.MinutesPerDay);
+            else
+                _viewModel.IsSplitMode = false;
+            e.Handled = true;
+            return;
+        }
         TaskClicked?.Invoke(this, task);
         if (e.ClickCount == 2)
         {
@@ -541,6 +591,11 @@ public sealed class GanttChart : TimelineElement
         }
 
         var task = TaskAt(p);
+        if (_viewModel is { IsSplitMode: true })
+        {
+            Cursor = task is not null && MainViewModel.CanSplit(task) ? Cursors.Cross : Cursors.No;
+            return;
+        }
         Cursor = task is null ? null : HitTest(task, p) switch
         {
             DragMode.Resize => Cursors.SizeWE,
@@ -590,6 +645,11 @@ public sealed class GanttChart : TimelineElement
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
+        if (e.Key == Key.Escape && _viewModel is { IsSplitMode: true })
+        {
+            _viewModel.IsSplitMode = false;
+            e.Handled = true;
+        }
         if (e.Key == Key.Escape && _drag != DragMode.None)
         {
             EndDrag();

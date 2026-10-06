@@ -29,6 +29,7 @@ public sealed class UsageRow
     public bool IsOverallocatedResource => Overallocations.Count > 0;
     public ProjectTask? Task { get; init; }
     public Resource? Resource { get; init; }
+    public Assignment? Assignment { get; init; }
 }
 
 /// <summary>

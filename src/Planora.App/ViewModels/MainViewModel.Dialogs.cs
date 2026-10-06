@@ -19,7 +19,7 @@ public sealed partial class MainViewModel
     private void InitializeDialogCommands()
     {
         TaskInformationCommand = new RelayCommand(
-            () => ShowDialog(new TaskInformationDialog(this, SelectedTasks[0])),
+            ShowTaskInformation,
             () => SelectedTasks.Count > 0);
         ResourceInformationCommand = new RelayCommand(
             () => ShowDialog(new ResourceInformationDialog(this, SelectedResources[0])),

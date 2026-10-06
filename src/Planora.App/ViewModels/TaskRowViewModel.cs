@@ -99,6 +99,7 @@ public sealed class TaskRowViewModel : ObservableObject
     }
     public bool IsSummary => Task?.IsSummary ?? false;
     public bool IsCritical => Task?.IsCritical ?? false;
+    public bool IsHighlighted => Task is not null && _owner.IsHighlighted(Task);
     public bool IsManual => Task?.Mode == TaskMode.ManuallyScheduled;
     public bool IsInactive => Task is { IsActive: false };
     public bool HasNotes => !string.IsNullOrWhiteSpace(Task?.Notes);

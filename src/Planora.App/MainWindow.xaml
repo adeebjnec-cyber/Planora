@@ -44,6 +44,8 @@
                 <MenuItem Header="Export as Ima_ge..." Command="{Binding ExportImageCommand}" />
                 <MenuItem Header="_Print..." InputGestureText="Ctrl+P" Command="{Binding PrintCommand}" />
                 <Separator />
+                <MenuItem Header="_Options..." Command="{Binding OptionsCommand}" />
+                <Separator />
                 <MenuItem Header="E_xit" Click="OnExit" />
             </MenuItem>
             <MenuItem Header="_Edit">
@@ -58,6 +60,7 @@
                 <MenuItem Header="_Insert Task" InputGestureText="Ins" Command="{Binding InsertTaskCommand}" />
                 <MenuItem Header="Insert _Milestone" Command="{Binding InsertMilestoneCommand}" />
                 <MenuItem Header="Insert _Summary Task" Command="{Binding InsertSummaryCommand}" />
+                <MenuItem Header="Insert _Recurring Task..." Command="{Binding RecurringTaskCommand}" />
                 <MenuItem Header="_Delete Task" InputGestureText="Del" Command="{Binding DeleteTaskCommand}" />
                 <Separator />
                 <MenuItem Header="I_ndent" InputGestureText="Alt+Shift+Right" Command="{Binding IndentCommand}" />
@@ -66,6 +69,8 @@
                 <MenuItem Header="_Unlink Tasks" InputGestureText="Ctrl+Shift+F2" Command="{Binding UnlinkCommand}" />
                 <Separator />
                 <MenuItem Header="Toggle _Manual / Auto Schedule" Command="{Binding ToggleModeCommand}" />
+                <MenuItem Header="S_plit Task..." Command="{Binding SplitTaskCommand}" />
+                <MenuItem Header="Split Mod_e (click a bar)" IsCheckable="True" IsChecked="{Binding IsSplitMode}" />
                 <Separator />
                 <MenuItem Header="Task _Information..." InputGestureText="Shift+F2" Command="{Binding TaskInformationCommand}" />
                 <MenuItem Header="Add to _Timeline" Command="{Binding AddToTimelineCommand}" />
@@ -82,6 +87,8 @@
                 <Separator />
                 <MenuItem Header="Set _Baseline..." Command="{Binding SetBaselineCommand}" />
                 <MenuItem Header="_Clear Baseline..." Command="{Binding ClearBaselineCommand}" />
+                <Separator />
+                <MenuItem Header="B_udgets..." Command="{Binding BudgetsCommand}" />
             </MenuItem>
             <MenuItem Header="Re_port">
                 <MenuItem Header="Project _Overview" Command="{Binding ReportsCommand}" CommandParameter="Project Overview" />
@@ -99,6 +106,8 @@
                 <Separator />
                 <MenuItem Header="_Critical Path" IsCheckable="True" IsChecked="{Binding ShowCriticalPath}" />
                 <MenuItem Header="_Baseline" IsCheckable="True" IsChecked="{Binding ShowBaseline}" />
+                <MenuItem Header="_Progress Lines" IsCheckable="True" IsChecked="{Binding ShowProgressLines}" />
+                <MenuItem Header="_Highlight Filter Instead of Hiding" IsCheckable="True" IsChecked="{Binding HighlightFilter}" />
                 <Separator />
                 <MenuItem Header="_Sort..." Command="{Binding SortCommand}" />
                 <MenuItem Header="Sort by _ID" Command="{Binding SortByIdCommand}" />
@@ -180,7 +189,12 @@
                 <Rectangle Style="{StaticResource ToolSeparator}" />
                 <StackPanel VerticalAlignment="Center" Margin="4,0">
                     <CheckBox Content="Critical path" IsChecked="{Binding ShowCriticalPath}" Margin="0,2" />
-                    <CheckBox Content="Baseline" IsChecked="{Binding ShowBaseline}" Margin="0,2" />
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox Content="Baseline" IsChecked="{Binding ShowBaseline}" Margin="0,2,6,2" VerticalAlignment="Center" />
+                        <ComboBox ItemsSource="{x:Static vm:MainViewModel.BaselineNames}" SelectedIndex="{Binding GanttBaselineIndex}" Width="90" FontSize="11"
+                                  IsEnabled="{Binding ShowBaseline}" ToolTip="Which baseline to draw under the bars" />
+                    </StackPanel>
+                    <CheckBox Content="Progress lines" IsChecked="{Binding ShowProgressLines}" Margin="0,2" />
                 </StackPanel>                <Rectangle Style="{StaticResource ToolSeparator}" />
                 <Grid VerticalAlignment="Center" Margin="4,0">
                     <Grid.ColumnDefinitions>
@@ -188,6 +202,7 @@
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition />
@@ -197,6 +212,8 @@
                     <ComboBox Grid.Column="1" ItemsSource="{Binding TableNames}" SelectedItem="{Binding CurrentTableName}" Margin="0,1" />
                     <TextBlock Grid.Column="2" Text="Filter:" VerticalAlignment="Center" Margin="10,0,4,0" />
                     <ComboBox Grid.Column="3" ItemsSource="{Binding FilterNames}" SelectedItem="{Binding CurrentFilterName}" Margin="0,1" />
+                    <CheckBox Grid.Column="4" Content="Highlight" IsChecked="{Binding HighlightFilter}" VerticalAlignment="Center" Margin="6,0,0,0"
+                              ToolTip="Highlight matching tasks instead of hiding the others" />
                     <TextBlock Grid.Row="1" Text="Group:" VerticalAlignment="Center" Margin="0,0,4,0" />
                     <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding GroupNames}" SelectedItem="{Binding CurrentGroupName}" Margin="0,1" />
                     <Button Grid.Row="1" Grid.Column="3" Content="Sort..." Command="{Binding SortCommand}" HorizontalAlignment="Left" Padding="10,1" Margin="0,1" />

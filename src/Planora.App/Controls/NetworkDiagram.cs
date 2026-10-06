@@ -192,6 +192,9 @@ public sealed class NetworkDiagram : FrameworkElement, ITaskCanvas
                 Line("Res:", resources);
         }
         dc.Pop();
+
+        if (_linking)
+            dc.DrawLine(new Pen(Drawing.TextBrush, 1.5) { DashStyle = DashStyles.Dash }, _linkStart, _linkCurrent);
     }
 
     private ProjectTask? TaskAt(Point p)
@@ -199,6 +202,11 @@ public sealed class NetworkDiagram : FrameworkElement, ITaskCanvas
         var point = new Point(p.X / _scale, p.Y / _scale);
         return _boxes.FirstOrDefault(kv => kv.Value.Contains(point)).Key;
     }
+
+    private ProjectTask? _linkFrom;
+    private Point _linkStart;
+    private Point _linkCurrent;
+    private bool _linking;
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
     {
@@ -208,8 +216,41 @@ public sealed class NetworkDiagram : FrameworkElement, ITaskCanvas
             return;
         TaskClicked?.Invoke(this, task);
         if (e.ClickCount == 2)
+        {
             TaskDoubleClicked?.Invoke(this, task);
+            e.Handled = true;
+            return;
+        }
+        // Dragging from one box to another links them, as in Microsoft Project's Network Diagram.
+        _linkFrom = task;
+        _linkStart = _linkCurrent = e.GetPosition(this);
+        CaptureMouse();
         e.Handled = true;
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        if (_linkFrom is null)
+            return;
+        _linkCurrent = e.GetPosition(this);
+        if (!_linking && (_linkCurrent - _linkStart).Length > 8)
+            _linking = true;
+        if (_linking)
+            InvalidateVisual();
+    }
+
+    protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonUp(e);
+        var (from, linking) = (_linkFrom, _linking);
+        _linkFrom = null;
+        _linking = false;
+        if (IsMouseCaptured)
+            ReleaseMouseCapture();
+        InvalidateVisual();
+        if (linking && from is not null && TaskAt(e.GetPosition(this)) is { } to && to != from)
+            _viewModel?.LinkTasks(from, to);
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e)
