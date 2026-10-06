@@ -42,6 +42,9 @@ public sealed class ProjectTask
 
     public bool IsMilestone { get; set; }
 
+    /// <summary>Show this task on the Timeline view.</summary>
+    public bool ShowOnTimeline { get; set; }
+
     /// <summary>Interruptions in the task, ordered by <see cref="TaskSplit.AfterWorkMinutes"/>.</summary>
     public IReadOnlyList<TaskSplit> Splits => _splits;
 

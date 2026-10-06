@@ -55,6 +55,7 @@
                 <MenuItem Header="Toggle _Manual / Auto Schedule" Command="{Binding ToggleModeCommand}" />
                 <Separator />
                 <MenuItem Header="Task _Information..." InputGestureText="Shift+F2" Command="{Binding TaskInformationCommand}" />
+                <MenuItem Header="Add to _Timeline" Command="{Binding AddToTimelineCommand}" />
             </MenuItem>
             <MenuItem Header="_Resource">
                 <MenuItem Header="Resource _Information..." Command="{Binding ResourceInformationCommand}" />

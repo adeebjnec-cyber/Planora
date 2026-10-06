@@ -14,7 +14,7 @@ namespace Planora.App.Controls;
 /// scroll positions in step. Bars can be dragged to move, resized at the right edge, dragged at the
 /// left edge to set progress, or dragged up/down onto another task to link them.
 /// </summary>
-public sealed class GanttChart : FrameworkElement
+public sealed class GanttChart : TimelineElement
 {
     private enum DragMode { None, Move, Resize, Progress, Link }
 
@@ -51,7 +51,6 @@ public sealed class GanttChart : FrameworkElement
 
     private MainViewModel? _viewModel;
     private double _verticalOffset;
-    private double _horizontalOffset;
 
     private DragMode _drag;
     private ProjectTask? _dragTask;
@@ -69,9 +68,6 @@ public sealed class GanttChart : FrameworkElement
 
     public double RowHeight { get; set; } = 24;
     public double HeaderHeight { get; set; } = 44;
-
-    /// <summary>Raised when the timeline width changes, so the window can size its horizontal scroll bar.</summary>
-    public event EventHandler? ExtentChanged;
 
     /// <summary>Raised when a bar is clicked, so the task sheet can select the task.</summary>
     public event EventHandler<ProjectTask>? TaskClicked;
@@ -105,68 +101,13 @@ public sealed class GanttChart : FrameworkElement
         }
     }
 
-    public double HorizontalOffset
-    {
-        get => _horizontalOffset;
-        set
-        {
-            _horizontalOffset = Math.Max(0, value);
-            InvalidateVisual();
-        }
-    }
-
-    public DateTime TimelineStart { get; private set; }
-    public DateTime TimelineEnd { get; private set; }
-    public double ExtentWidth => (TimelineEnd - TimelineStart).TotalDays * PixelsPerDay;
-
-    private double PixelsPerDay => _viewModel?.PixelsPerDay ?? 24;
-    private Project? Project => _viewModel?.Project;
-
-    /// <summary>Scrolls horizontally so that a date is near the left edge.</summary>
-    public void ScrollTo(DateTime date) => HorizontalOffset = Math.Max(0, (date - TimelineStart).TotalDays * PixelsPerDay - 40);
-
-    public double XOf(DateTime date) => (date - TimelineStart).TotalDays * PixelsPerDay - _horizontalOffset;
-
-    public DateTime DateAt(double x) => TimelineStart.AddDays((x + _horizontalOffset) / PixelsPerDay);
+    protected override double PixelsPerDay => _viewModel?.PixelsPerDay ?? 24;
+    protected override Project? Project => _viewModel?.Project;
 
     private void OnRefreshed(object? sender, EventArgs e)
     {
         UpdateTimeline();
         InvalidateVisual();
-    }
-
-    /// <summary>Timeline spans the project with margins, and always includes today.</summary>
-    private void UpdateTimeline()
-    {
-        var p = Project;
-        if (p is null)
-            return;
-        var start = p.Tasks.Count > 0 ? p.Start : p.StartDate;
-        var finish = p.Tasks.Count > 0 ? p.Finish : p.StartDate;
-        if (DateTime.Today < start) start = DateTime.Today;
-        if (DateTime.Today > finish) finish = DateTime.Today;
-
-        double marginDays = Math.Max(7, 60 / PixelsPerDay);
-        var (top, _) = Timescale.For(PixelsPerDay);
-        var newStart = top.Floor(start.AddDays(-marginDays));
-        var newEnd = finish.AddDays(Math.Max(28, ActualWidth / PixelsPerDay));
-
-        if (newStart != TimelineStart || newEnd != TimelineEnd)
-        {
-            // Keep the visible date steady when the timeline origin moves.
-            var anchor = TimelineStart == default ? (DateTime?)null : DateAt(0);
-            TimelineStart = newStart;
-            TimelineEnd = newEnd;
-            if (anchor is { } a)
-                _horizontalOffset = Math.Max(0, (a - TimelineStart).TotalDays * PixelsPerDay);
-            ExtentChanged?.Invoke(this, EventArgs.Empty);
-        }
-    }
-
-    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
-    {
-        base.OnRenderSizeChanged(sizeInfo);
-        UpdateTimeline();
     }
 
     // ------------------------------------------------------------------ drawing
@@ -219,32 +160,8 @@ public sealed class GanttChart : FrameworkElement
 
     private double RowTop(int row) => HeaderHeight + row * RowHeight - _verticalOffset;
 
-    private void DrawHeader(DrawingContext dc, DateTime from, DateTime to)
-    {
-        double tierHeight = HeaderHeight / 2;
-        dc.DrawRectangle(HeaderBackground, null, new Rect(0, 0, ActualWidth, HeaderHeight));
-        var (top, bottom) = Timescale.For(PixelsPerDay);
-        DrawTier(dc, top, from, to, 0, tierHeight, centerLabels: false);
-        DrawTier(dc, bottom, from, to, tierHeight, tierHeight, centerLabels: true);
-        dc.DrawLine(GridPen, new Point(0, tierHeight), new Point(ActualWidth, tierHeight));
-        dc.DrawLine(GridPen, new Point(0, HeaderHeight - 0.5), new Point(ActualWidth, HeaderHeight - 0.5));
-    }
-
-    private void DrawTier(DrawingContext dc, TimescaleTier tier, DateTime from, DateTime to, double y, double height, bool centerLabels)
-    {
-        foreach (var boundary in tier.Boundaries(from, to))
-        {
-            double x = Math.Round(XOf(boundary)) + 0.5;
-            double width = XOf(tier.Next(boundary)) - XOf(boundary);
-            dc.DrawLine(GridPen, new Point(x, y), new Point(x, y + height));
-            var text = Text(tier.Label(boundary), 11);
-            if (text.Width > width - 4)
-                continue;
-            // Top-tier labels stick to the left edge while their period is partly scrolled off.
-            double textX = centerLabels ? x + (width - text.Width) / 2 : Math.Min(Math.Max(x + 3, 3), x + width - text.Width - 3);
-            dc.DrawText(text, new Point(textX, y + (height - text.Height) / 2));
-        }
-    }
+    private void DrawHeader(DrawingContext dc, DateTime from, DateTime to) =>
+        Drawing.TimescaleHeader(dc, this, XOf, from, to, PixelsPerDay, ActualWidth, HeaderHeight);
 
     private void DrawNonWorkingTime(DrawingContext dc, DateTime from, DateTime to)
     {
@@ -681,13 +598,12 @@ public sealed class GanttChart : FrameworkElement
             var anchorX = e.GetPosition(this).X;
             var anchor = DateAt(anchorX);
             _viewModel.ZoomIndex += e.Delta > 0 ? 1 : -1;
-            HorizontalOffset = (anchor - TimelineStart).TotalDays * PixelsPerDay - anchorX;
-            ExtentChanged?.Invoke(this, EventArgs.Empty);
+            KeepDateAt(anchor, anchorX);
         }
         else if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
         {
             HorizontalOffset -= e.Delta;
-            ExtentChanged?.Invoke(this, EventArgs.Empty);
+            RaiseExtentChanged();
         }
         else
         {

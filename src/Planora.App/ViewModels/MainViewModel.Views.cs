@@ -69,9 +69,24 @@ public sealed partial class MainViewModel
 
     public ICommand DeleteResourceCommand { get; private set; } = null!;
 
+    public ICommand AddToTimelineCommand { get; private set; } = null!;
+
     private void InitializeViewCommands()
     {
         DeleteResourceCommand = new RelayCommand(DeleteResources, () => SelectedResources.Count > 0);
+        AddToTimelineCommand = new RelayCommand(ToggleTimeline, () => SelectedTasks.Count > 0);
+    }
+
+    /// <summary>Adds the selected tasks to the Timeline, or removes them if they are all already on it.</summary>
+    private void ToggleTimeline()
+    {
+        var ids = SelectedTasks.Select(t => t.Id).ToList();
+        bool add = SelectedTasks.Any(t => !t.ShowOnTimeline);
+        TryEdit(add ? "Add to timeline" : "Remove from timeline", p =>
+        {
+            foreach (var id in ids)
+                p.GetRequiredTask(id).ShowOnTimeline = add;
+        });
     }
 
     public void SetResourceSelection(IEnumerable<Resource> resources)

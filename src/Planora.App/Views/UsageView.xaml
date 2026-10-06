@@ -1,0 +1,51 @@
+<UserControl x:Class="Planora.App.Views.UsageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Planora.App.Controls">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="4*" MinWidth="200" />
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="7*" MinWidth="200" />
+        </Grid.ColumnDefinitions>
+
+        <DataGrid x:Name="Sheet" Style="{StaticResource SheetStyle}" IsReadOnly="True" SelectionMode="Single">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource SheetRowStyle}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsGroup}" Value="True">
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="Background" Value="#F3F3F3" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsOverallocatedResource}" Value="True">
+                            <Setter Property="Foreground" Value="#C62828" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn x:Name="NameColumn" Header="Task Name" Width="230">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="controls:UsageRow">
+                            <TextBlock Text="{Binding Name}" Margin="{Binding IndentWidth, Converter={StaticResource IndentConverter}}"
+                                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Work" Binding="{Binding TotalWork}" Width="80" />
+                <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="60" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{StaticResource ChromeBorder}" />
+
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <controls:UsageGrid x:Name="TimeGrid" RowHeight="24" HeaderHeight="44" />
+            <ScrollBar x:Name="HorizontalScroll" Grid.Row="1" Orientation="Horizontal" ValueChanged="OnHorizontalScroll" />
+        </Grid>
+    </Grid>
+</UserControl>

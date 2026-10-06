@@ -124,6 +124,7 @@ public static class ProjectFile
                 IsElapsedDuration = t.IsElapsedDuration,
                 IsEstimated = t.IsEstimated,
                 IsMilestone = t.IsMilestone,
+                ShowOnTimeline = t.ShowOnTimeline,
                 ConstraintType = t.ConstraintType,
                 ConstraintDate = t.ConstraintDate,
                 Deadline = t.Deadline,
@@ -295,6 +296,7 @@ public static class ProjectFile
             task.IsElapsedDuration = t.IsElapsedDuration;
             task.IsEstimated = t.IsEstimated;
             task.IsMilestone = t.IsMilestone;
+            task.ShowOnTimeline = t.ShowOnTimeline;
             task.ConstraintType = t.ConstraintType;
             task.ConstraintDate = t.ConstraintDate;
             task.Deadline = t.Deadline;
@@ -467,6 +469,7 @@ public static class ProjectFile
         public bool IsElapsedDuration { get; set; }
         public bool IsEstimated { get; set; }
         public bool IsMilestone { get; set; }
+        public bool ShowOnTimeline { get; set; }
         public ConstraintType ConstraintType { get; set; }
         public DateTime? ConstraintDate { get; set; }
         public DateTime? Deadline { get; set; }

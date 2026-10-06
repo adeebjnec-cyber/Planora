@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Planora.App.Controls;
 using Planora.App.ViewModels;
 using Planora.App.Views;
 
@@ -44,6 +45,12 @@ public partial class MainWindow : Window
     {
         ViewKind.Gantt => new GanttView(),
         ViewKind.ResourceSheet => new ResourceSheetView(),
+        ViewKind.TaskUsage => new UsageView(byResource: false),
+        ViewKind.ResourceUsage => new UsageView(byResource: true),
+        ViewKind.NetworkDiagram => new DiagramView(new NetworkDiagram()),
+        ViewKind.Calendar => new DiagramView(new CalendarCanvas(), scroll: false),
+        ViewKind.TaskBoard => new DiagramView(new TaskBoard()),
+        ViewKind.Timeline => new DiagramView(new TimelineCanvas(), scroll: false),
         _ => new TextBlock
         {
             Text = "This view is being built.",
