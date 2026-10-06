@@ -76,7 +76,7 @@ public sealed class UsageGrid : TimelineElement
         }
     }
 
-    protected override double PixelsPerDay => _viewModel?.PixelsPerDay ?? 24;
+    protected override double ZoomPixelsPerDay => _viewModel?.PixelsPerDay ?? 24;
     protected override Project? Project => _viewModel?.Project;
 
     private void OnRefreshed(object? sender, EventArgs e)

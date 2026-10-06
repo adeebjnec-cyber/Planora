@@ -16,6 +16,44 @@ public partial class App : Application
         // Developer aid: "--screenshot out.png [--view Kind] [--dialog Name] [file]" renders the window
         // (or a dialog) to an image and exits.
         var options = ParseOptions(e.Args, out var positional);
+
+        // Developer aid: "--export out.pdf|out.png [--report Name] [file]" writes output without dialogs.
+        if (options.TryGetValue("--export", out var exportPath))
+        {
+            window.Show();
+            if (positional.FirstOrDefault() is { } source)
+                window.ViewModel.OpenFile(source);
+            else
+                window.ViewModel.LoadSample();
+            window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
+            {
+                try
+                {
+                    var vm = window.ViewModel;
+                    if (options.TryGetValue("--report", out var report))
+                    {
+                        var doc = Output.ReportDocument.Build(Engine.Reports.ReportCatalog.Build(vm.Project, report));
+                        Output.PageOutput.SavePdf(Output.PageOutput.Paginate(doc, new Size(793.7, 1122.5)), exportPath, report);
+                    }
+                    else if (exportPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var (visual, size) = Output.GanttPages.BuildImage(vm);
+                        Output.PageOutput.SavePng(visual, size, exportPath);
+                    }
+                    else
+                    {
+                        Output.PageOutput.SavePdf(Output.GanttPages.Build(vm, Output.PageOutput.A4Landscape), exportPath, vm.Project.Name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.IO.File.WriteAllText(exportPath + ".error.txt", ex.ToString());
+                }
+                window.ViewModel.Document.DeleteAutosave();
+                Shutdown();
+            });
+            return;
+        }
         if (options.TryGetValue("--screenshot", out var output))
         {
             // Never block on a message box in this unattended mode: log the error and exit.
@@ -64,6 +102,8 @@ public partial class App : Application
         window.Show();
         if (e.Args.Length > 0)
             window.ViewModel.OpenFile(e.Args[0]);
+        else
+            window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, window.ViewModel.OfferRecovery);
     }
 
     /// <summary>Splits "--name value" pairs from positional arguments.</summary>

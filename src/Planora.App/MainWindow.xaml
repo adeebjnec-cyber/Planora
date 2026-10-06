@@ -15,6 +15,7 @@
         <KeyBinding Key="F12" Command="{Binding SaveAsCommand}" />
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}" />
         <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}" />
+        <KeyBinding Key="P" Modifiers="Control" Command="{Binding PrintCommand}" />
         <KeyBinding Key="Insert" Command="{Binding InsertTaskCommand}" />
         <KeyBinding Key="Right" Modifiers="Alt+Shift" Command="{Binding IndentCommand}" />
         <KeyBinding Key="Left" Modifiers="Alt+Shift" Command="{Binding OutdentCommand}" />
@@ -30,16 +31,28 @@
         <Menu DockPanel.Dock="Top" Background="{StaticResource ChromeBackground}" Padding="2">
             <MenuItem Header="_File">
                 <MenuItem Header="_New" InputGestureText="Ctrl+N" Command="{Binding NewCommand}" />
+                <MenuItem Header="New from _Template..." Command="{Binding NewFromTemplateCommand}" />
                 <MenuItem Header="_Open..." InputGestureText="Ctrl+O" Command="{Binding OpenCommand}" />
                 <MenuItem Header="Open Sa_mple Project" Command="{Binding OpenSampleCommand}" />
                 <MenuItem Header="_Save" InputGestureText="Ctrl+S" Command="{Binding SaveCommand}" />
                 <MenuItem Header="Save _As..." InputGestureText="F12" Command="{Binding SaveAsCommand}" />
+                <MenuItem Header="Save as Te_mplate..." Command="{Binding SaveAsTemplateCommand}" />
+                <Separator />
+                <MenuItem Header="_Import..." Command="{Binding ImportCommand}" />
+                <MenuItem Header="_Export..." Command="{Binding ExportCommand}" />
+                <MenuItem Header="Export as _PDF..." Command="{Binding ExportPdfCommand}" />
+                <MenuItem Header="Export as Ima_ge..." Command="{Binding ExportImageCommand}" />
+                <MenuItem Header="_Print..." InputGestureText="Ctrl+P" Command="{Binding PrintCommand}" />
                 <Separator />
                 <MenuItem Header="E_xit" Click="OnExit" />
             </MenuItem>
             <MenuItem Header="_Edit">
                 <MenuItem Header="_Undo" InputGestureText="Ctrl+Z" Command="{Binding UndoCommand}" />
                 <MenuItem Header="_Redo" InputGestureText="Ctrl+Y" Command="{Binding RedoCommand}" />
+                <Separator />
+                <MenuItem Header="Cu_t Tasks" InputGestureText="Ctrl+X" Command="{Binding CutCommand}" />
+                <MenuItem Header="_Copy Tasks" InputGestureText="Ctrl+C" Command="{Binding CopyCommand}" />
+                <MenuItem Header="_Paste Tasks" InputGestureText="Ctrl+V" Command="{Binding PasteCommand}" />
             </MenuItem>
             <MenuItem Header="_Task">
                 <MenuItem Header="_Insert Task" InputGestureText="Ins" Command="{Binding InsertTaskCommand}" />
@@ -70,7 +83,16 @@
                 <MenuItem Header="Set _Baseline..." Command="{Binding SetBaselineCommand}" />
                 <MenuItem Header="_Clear Baseline..." Command="{Binding ClearBaselineCommand}" />
             </MenuItem>
-            <MenuItem Header="_View">
+            <MenuItem Header="Re_port">
+                <MenuItem Header="Project _Overview" Command="{Binding ReportsCommand}" CommandParameter="Project Overview" />
+                <MenuItem Header="_Critical Tasks" Command="{Binding ReportsCommand}" CommandParameter="Critical Tasks" />
+                <MenuItem Header="Cost O_verview" Command="{Binding ReportsCommand}" CommandParameter="Cost Overview" />
+                <MenuItem Header="_Earned Value" Command="{Binding ReportsCommand}" CommandParameter="Earned Value" />
+                <MenuItem Header="_Resource Overview" Command="{Binding ReportsCommand}" CommandParameter="Resource Overview" />
+                <MenuItem Header="Task _Status" Command="{Binding ReportsCommand}" CommandParameter="Task Status" />
+                <MenuItem Header="_Milestones" Command="{Binding ReportsCommand}" CommandParameter="Milestones" />
+                <MenuItem Header="_Who Does What" Command="{Binding ReportsCommand}" CommandParameter="Who Does What" />
+            </MenuItem>            <MenuItem Header="_View">
                 <MenuItem Header="Zoom _In" InputGestureText="Ctrl++" Command="{Binding ZoomInCommand}" />
                 <MenuItem Header="Zoom _Out" InputGestureText="Ctrl+-" Command="{Binding ZoomOutCommand}" />
                 <MenuItem Header="_Scroll to Task" InputGestureText="Ctrl+Shift+F5" Command="{Binding ScrollToTaskCommand}" />

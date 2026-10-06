@@ -28,7 +28,16 @@ public abstract class TimelineElement : FrameworkElement
     public DateTime TimelineEnd { get; private set; }
     public double ExtentWidth => (TimelineEnd - TimelineStart).TotalDays * PixelsPerDay;
 
-    protected abstract double PixelsPerDay { get; }
+    /// <summary>Zoom from the view model (pixels per day).</summary>
+    protected abstract double ZoomPixelsPerDay { get; }
+
+    /// <summary>Overrides the zoom, e.g. to fit the whole project on a printed page.</summary>
+    public double? FixedPixelsPerDay { get; set; }
+
+    /// <summary>Overrides the timeline range (used when printing).</summary>
+    public (DateTime Start, DateTime End)? FixedRange { get; set; }
+
+    protected double PixelsPerDay => FixedPixelsPerDay ?? ZoomPixelsPerDay;
     protected abstract Project? Project { get; }
 
     public double XOf(DateTime date) => (date - TimelineStart).TotalDays * PixelsPerDay - _horizontalOffset;
@@ -55,6 +64,16 @@ public abstract class TimelineElement : FrameworkElement
     /// <summary>Timeline spans the project with margins, and always includes today.</summary>
     protected void UpdateTimeline()
     {
+        if (FixedRange is { } fixedRange)
+        {
+            if (TimelineStart != fixedRange.Start || TimelineEnd != fixedRange.End)
+            {
+                (TimelineStart, TimelineEnd) = fixedRange;
+                _horizontalOffset = 0;
+                RaiseExtentChanged();
+            }
+            return;
+        }
         var p = Project;
         if (p is null)
             return;

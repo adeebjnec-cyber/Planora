@@ -66,6 +66,9 @@ public sealed class GanttChart : TimelineElement
         ToolTipService.SetInitialShowDelay(this, 600);
     }
 
+    /// <summary>Highlight selected rows (off when printing).</summary>
+    public bool ShowSelection { get; set; } = true;
+
     public double RowHeight { get; set; } = 24;
     public double HeaderHeight { get; set; } = 44;
 
@@ -101,7 +104,7 @@ public sealed class GanttChart : TimelineElement
         }
     }
 
-    protected override double PixelsPerDay => _viewModel?.PixelsPerDay ?? 24;
+    protected override double ZoomPixelsPerDay => _viewModel?.PixelsPerDay ?? 24;
     protected override Project? Project => _viewModel?.Project;
 
     private void OnRefreshed(object? sender, EventArgs e)
@@ -134,7 +137,7 @@ public sealed class GanttChart : TimelineElement
         dc.PushClip(new RectangleGeometry(new Rect(0, HeaderHeight, ActualWidth, Math.Max(0, ActualHeight - HeaderHeight))));
         DrawNonWorkingTime(dc, visibleFrom, visibleTo);
 
-        var selected = _viewModel.SelectedTasks.ToHashSet();
+        var selected = ShowSelection ? _viewModel.SelectedTasks.ToHashSet() : new HashSet<ProjectTask>();
         for (int i = firstRow; i <= lastRow; i++)
         {
             if (rows[i].Task is { } t && selected.Contains(t))

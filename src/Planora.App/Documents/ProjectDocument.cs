@@ -74,6 +74,10 @@ public sealed class ProjectDocument : ObservableObject
 
     public static ProjectDocument Open(string path) => new(ProjectFile.Load(path), path);
 
+    /// <summary>Opens an autosaved copy as unsaved work (of <paramref name="originalPath"/>, or untitled).</summary>
+    public static ProjectDocument Recover(string autosavePath, string? originalPath = null) =>
+        new(ProjectFile.Load(autosavePath), originalPath) { IsDirty = true };
+
     /// <summary>
     /// Applies a change as one undoable step. If the change throws, or leaves the project impossible
     /// to schedule (e.g. a dependency loop), the project is restored and the error is rethrown.

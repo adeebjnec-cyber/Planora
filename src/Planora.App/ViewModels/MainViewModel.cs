@@ -54,6 +54,7 @@ public sealed partial class MainViewModel : ObservableObject
         InitializeViewCommands();
         InitializeDialogCommands();
         InitializeOrganizeCommands();
+        InitializeOutputCommands();
 
         _autosaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(2) };
         _autosaveTimer.Tick += (_, _) => Autosave();
@@ -386,7 +387,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         try
         {
-            Document = ProjectDocument.Open(path);
+            var source = ChooseRecoveredVersion(path);
+            Document = source == path ? ProjectDocument.Open(path) : ProjectDocument.Recover(source, path);
             Status = $"Opened {Path.GetFileName(path)}";
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)

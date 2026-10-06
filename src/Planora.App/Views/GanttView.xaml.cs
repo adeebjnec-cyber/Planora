@@ -124,6 +124,13 @@ public partial class GanttView : UserControl
             _viewModel.TaskInformationCommand.Execute(null);
             e.Handled = true;
         }
+        else if (Keyboard.Modifiers == ModifierKeys.Control && e.Key is Key.C or Key.X or Key.V)
+        {
+            var command = e.Key switch { Key.C => _viewModel.CopyCommand, Key.X => _viewModel.CutCommand, _ => _viewModel.PasteCommand };
+            if (command.CanExecute(null))
+                command.Execute(null);
+            e.Handled = true;
+        }
     }
 
     private void OnSheetDoubleClick(object sender, MouseButtonEventArgs e)

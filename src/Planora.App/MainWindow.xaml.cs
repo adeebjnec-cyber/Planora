@@ -25,6 +25,7 @@ public partial class MainWindow : Window
                 ShowView(ViewModel.CurrentView);
         };
         ShowView(ViewModel.CurrentView);
+        ViewModel.CurrentViewElement = () => ViewHost.Content as FrameworkElement;
     }
 
     public MainViewModel ViewModel { get; }
