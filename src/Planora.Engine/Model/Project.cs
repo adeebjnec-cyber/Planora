@@ -54,6 +54,9 @@ public sealed class Project
 
     /// <summary>Gantt Chart formatting: bar styles, text styles, timescale and gridlines.</summary>
     public Views.GanttFormat GanttFormat { get; set; } = new();
+
+    /// <summary>Reports designed by the user (Report > New Report).</summary>
+    public List<Reports.CustomReport> CustomReports { get; } = new();
     public ScheduleOptions Options { get; } = new();
 
     /// <summary>Tasks in display (outline) order.</summary>

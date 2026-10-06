@@ -33,7 +33,17 @@ public partial class App : Application
                     if (options.TryGetValue("--report", out var report))
                     {
                         var doc = Output.ReportDocument.Build(Engine.Reports.ReportCatalog.Build(vm.Project, report));
-                        Output.PageOutput.SavePdf(Output.PageOutput.Paginate(doc, new Size(793.7, 1122.5)), exportPath, report);
+                        var pages = Output.PageOutput.Paginate(doc, new Size(793.7, 1122.5));
+                        if (exportPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // One image per page: out.png, out-2.png, ...
+                            for (int i = 0; i < pages.Pages.Count; i++)
+                                Output.PageOutput.SavePng(pages.Pages[i], pages.PageSize, i == 0 ? exportPath : exportPath[..^4] + $"-{i + 1}.png", 96);
+                        }
+                        else
+                        {
+                            Output.PageOutput.SavePdf(pages, exportPath, report);
+                        }
                     }
                     else if (exportPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
                     {

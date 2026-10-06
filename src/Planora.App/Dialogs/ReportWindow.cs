@@ -26,16 +26,22 @@ public sealed class ReportWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         FontFamily = new System.Windows.Media.FontFamily("Segoe UI");
 
-        _picker = new ComboBox { ItemsSource = ReportCatalog.Names, SelectedItem = reportName, Width = 220, Margin = new Thickness(0, 0, 10, 0) };
+        _picker = new ComboBox { ItemsSource = ReportCatalog.AllNames(owner.Project), SelectedItem = reportName, Width = 220, Margin = new Thickness(0, 0, 10, 0) };
         var print = new Button { Content = "Print...", Padding = new Thickness(12, 3, 12, 3), Margin = new Thickness(0, 0, 6, 0) };
-        var pdf = new Button { Content = "Export PDF...", Padding = new Thickness(12, 3, 12, 3) };
+        var pdf = new Button { Content = "Export PDF...", Padding = new Thickness(12, 3, 12, 3), Margin = new Thickness(0, 0, 18, 0) };
+        var newReport = new Button { Content = "New Report...", Padding = new Thickness(12, 3, 12, 3), Margin = new Thickness(0, 0, 6, 0) };
+        _edit = new Button { Content = "Edit Report...", Padding = new Thickness(12, 3, 12, 3), Margin = new Thickness(0, 0, 6, 0) };
+        _delete = new Button { Content = "Delete", Padding = new Thickness(12, 3, 12, 3) };
+        newReport.Click += (_, _) => Design(null);
+        _edit.Click += (_, _) => Design(CurrentCustom);
+        _delete.Click += (_, _) => DeleteReport();
         _viewer = new FlowDocumentScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, IsToolBarVisible = false };
 
         _picker.SelectionChanged += (_, _) => ShowReport();
         print.Click += (_, _) => PageOutput.Print(size => PageOutput.Paginate(ReportDocument.Build(Build()), size), CurrentName);
         pdf.Click += (_, _) => ExportPdf();
 
-        var bar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10), Children = { new TextBlock { Text = "Report:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) }, _picker, print, pdf } };
+        var bar = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(10), Children = { new TextBlock { Text = "Report:", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) }, _picker, print, pdf, newReport, _edit, _delete } };
         var root = new DockPanel();
         DockPanel.SetDock(bar, Dock.Top);
         root.Children.Add(bar);
@@ -44,11 +50,44 @@ public sealed class ReportWindow : Window
         ShowReport();
     }
 
+    private readonly Button _edit;
+    private readonly Button _delete;
+
     private string CurrentName => _picker.SelectedItem as string ?? ReportCatalog.Names[0];
+
+    /// <summary>The selected report if it is one of the project's own.</summary>
+    private CustomReport? CurrentCustom =>
+        ReportCatalog.Names.Contains(CurrentName) ? null : _owner.Project.CustomReports.FirstOrDefault(r => r.Name == CurrentName);
+
+    private void Design(CustomReport? report)
+    {
+        var dialog = new ReportDesignerDialog(_owner, report) { Owner = this };
+        if (dialog.ShowDialog() != true)
+            return;
+        _picker.ItemsSource = ReportCatalog.AllNames(_owner.Project);
+        _picker.SelectedItem = dialog.ReportName;
+        ShowReport();
+    }
+
+    private void DeleteReport()
+    {
+        if (CurrentCustom is not { } report || MessageBox.Show(this, $"Delete the report '{report.Name}'?", "Planora", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            return;
+        var name = report.Name;
+        if (_owner.TryEdit("Delete report", p => p.CustomReports.RemoveAll(r => r.Name == name)))
+        {
+            _picker.ItemsSource = ReportCatalog.AllNames(_owner.Project);
+            _picker.SelectedIndex = 0;
+        }
+    }
 
     private Report Build() => ReportCatalog.Build(_owner.Project, CurrentName);
 
-    private void ShowReport() => _viewer.Document = ReportDocument.Build(Build());
+    private void ShowReport()
+    {
+        _viewer.Document = ReportDocument.Build(Build());
+        _edit.IsEnabled = _delete.IsEnabled = CurrentCustom is not null;
+    }
 
     private void ExportPdf()
     {

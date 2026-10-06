@@ -47,6 +47,9 @@ public static class ReportDocument
                 case BarChartBlock c:
                     doc.Blocks.Add(new BlockUIContainer(new BarChart(c)) { Margin = new Thickness(0, 6, 0, 12) });
                     break;
+                case TimeChartBlock tc:
+                    doc.Blocks.Add(new BlockUIContainer(new TimeChart(tc)) { Margin = new Thickness(0, 6, 0, 12) });
+                    break;
             }
         }
         return doc;
@@ -107,6 +110,146 @@ public static class ReportDocument
             BorderBrush = new SolidColorBrush(Color.FromRgb(0xE6, 0xE6, 0xE6)),
             BorderThickness = new Thickness(0, 0, 0, 1),
         };
+    }
+
+    /// <summary>
+    /// A chart over time: column series drawn as bars, other series as lines (gaps where a value is
+    /// unknown, e.g. actuals after the status date), with a dashed status-date line and a legend.
+    /// </summary>
+    private sealed class TimeChart : FrameworkElement
+    {
+        private static readonly Brush[] Palette =
+        {
+            new SolidColorBrush(Color.FromRgb(0x2B, 0x57, 0x9A)), new SolidColorBrush(Color.FromRgb(0xE0, 0x7B, 0x39)),
+            new SolidColorBrush(Color.FromRgb(0x5B, 0x9B, 0x5B)), new SolidColorBrush(Color.FromRgb(0x9A, 0x4F, 0xA8)),
+        };
+
+        private const double Left = 70, Right = 16, Top = 28, Bottom = 46;
+        private readonly TimeChartBlock _block;
+
+        public TimeChart(TimeChartBlock block)
+        {
+            _block = block;
+            Height = 300;
+            MinWidth = 420;
+        }
+
+        private double _max;
+
+        private string Format(double value) => _block.ValueFormat switch
+        {
+            "money" => value.ToString(_max >= 1000 ? "C0" : "C", System.Globalization.CultureInfo.CurrentCulture),
+            "hours" => value.ToString("0", System.Globalization.CultureInfo.CurrentCulture) + "h",
+            _ => value.ToString("0.#", System.Globalization.CultureInfo.CurrentCulture),
+        };
+
+        protected override void OnRender(DrawingContext dc)
+        {
+            dc.DrawText(Drawing.Text(this, _block.Title, 13, bold: true), new Point(0, 0));
+            int n = _block.Periods.Count;
+            if (n == 0)
+                return;
+            double plotWidth = Math.Max(50, ActualWidth - Left - Right);
+            double plotHeight = Height - Top - Bottom;
+            double max = _block.Series.SelectMany(s => s.Values).Where(v => !double.IsNaN(v)).DefaultIfEmpty(0).Max();
+            max = max <= 0 ? 1 : NiceCeiling(max);
+            _max = max;
+            double slot = plotWidth / n;
+            double X(int i) => Left + slot * (i + 0.5);
+            double Y(double v) => Top + plotHeight * (1 - v / max);
+
+            for (int t = 0; t <= 4; t++)
+            {
+                double v = max * t / 4, y = Math.Round(Y(v)) + 0.5;
+                dc.DrawLine(Drawing.LightGridPen, new Point(Left, y), new Point(Left + plotWidth, y));
+                var label = Drawing.Text(this, Format(v), 10, Drawing.MutedText);
+                dc.DrawText(label, new Point(Left - 6 - label.Width, y - label.Height / 2));
+            }
+            dc.DrawLine(Drawing.GridPen, new Point(Left, Top + plotHeight + 0.5), new Point(Left + plotWidth, Top + plotHeight + 0.5));
+
+            int every = Math.Max(1, (int)Math.Ceiling(n / (plotWidth / 52)));
+            for (int i = 0; i < n; i += every)
+            {
+                var label = Drawing.Text(this, _block.PeriodLabels[i], 10, Drawing.MutedText);
+                dc.DrawText(label, new Point(X(i) - label.Width / 2, Top + plotHeight + 4));
+            }
+
+            var columns = _block.Series.Where(s => s.AsColumns).ToList();
+            for (int c = 0; c < columns.Count; c++)
+            {
+                var brush = Palette[_block.Series.ToList().IndexOf(columns[c]) % Palette.Length];
+                double width = Math.Max(1, slot * 0.7 / columns.Count);
+                for (int i = 0; i < n && i < columns[c].Values.Count; i++)
+                {
+                    double v = columns[c].Values[i];
+                    if (double.IsNaN(v) || v <= 0)
+                        continue;
+                    double x = X(i) - slot * 0.35 + c * width;
+                    dc.DrawRectangle(brush, null, new Rect(x, Y(v), width, Top + plotHeight - Y(v)));
+                }
+            }
+            for (int s = 0; s < _block.Series.Count; s++)
+            {
+                var series = _block.Series[s];
+                if (series.AsColumns)
+                    continue;
+                var pen = new Pen(Palette[s % Palette.Length], 2);
+                Point? previous = null;
+                for (int i = 0; i < n && i < series.Values.Count; i++)
+                {
+                    double v = series.Values[i];
+                    if (double.IsNaN(v))
+                    {
+                        previous = null;
+                        continue;
+                    }
+                    var point = new Point(X(i), Y(v));
+                    if (previous is { } p)
+                        dc.DrawLine(pen, p, point);
+                    else
+                        dc.DrawEllipse(pen.Brush, null, point, 2, 2);
+                    previous = point;
+                }
+            }
+
+            if (_block.StatusDate is { } status && status >= _block.Periods[0])
+            {
+                int index = _block.Periods.Count(p => p <= status) - 1;
+                if (index >= 0 && index < n)
+                {
+                    double x = Left + slot * index + slot * Math.Clamp((status - _block.Periods[index]).TotalDays / Math.Max(1, ((index + 1 < n ? _block.Periods[index + 1] : _block.Periods[index].AddDays(7)) - _block.Periods[index]).TotalDays), 0, 1);
+                    var dashed = new Pen(Brushes.MediumPurple, 1) { DashStyle = DashStyles.Dash };
+                    dc.DrawLine(dashed, new Point(x, Top), new Point(x, Top + plotHeight));
+                    dc.DrawText(Drawing.Text(this, "Status date", 9.5, Brushes.MediumPurple), new Point(x + 3, Top));
+                }
+            }
+
+            double lx = Left;
+            for (int s = 0; s < _block.Series.Count; s++)
+            {
+                var brush = Palette[s % Palette.Length];
+                double ly = Height - 16;
+                if (_block.Series[s].AsColumns)
+                    dc.DrawRectangle(brush, null, new Rect(lx, ly + 1, 12, 10));
+                else
+                    dc.DrawRectangle(brush, null, new Rect(lx, ly + 5, 14, 2.5));
+                var label = Drawing.Text(this, _block.Series[s].Name, 10.5);
+                dc.DrawText(label, new Point(lx + 18, ly - 1));
+                lx += 30 + label.Width;
+            }
+        }
+
+        /// <summary>A round axis maximum just above the value (1, 2, 2.5 or 5 times a power of ten).</summary>
+        private static double NiceCeiling(double value)
+        {
+            double magnitude = Math.Pow(10, Math.Floor(Math.Log10(value)));
+            foreach (double step in new[] { 1, 2, 2.5, 5, 10 })
+            {
+                if (step * magnitude >= value)
+                    return step * magnitude;
+            }
+            return 10 * magnitude;
+        }
     }
 
     /// <summary>Horizontal bar chart with value labels; the optional second series is a thin bar underneath.</summary>

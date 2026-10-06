@@ -141,15 +141,26 @@
                     <RibbonButton Label="Project Overview" LargeImageSource="{infra:Glyph &#xE9D2;}" Command="{Binding ReportsCommand}" CommandParameter="Project Overview" />
                     <RibbonButton Label="Cost Overview" LargeImageSource="{infra:Glyph &#xE8C7;}" Command="{Binding ReportsCommand}" CommandParameter="Cost Overview" />
                     <RibbonButton Label="Earned Value" LargeImageSource="{infra:Glyph &#xE9D9;}" Command="{Binding ReportsCommand}" CommandParameter="Earned Value" />
+                    <RibbonButton Label="Burndown" SmallImageSource="{infra:Glyph &#xE74B;}" Command="{Binding ReportsCommand}" CommandParameter="Burndown" />
+                    <RibbonButton Label="Cash Flow" SmallImageSource="{infra:Glyph &#xE8C7;}" Command="{Binding ReportsCommand}" CommandParameter="Cash Flow" />
+                    <RibbonButton Label="Work Overview" SmallImageSource="{infra:Glyph &#xE9D2;}" Command="{Binding ReportsCommand}" CommandParameter="Work Overview" />
+                    <RibbonButton Label="Cost Overruns" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Cost Overruns" />
                 </RibbonGroup>
                 <RibbonGroup Header="Tasks">
                     <RibbonButton Label="Critical Tasks" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Critical Tasks" />
                     <RibbonButton Label="Task Status" SmallImageSource="{infra:Glyph &#xE73E;}" Command="{Binding ReportsCommand}" CommandParameter="Task Status" />
                     <RibbonButton Label="Milestones" SmallImageSource="{infra:Glyph &#xE7C1;}" Command="{Binding ReportsCommand}" CommandParameter="Milestones" />
+                    <RibbonButton Label="Late Tasks" SmallImageSource="{infra:Glyph &#xE823;}" Command="{Binding ReportsCommand}" CommandParameter="Late Tasks" />
+                    <RibbonButton Label="Upcoming Tasks" SmallImageSource="{infra:Glyph &#xE787;}" Command="{Binding ReportsCommand}" CommandParameter="Upcoming Tasks" />
+                    <RibbonButton Label="Slipping Tasks" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Slipping Tasks" />
                 </RibbonGroup>
                 <RibbonGroup Header="Resources">
                     <RibbonButton Label="Resource Overview" SmallImageSource="{infra:Glyph &#xE716;}" Command="{Binding ReportsCommand}" CommandParameter="Resource Overview" />
                     <RibbonButton Label="Who Does What" SmallImageSource="{infra:Glyph &#xE77B;}" Command="{Binding ReportsCommand}" CommandParameter="Who Does What" />
+                    <RibbonButton Label="Overallocated" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Overallocated Resources" />
+                </RibbonGroup>
+                <RibbonGroup Header="Custom">
+                    <RibbonButton Label="Custom Reports" LargeImageSource="{infra:Glyph &#xE70F;}" Command="{Binding ReportsCommand}" ToolTipTitle="Open the report window to design your own reports (New Report...)" />
                 </RibbonGroup>
                 <RibbonGroup Header="Export">
                     <RibbonButton Label="PDF" LargeImageSource="{infra:Glyph &#xEA90;}" Command="{Binding ExportPdfCommand}" />

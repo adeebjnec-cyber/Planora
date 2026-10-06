@@ -8,6 +8,7 @@ namespace Planora.Engine.Reports;
 /// <summary>The built-in reports, like Microsoft Project's dashboards and visual reports.</summary>
 public static class ReportCatalog
 {
+    /// <summary>The built-in reports.</summary>
     public static readonly IReadOnlyList<string> Names = new[]
     {
         "Project Overview",
@@ -18,11 +19,21 @@ public static class ReportCatalog
         "Task Status",
         "Milestones",
         "Who Does What",
-    };
+    }.Concat(MoreReports.Names).ToList();
+
+    /// <summary>Built-in reports followed by the project's own (custom) reports.</summary>
+    public static IReadOnlyList<string> AllNames(Project project) =>
+        Names.Concat(project.CustomReports.Select(r => r.Name).Where(n => !Names.Contains(n))).ToList();
 
     public static Report Build(Project project, string name)
     {
         ProjectScheduler.Schedule(project);
+        var subtitleText = $"{project.Name}  ·  {DateTime.Now.ToString("D", CultureInfo.CurrentCulture)}" +
+                           (project.StatusDate is { } sd ? $"  ·  Status date {Date(sd)}" : "");
+        if (project.CustomReports.FirstOrDefault(r => r.Name == name) is { } custom && !Names.Contains(name))
+            return new Report(custom.Name, subtitleText, custom.Build(project));
+        if (MoreReports.Names.Contains(name))
+            return new Report(name, subtitleText, new MoreReports(project).Build(name));
         var context = new Context(project);
         var blocks = name switch
         {

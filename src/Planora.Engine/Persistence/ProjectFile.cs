@@ -213,6 +213,7 @@ public static class ProjectFile
                 SortKeys = v.Sort.Keys.ToList(), KeepOutlineStructure = v.Sort.KeepOutlineStructure,
             }).ToList(),
             GanttFormat = project.GanttFormat,
+            CustomReports = project.CustomReports.Count == 0 ? null : project.CustomReports,
             BudgetCosts = project.BudgetCosts.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
             BudgetWork = project.BudgetWork.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
             Baselines = Sparse(project.Baselines),
@@ -462,6 +463,8 @@ public static class ProjectFile
             project.Groups.Add(new GroupDefinition(g.Name, g.Levels.ToArray()) { ShowSummaryTasks = g.ShowSummaryTasks });
         if (dto.GanttFormat is { } format)
             project.GanttFormat = format;
+        if (dto.CustomReports is { } reports)
+            project.CustomReports.AddRange(reports);
         foreach (var v in dto.SavedViews ?? new())
         {
             project.SavedViews.Add(new SavedView
@@ -523,6 +526,7 @@ public static class ProjectFile
         public List<GroupDto>? Groups { get; set; }
         public List<SavedViewDto>? SavedViews { get; set; }
         public GanttFormat? GanttFormat { get; set; }
+        public List<Reports.CustomReport>? CustomReports { get; set; }
     }
 
     private sealed class CustomFieldDto

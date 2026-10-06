@@ -40,6 +40,7 @@ internal static class DialogFactory
             "textstyles" => new TextStylesDialog(vm),
             "timescale" => new TimescaleDialog(vm),
             "gridlines" => new GridlinesDialog(vm),
+            "reportdesigner" => new ReportDesignerDialog(vm, null),
             _ => throw new ArgumentException($"Unknown dialog '{name}'."),
         };
     }
