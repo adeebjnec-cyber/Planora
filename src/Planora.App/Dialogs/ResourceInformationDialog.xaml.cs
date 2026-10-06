@@ -35,6 +35,15 @@ public partial class ResourceInformationDialog : Window
         AccrualIndex = (int)resource.AccrueAt;
         IsBudget = resource.IsBudget;
         Notes = resource.Notes;
+        foreach (var period in resource.Availability)
+        {
+            AvailabilityRows.Add(new AvailabilityRow
+            {
+                From = DateText.FormatDay(DateOnly.FromDateTime(period.From)),
+                To = period.To is { } to ? DateText.FormatDay(DateOnly.FromDateTime(to.AddMinutes(-1))) : "",
+                Units = $"{period.Units * 100:0.##}%",
+            });
+        }
 
         InitializeComponent();
         DataContext = this;
@@ -69,6 +78,7 @@ public partial class ResourceInformationDialog : Window
     public int AccrualIndex { get; set; }
     public bool IsBudget { get; set; }
     public string Notes { get; set; }
+    public ObservableCollection<AvailabilityRow> AvailabilityRows { get; } = new();
 
     private static DataGrid CreateRateGrid(ObservableCollection<RateEntry> rows)
     {
@@ -103,6 +113,7 @@ public partial class ResourceInformationDialog : Window
 
     private void OnOk(object sender, RoutedEventArgs e)
     {
+        VisualTreeSearch.FindChild<DataGrid>(this)?.CommitEdit(DataGridEditingUnit.Row, true);
         foreach (TabItem tab in RateTabs.Items)
             (tab.Content as DataGrid)?.CommitEdit(DataGridEditingUnit.Row, true);
         if (_owner.TryEdit("Resource information", Apply))
@@ -148,6 +159,30 @@ public partial class ResourceInformationDialog : Window
             r.Calendar = null;
         }
 
+        var periods = new List<AvailabilityPeriod>();
+        foreach (var row in AvailabilityRows.Where(a => !string.IsNullOrWhiteSpace(a.From)))
+        {
+            if (!DateText.TryParseDay(row.From, out var from))
+                throw new FormatException($"'{row.From}' is not a valid 'available from' date.");
+            DateTime? to = null;
+            if (!string.IsNullOrWhiteSpace(row.To))
+            {
+                if (!DateText.TryParseDay(row.To, out var toDay) || toDay < from)
+                    throw new FormatException($"'{row.To}' is not a valid 'available to' date on or after the start.");
+                to = toDay.ToDateTime(TimeOnly.MinValue).AddDays(1); // through the end of that day
+            }
+            if (!double.TryParse((row.Units ?? "").Trim().TrimEnd('%'), NumberStyles.Float, CultureInfo.CurrentCulture, out var units) || units < 0)
+                throw new FormatException($"'{row.Units}' is not a valid number of units (e.g. 50%).");
+            periods.Add(new AvailabilityPeriod(from.ToDateTime(TimeOnly.MinValue), to, units / 100));
+        }
+        periods.Sort((a, b) => a.From.CompareTo(b.From));
+        for (int i = 1; i < periods.Count; i++)
+        {
+            if (periods[i - 1].To is null || periods[i - 1].To > periods[i].From)
+                throw new FormatException("Availability periods must not overlap.");
+        }
+        r.Availability.Clear();
+        r.Availability.AddRange(periods);
         for (int i = 0; i < Resource.RateTableCount; i++)
         {
             var rates = new List<CostRate>();
@@ -181,6 +216,14 @@ public partial class ResourceInformationDialog : Window
             ? amount
             : throw new FormatException($"Rate table {(char)('A' + table)}: '{text}' is not a valid amount.");
     }
+}
+
+/// <summary>A row of the resource availability table.</summary>
+public sealed class AvailabilityRow
+{
+    public string? From { get; set; }
+    public string? To { get; set; }
+    public string? Units { get; set; } = "100%";
 }
 
 /// <summary>A row of a cost rate table.</summary>

@@ -110,12 +110,13 @@ public sealed class AssignmentInformationDialog : Window
         bool work = assignment.IsWork, cost = assignment.Resource.Type == ResourceType.Cost;
         var units = Form.Box(work ? $"{assignment.Units * 100:0.##}%" : assignment.Units.ToString("0.##", CultureInfo.CurrentCulture));
         var workBox = Form.Box(DurationText.Format(assignment.WorkMinutes, o, DurationUnit.Hours));
+        var overtime = Form.Box(DurationText.Format(assignment.OvertimeWorkMinutes, o, DurationUnit.Hours));
         var contour = new ComboBox { ItemsSource = Enum.GetNames<WorkContour>(), SelectedIndex = (int)assignment.Contour, Width = 140, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 3, 0, 3) };
         var delay = Form.Box(DurationText.Format(assignment.DelayMinutes, o));
         var table = new ComboBox { ItemsSource = new[] { "A", "B", "C", "D", "E" }, SelectedIndex = assignment.CostRateTable, Width = 60, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 3, 0, 3) };
         var amount = Form.Box(assignment.CostAmount.ToString("0.##", CultureInfo.CurrentCulture));
         units.IsEnabled = !cost;
-        workBox.IsEnabled = contour.IsEnabled = delay.IsEnabled = work;
+        workBox.IsEnabled = overtime.IsEnabled = contour.IsEnabled = delay.IsEnabled = work;
         table.IsEnabled = !cost;
         amount.IsEnabled = cost;
 
@@ -127,7 +128,7 @@ public sealed class AssignmentInformationDialog : Window
             Children =
             {
                 new TextBlock { Text = $"{assignment.Resource.Name} on {assignment.Task.Name}", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 8) },
-                Form.Fields(("Units:", units), ("Work:", workBox), ("Work contour:", contour), ("Delay:", delay), ("Cost rate table:", table), ("Cost (cost resources):", amount)),
+                Form.Fields(("Units:", units), ("Work:", workBox), ("Overtime work:", overtime), ("Work contour:", contour), ("Delay:", delay), ("Cost rate table:", table), ("Cost (cost resources):", amount)),
                 new TextBlock { Text = $"Start {Infrastructure.DateText.Format(assignment.Start)}   Finish {Infrastructure.DateText.Format(assignment.Finish)}   Cost {assignment.Cost:C}", Foreground = System.Windows.Media.Brushes.Gray, Margin = new Thickness(0, 8, 0, 0) },
                 Form.Buttons(this, () =>
                 {
@@ -151,7 +152,9 @@ public sealed class AssignmentInformationDialog : Window
                                 throw new FormatException($"'{workBox.Text}' is not a valid amount of work.");
                             if (w.Minutes != a.WorkMinutes)
                                 p.SetWork(a, w.Minutes);
-                            if (!DurationText.TryParse(delay.Text, p.Options, out var d))
+                            if (!DurationText.TryParse(overtime.Text, p.Options, out var ot, DurationUnit.Hours) || ot.Minutes > a.WorkMinutes)
+                                throw new FormatException("Overtime must be an amount of work no larger than the total work.");
+                            a.OvertimeWorkMinutes = ot.Minutes;                            if (!DurationText.TryParse(delay.Text, p.Options, out var d))
                                 throw new FormatException($"'{delay.Text}' is not a valid delay.");
                             a.DelayMinutes = d.Minutes;
                         }

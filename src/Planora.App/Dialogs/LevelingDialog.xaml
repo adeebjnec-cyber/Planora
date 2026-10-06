@@ -3,7 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Resource Leveling" Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner">
     <StackPanel Margin="14" Width="440">
-        <GroupBox Header="Leveling range">
+        <GroupBox Header="Leveling calculations">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Look for overallocations on a" Style="{StaticResource FormLabel}" />
+                <ComboBox x:Name="Basis" Width="140" SelectedIndex="2">
+                    <ComboBoxItem Content="Minute by Minute" />
+                    <ComboBoxItem Content="Hour by Hour" />
+                    <ComboBoxItem Content="Day by Day" />
+                    <ComboBoxItem Content="Week by Week" />
+                    <ComboBoxItem Content="Month by Month" />
+                </ComboBox>
+                <TextBlock Text=" basis" Style="{StaticResource FormLabel}" />
+            </StackPanel>
+        </GroupBox>        <GroupBox Header="Leveling range">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -33,6 +45,7 @@
                 </StackPanel>
                 <CheckBox x:Name="WithinSlack" Content="Level only within available slack" Style="{StaticResource FormCheck}" />
                 <CheckBox x:Name="ClearFirst" Content="Clear leveling values before leveling" IsChecked="True" Style="{StaticResource FormCheck}" />
+                <CheckBox x:Name="CanSplit" Content="Leveling can create splits in remaining work" Style="{StaticResource FormCheck}" />
             </StackPanel>
         </GroupBox>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">

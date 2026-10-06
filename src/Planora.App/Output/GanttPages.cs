@@ -33,32 +33,25 @@ public static class GanttPages
         int rowsPerPage = Math.Max(1, (int)((bodyHeight - HeaderHeight) / RowHeight));
         int pageCount = Math.Max(1, (int)Math.Ceiling(rows.Count / (double)rowsPerPage));
 
-        var chart = CreateChart(vm, chartWidth, HeaderHeight + rowsPerPage * RowHeight);
         var pages = new List<Visual>();
-        try
+        for (int page = 0; page < pageCount; page++)
         {
-            for (int page = 0; page < pageCount; page++)
-            {
-                int first = page * rowsPerPage;
-                var visual = new DrawingVisual();
-                using (var dc = visual.RenderOpen())
-                {
-                    DrawTitle(dc, visual, vm, page + 1, pageCount, pageSize);
-                    double top = Margin + TitleHeight;
-                    DrawTable(dc, visual, rows.Skip(first).Take(rowsPerPage).ToList(), Margin, top);
+            int first = page * rowsPerPage;
+            double top = Margin + TitleHeight;
+            double chartHeight = HeaderHeight + rowsPerPage * RowHeight;
 
-                    chart.VerticalOffset = first * RowHeight;
-                    chart.UpdateLayout();
-                    var image = PageOutput.Render(chart, new Size(chartWidth, chart.Height), 192);
-                    dc.DrawImage(image, new Rect(Margin + tableWidth, top, chartWidth, chart.Height));
-                    dc.DrawRectangle(null, Drawing.GridPen, new Rect(Margin, top, tableWidth + chartWidth, chart.Height));
-                }
-                pages.Add(visual);
+            // The chart is part of the page (not a picture of it), so its text stays selectable in PDFs.
+            var container = new ContainerVisual();
+            var frame = new DrawingVisual();
+            using (var dc = frame.RenderOpen())
+            {
+                DrawTitle(dc, frame, vm, page + 1, pageCount, pageSize);
+                DrawTable(dc, frame, rows.Skip(first).Take(rowsPerPage).ToList(), Margin, top);
+                dc.DrawRectangle(null, Drawing.GridPen, new Rect(Margin, top, tableWidth + chartWidth, chartHeight));
             }
-        }
-        finally
-        {
-            chart.ViewModel = null;
+            container.Children.Add(frame);
+            container.Children.Add(CreateChart(vm, new Rect(Margin + tableWidth, top, chartWidth, chartHeight), first * RowHeight));
+            pages.Add(container);
         }
         return new PageSet(pageSize, pages);
     }
@@ -74,26 +67,20 @@ public static class GanttPages
         double height = HeaderHeight + rows.Count * RowHeight;
         var size = new Size(tableWidth + chartWidth + 2 * Margin, height + TitleHeight + 2 * Margin);
 
-        var chart = CreateChart(vm, chartWidth, height);
-        try
+        var container = new ContainerVisual();
+        var frame = new DrawingVisual();
+        using (var dc = frame.RenderOpen())
         {
-            var visual = new DrawingVisual();
-            using (var dc = visual.RenderOpen())
-            {
-                DrawTitle(dc, visual, vm, 1, 1, size);
-                DrawTable(dc, visual, rows, Margin, Margin + TitleHeight);
-                chart.UpdateLayout();
-                dc.DrawImage(PageOutput.Render(chart, new Size(chartWidth, height), 144), new Rect(Margin + tableWidth, Margin + TitleHeight, chartWidth, height));
-            }
-            return (visual, size);
+            DrawTitle(dc, frame, vm, 1, 1, size);
+            DrawTable(dc, frame, rows, Margin, Margin + TitleHeight);
         }
-        finally
-        {
-            chart.ViewModel = null;
-        }
+        container.Children.Add(frame);
+        container.Children.Add(CreateChart(vm, new Rect(Margin + tableWidth, Margin + TitleHeight, chartWidth, height), 0));
+        return (container, size);
     }
 
-    private static GanttChart CreateChart(MainViewModel vm, double width, double height)
+    /// <summary>A Gantt chart laid out at a position on a page, showing rows from <paramref name="verticalOffset"/>.</summary>
+    private static GanttChart CreateChart(MainViewModel vm, Rect bounds, double verticalOffset)
     {
         var project = vm.Project;
         var start = (project.Tasks.Count > 0 ? project.Start : project.StartDate).Date.AddDays(-2);
@@ -106,17 +93,19 @@ public static class GanttPages
             HeaderHeight = HeaderHeight,
             ShowSelection = false,
             FixedRange = (start, end),
-            FixedPixelsPerDay = width / Math.Max(1, (end - start).TotalDays),
-            Width = width,
-            Height = height,
+            FixedPixelsPerDay = bounds.Width / Math.Max(1, (end - start).TotalDays),
+            Width = bounds.Width,
+            Height = bounds.Height,
         };
         chart.ViewModel = vm;
-        chart.Measure(new Size(width, height));
-        chart.Arrange(new Rect(0, 0, width, height));
+        chart.VerticalOffset = verticalOffset;
+        chart.Measure(bounds.Size);
+        chart.Arrange(bounds);
         chart.UpdateLayout();
+        // A printed page is a snapshot: stop following later edits.
+        chart.DetachFromViewModel();
         return chart;
     }
-
     private static void DrawTitle(DrawingContext dc, Visual visual, MainViewModel vm, int page, int pages, Size pageSize)
     {
         dc.DrawText(Drawing.Text(visual, vm.Project.Name, 15, bold: true), new Point(Margin, Margin));

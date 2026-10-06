@@ -26,6 +26,8 @@ public partial class LevelingDialog : Window
             Order = (LevelingOrder)Order.SelectedIndex,
             LevelWithinAvailableSlack = WithinSlack.IsChecked == true,
             ClearLevelingValuesFirst = ClearFirst.IsChecked == true,
+            Basis = (OverallocationBasis)Basis.SelectedIndex,
+            CanSplitRemainingWork = CanSplit.IsChecked == true,
         };
         if (Range.IsChecked == true)
         {

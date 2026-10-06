@@ -66,6 +66,21 @@
                 </DockPanel>
             </TabItem>
 
+            <TabItem Header="Availability">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Margin="0,0,0,6" Foreground="#555"
+                               Text="Periods when the resource has different units available (e.g. 50% during March). Outside these periods, Max. units applies. Leave 'Available To' empty for open-ended." />
+                    <DataGrid ItemsSource="{Binding AvailabilityRows}" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
+                              HeadersVisibility="All" RowHeight="24">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Available From" Binding="{Binding From}" Width="140" />
+                            <DataGridTextColumn Header="Available To" Binding="{Binding To}" Width="140" />
+                            <DataGridTextColumn Header="Units" Binding="{Binding Units}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
             <TabItem Header="Notes">
                 <TextBox Margin="8" Text="{Binding Notes}" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" />
             </TabItem>

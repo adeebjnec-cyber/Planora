@@ -95,6 +95,13 @@ public sealed class GanttChart : TimelineElement
         }
     }
 
+    /// <summary>Stops repainting on project changes while keeping the current picture (used for printed pages).</summary>
+    public void DetachFromViewModel()
+    {
+        if (_viewModel is not null)
+            _viewModel.Refreshed -= OnRefreshed;
+    }
+
     public double VerticalOffset
     {
         get => _verticalOffset;
