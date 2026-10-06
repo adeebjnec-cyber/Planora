@@ -102,7 +102,11 @@
                     <RibbonButton Label="Delete Resource" SmallImageSource="{infra:Glyph &#xE74D;}" Command="{Binding DeleteResourceCommand}" />
                     <RibbonButton Label="Budgets" SmallImageSource="{infra:Glyph &#xE8C7;}" Command="{Binding BudgetsCommand}" />
                 </RibbonGroup>
-                <RibbonGroup Header="Level">
+                <RibbonGroup Header="Resource Pool">
+                    <RibbonButton Label="Share Resources" LargeImageSource="{infra:Glyph &#xE716;}" Command="{Binding ShareResourcesCommand}" ToolTipTitle="Use the resources of a resource pool file" />
+                    <RibbonButton Label="Refresh from Pool" SmallImageSource="{infra:Glyph &#xE72C;}" Command="{Binding RefreshPoolCommand}" />
+                    <RibbonButton Label="Update Pool" SmallImageSource="{infra:Glyph &#xE74E;}" Command="{Binding UpdatePoolCommand}" />
+                </RibbonGroup>                <RibbonGroup Header="Level">
                     <RibbonButton Label="Leveling Options" LargeImageSource="{infra:Glyph &#xE9F5;}" Command="{Binding LevelResourcesCommand}" ToolTipTitle="Level resources, or clear leveling" />
                 </RibbonGroup>
             </RibbonTab>
@@ -138,7 +142,11 @@
                     <RibbonButton Label="Set Baseline" LargeImageSource="{infra:Glyph &#xE9D9;}" Command="{Binding SetBaselineCommand}" />
                     <RibbonButton Label="Clear Baseline" SmallImageSource="{infra:Glyph &#xE894;}" Command="{Binding ClearBaselineCommand}" />
                 </RibbonGroup>
-                <RibbonGroup Header="Data Exchange">
+                <RibbonGroup Header="Subprojects">
+                    <RibbonButton Label="Insert Project" LargeImageSource="{infra:Glyph &#xE8F4;}" Command="{Binding InsertProjectCommand}" ToolTipTitle="Insert another project file as a subproject" />
+                    <RibbonButton Label="Refresh" SmallImageSource="{infra:Glyph &#xE72C;}" Command="{Binding RefreshSubprojectCommand}" ToolTipTitle="Reload the selected subproject from its file" />
+                    <RibbonButton Label="Save Subproject" SmallImageSource="{infra:Glyph &#xE74E;}" Command="{Binding SaveSubprojectCommand}" ToolTipTitle="Save the selected subproject back to its file" />
+                </RibbonGroup>                <RibbonGroup Header="Data Exchange">
                     <RibbonButton Label="Import" SmallImageSource="{infra:Glyph &#xE8B5;}" Command="{Binding ImportCommand}" />
                     <RibbonButton Label="Export" SmallImageSource="{infra:Glyph &#xEDE1;}" Command="{Binding ExportCommand}" />
                 </RibbonGroup>

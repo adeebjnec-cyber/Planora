@@ -75,6 +75,12 @@ public sealed partial class MainViewModel
     public ICommand SplitModeCommand { get; private set; } = null!;
     public ICommand OptionsCommand { get; private set; } = null!;
     public ICommand BudgetsCommand { get; private set; } = null!;
+    public ICommand InsertProjectCommand { get; private set; } = null!;
+    public ICommand RefreshSubprojectCommand { get; private set; } = null!;
+    public ICommand SaveSubprojectCommand { get; private set; } = null!;
+    public ICommand ShareResourcesCommand { get; private set; } = null!;
+    public ICommand RefreshPoolCommand { get; private set; } = null!;
+    public ICommand UpdatePoolCommand { get; private set; } = null!;
 
     private void InitializeExtraCommands()
     {
@@ -85,8 +91,88 @@ public sealed partial class MainViewModel
         SplitModeCommand = new RelayCommand(() => IsSplitMode = !IsSplitMode);
         OptionsCommand = new RelayCommand(() => ShowDialog(new OptionsDialog(this)));
         BudgetsCommand = new RelayCommand(() => ShowDialog(new BudgetDialog(this)));
+        InsertProjectCommand = new RelayCommand(InsertProject);
+        RefreshSubprojectCommand = new RelayCommand(() => SubprojectAction("Refresh subproject", Engine.Interop.MasterProject.RefreshSubproject), () => SelectedSubproject is not null);
+        SaveSubprojectCommand = new RelayCommand(SaveSubproject, () => SelectedSubproject is not null);
+        ShareResourcesCommand = new RelayCommand(ShareResources);
+        RefreshPoolCommand = new RelayCommand(() => PoolAction("Refresh from resource pool", p => Engine.Interop.ResourcePool.Refresh(p)), () => Project.ResourcePoolPath is not null);
+        UpdatePoolCommand = new RelayCommand(UpdatePool, () => Project.ResourcePoolPath is not null);
     }
 
+    private const string ProjectFilesFilter = "Projects (*.planora;*.xml)|*.planora;*.xml|Planora project (*.planora)|*.planora|Microsoft Project XML (*.xml)|*.xml";
+
+    /// <summary>The inserted-project summary task containing the selection, if any.</summary>
+    private ProjectTask? SelectedSubproject
+    {
+        get
+        {
+            for (var t = SelectedTasks.FirstOrDefault(); t is not null; t = t.Parent)
+            {
+                if (t.IsSubproject)
+                    return t;
+            }
+            return null;
+        }
+    }
+
+    private void InsertProject()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = ProjectFilesFilter, Title = "Insert Project" };
+        if (dialog.ShowDialog() != true)
+            return;
+        int index = SelectedTasks.Count > 0 ? Project.IndexOf(SelectedTasks[0]) : Project.Tasks.Count;
+        TryEdit("Insert project", p => Engine.Interop.MasterProject.InsertSubproject(p, dialog.FileName, index));
+    }
+
+    private void SubprojectAction(string description, Action<Project, ProjectTask> action)
+    {
+        int id = SelectedSubproject!.Id;
+        TryEdit(description, p => action(p, p.GetRequiredTask(id)));
+    }
+
+    private void SaveSubproject()
+    {
+        var summary = SelectedSubproject!;
+        if (MessageBox.Show(Application.Current.MainWindow, $"Save the tasks under '{summary.Name}' back to {summary.SubprojectPath}?",
+                "Save Subproject", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            return;
+        try
+        {
+            Engine.Interop.MasterProject.SaveSubproject(Project, summary);
+            Status = $"Saved subproject {System.IO.Path.GetFileName(summary.SubprojectPath)}";
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+        {
+            ShowError($"Could not save the subproject: {ex.Message}");
+        }
+    }
+
+    private void ShareResources()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { Filter = ProjectFilesFilter, Title = "Share Resources: choose the resource pool file" };
+        if (dialog.ShowDialog() == true)
+            PoolAction("Share resources", p => Engine.Interop.ResourcePool.Share(p, dialog.FileName));
+    }
+
+    private void PoolAction(string description, Func<Project, int> action)
+    {
+        int added = 0;
+        if (TryEdit(description, p => added = action(p)))
+            Status = added == 0 ? "Resources updated from the pool" : $"Resources updated from the pool; {added} added";
+    }
+
+    private void UpdatePool()
+    {
+        try
+        {
+            Engine.Interop.ResourcePool.Update(Project);
+            Status = $"Resource pool {System.IO.Path.GetFileName(Project.ResourcePoolPath)} updated";
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or System.IO.InvalidDataException)
+        {
+            ShowError($"Could not update the resource pool: {ex.Message}");
+        }
+    }
     public static bool CanSplit(ProjectTask task) =>
         !task.IsSummary && task.DurationMinutes > 0 && task.Mode == TaskMode.AutoScheduled;
 

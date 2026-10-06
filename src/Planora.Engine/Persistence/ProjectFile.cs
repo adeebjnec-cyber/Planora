@@ -71,6 +71,7 @@ public static class ProjectFile
             FinishDate = project.FinishDate,
             ScheduleFromFinish = project.ScheduleFromFinish,
             StatusDate = project.StatusDate,
+            ResourcePoolPath = project.ResourcePoolPath,
             CalendarId = calendarIds[project.Calendar],
             BaseCalendarIds = project.Calendars.Select(c => calendarIds[c]).ToList(),
             Options = new OptionsDto
@@ -132,6 +133,7 @@ public static class ProjectFile
                 IsEstimated = t.IsEstimated,
                 IsMilestone = t.IsMilestone,
                 ShowOnTimeline = t.ShowOnTimeline,
+                SubprojectPath = t.SubprojectPath,
                 ConstraintType = t.ConstraintType,
                 ConstraintDate = t.ConstraintDate,
                 Deadline = t.Deadline,
@@ -260,6 +262,7 @@ public static class ProjectFile
             FinishDate = dto.FinishDate,
             ScheduleFromFinish = dto.ScheduleFromFinish,
             StatusDate = dto.StatusDate,
+            ResourcePoolPath = dto.ResourcePoolPath,
         };
         project.Calendars.Clear();
         if (calendars.Count > 0)
@@ -321,6 +324,7 @@ public static class ProjectFile
             task.IsEstimated = t.IsEstimated;
             task.IsMilestone = t.IsMilestone;
             task.ShowOnTimeline = t.ShowOnTimeline;
+            task.SubprojectPath = t.SubprojectPath;
             task.ConstraintType = t.ConstraintType;
             task.ConstraintDate = t.ConstraintDate;
             task.Deadline = t.Deadline;
@@ -441,6 +445,7 @@ public static class ProjectFile
         public DateTime FinishDate { get; set; }
         public bool ScheduleFromFinish { get; set; }
         public DateTime? StatusDate { get; set; }
+        public string? ResourcePoolPath { get; set; }
         public int CalendarId { get; set; }
         public List<int> BaseCalendarIds { get; set; } = new();
         public OptionsDto? Options { get; set; }
@@ -570,6 +575,7 @@ public static class ProjectFile
         public bool IsEstimated { get; set; }
         public bool IsMilestone { get; set; }
         public bool ShowOnTimeline { get; set; }
+        public string? SubprojectPath { get; set; }
         public ConstraintType ConstraintType { get; set; }
         public DateTime? ConstraintDate { get; set; }
         public DateTime? Deadline { get; set; }

@@ -42,6 +42,11 @@ public sealed class ProjectTask
 
     public bool IsMilestone { get; set; }
 
+    /// <summary>For an inserted project (master/subproject): the file its subtasks come from.</summary>
+    public string? SubprojectPath { get; set; }
+
+    public bool IsSubproject => !string.IsNullOrEmpty(SubprojectPath);
+
     /// <summary>Show this task on the Timeline view.</summary>
     public bool ShowOnTimeline { get; set; }
 

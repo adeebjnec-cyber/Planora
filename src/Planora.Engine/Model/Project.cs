@@ -35,6 +35,9 @@ public sealed class Project
 
     public DateTime? StatusDate { get; set; }
 
+    /// <summary>A shared resource pool file this project takes its resources from, if any.</summary>
+    public string? ResourcePoolPath { get; set; }
+
     /// <summary>The project calendar, used by tasks that have no calendar of their own.</summary>
     public WorkingCalendar Calendar { get; set; }
 

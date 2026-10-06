@@ -118,6 +118,7 @@ public sealed class TaskRowViewModel : ObservableObject
             if (Task is null)
                 return "";
             var parts = new List<string>();
+            if (Task.IsSubproject) parts.Add("⧉");
             if (IsRecurring) parts.Add("↻");
             if (HasConstraint) parts.Add("▦");
             if (MissesDeadline) parts.Add("!");
