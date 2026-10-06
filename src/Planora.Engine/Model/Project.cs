@@ -394,8 +394,7 @@ public sealed class Project
     /// <summary>
     /// Sets the work an assignment does between two moments (editing a cell of the usage views). The
     /// assignment becomes contoured: work elsewhere is kept, its total and end follow the edit, and the
-    /// task's dates follow the assignment. The project must have been scheduled (so the assignment has
-    /// dates), and the task must be one whose dates come from its resources.
+    /// task's dates follow the assignment. The project must have been scheduled (so the assignment has dates).
     /// </summary>
     public void SetTimephasedWork(Assignment assignment, DateTime from, DateTime to, long workMinutes)
     {
@@ -404,15 +403,27 @@ public sealed class Project
         if (workMinutes < 0)
             throw new ArgumentOutOfRangeException(nameof(workMinutes), "Work cannot be negative.");
         var task = assignment.Task;
-        if (task.Mode != TaskMode.AutoScheduled || task.ActualStart is not null || task.Splits.Count > 0)
-            throw new InvalidOperationException("Work can be edited by period only on auto-scheduled tasks that have not started and are not split.");
         var cal = assignment.EffectiveCalendar
             ?? throw new InvalidOperationException("Schedule the project before editing work by period.");
         if (to <= assignment.Start)
             throw new InvalidOperationException("Work cannot be added before the assignment starts; move the task instead.");
 
-        long start = cal.WorkingMinutesBetween(assignment.Start, from < assignment.Start ? assignment.Start : from);
-        long end = cal.WorkingMinutesBetween(assignment.Start, to);
+        // Tasks whose dates come from their resources can grow when work is added after their finish;
+        // other tasks (manual, split, under way) keep their dates, so work is reshaped within them.
+        bool resourceDriven = task.Mode == TaskMode.AutoScheduled && task.ActualStart is null && task.Splits.Count == 0;
+        long start, end;
+        if (resourceDriven)
+        {
+            start = cal.WorkingMinutesBetween(assignment.Start, from < assignment.Start ? assignment.Start : from);
+            end = cal.WorkingMinutesBetween(assignment.Start, to);
+        }
+        else
+        {
+            if (from >= assignment.Finish)
+                throw new InvalidOperationException("That period is after the task finishes. Change the task's dates or duration first.");
+            start = (long)Math.Round(Scheduling.Timephased.ActiveMinutes(assignment, cal, from));
+            end = (long)Math.Round(Scheduling.Timephased.ActiveMinutes(assignment, cal, to < assignment.Finish ? to : assignment.Finish));
+        }
         if (end <= start)
             throw new InvalidOperationException("There is no working time for this resource in that period.");
 
@@ -429,7 +440,8 @@ public sealed class Project
         }
         result.Add(new WorkPiece(start, end - start, workMinutes));
         assignment.SetPieces(result);
-        UpdateDurationFromAssignments(task);
+        if (resourceDriven)
+            UpdateDurationFromAssignments(task);
     }
 
     /// <summary>A standard contour as pieces: ten equal parts of the span at the contour's percentages.</summary>

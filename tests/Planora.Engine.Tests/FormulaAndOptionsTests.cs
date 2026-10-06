@@ -49,6 +49,45 @@ public class FormulaAndOptionsTests
     }
 
     [Theory]
+    [InlineData("2 ^ 3", 8.0)]
+    [InlineData("2 ^ 3 ^ 2", 512.0)]
+    [InlineData("-2 ^ 2", -4.0)]
+    [InlineData("17 Mod 5", 2.0)]
+    [InlineData("17 \\ 5", 3.0)]
+    [InlineData("Sgn(-3)", -1.0)]
+    [InlineData("Sqr(16)", 4.0)]
+    [InlineData("Fix(-2.7)", -2.0)]
+    [InlineData("CInt(2.5)", 2.0)]
+    [InlineData("InStr(\"planora\", \"no\")", 4.0)]
+    [InlineData("InStr(5, \"banana\", \"a\")", 6.0)]
+    [InlineData("Choose(2, 10, 20, 30)", 20.0)]
+    [InlineData("Weekday(DateSerial(2026, 1, 5))", 2.0)]
+    [InlineData("DateDiff(\"m\", DateSerial(2026, 1, 31), DateSerial(2026, 3, 1))", 2.0)]
+    [InlineData("DatePart(\"q\", DateSerial(2026, 8, 1))", 3.0)]
+    [InlineData("ProjDurValue(\"2d\")", 960.0)]
+    public void MoreNumericFunctions(string formula, double expected)
+    {
+        var (p, t) = Sample();
+        Assert.Equal(expected, (double)Eval(p, t, formula)!, 6);
+    }
+
+    [Fact]
+    public void MoreTextAndDateFunctions()
+    {
+        var (p, t) = Sample();
+        Assert.Equal("Big", Eval(p, t, "Switch([Duration] > 2400, \"Huge\", [Duration] > 960, \"Big\", True, \"Small\")"));
+        Assert.Equal("b-a", Eval(p, t, "Replace(\"b+a\", \"+\", \"-\")"));
+        Assert.Equal("cba", Eval(p, t, "StrReverse(\"abc\")"));
+        Assert.Equal("xxx", Eval(p, t, "String(3, \"x\")"));
+        Assert.Equal(new DateTime(2026, 4, 30), Eval(p, t, "DateAdd(\"m\", 3, DateSerial(2026, 1, 30))"));
+        Assert.Equal(new DateTime(2026, 1, 7, 17, 0, 0), Eval(p, t, "ProjDateAdd([Start], 3 * 480)")); // finish-style, like task finishes
+        Assert.Equal("3 days", Eval(p, t, "ProjDurConv([Duration], pjDays)"));
+        Assert.Equal("24 hrs", Eval(p, t, "ProjDurConv([Duration], pjHours)"));
+        Assert.Equal(true, Eval(p, t, "IsNumeric(\"12.5\") And Not IsNumeric(\"abc\")"));
+        Assert.Equal("Yes", Eval(p, t, "Format(1, \"Yes/No\")"));
+    }
+
+    [Theory]
     [InlineData("1 +")]
     [InlineData("Foo(1)")]
     [InlineData("\"open")]

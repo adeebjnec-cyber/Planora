@@ -107,7 +107,8 @@ public static class Timephased
         }
     }
 
-    private static double ActiveMinutes(Assignment assignment, WorkingCalendar cal, DateTime moment)
+    /// <summary>Working minutes of the assignment's own working periods (split gaps excluded) before a moment.</summary>
+    internal static double ActiveMinutes(Assignment assignment, WorkingCalendar cal, DateTime moment)
     {
         double minutes = 0;
         foreach (var segment in assignment.Segments)

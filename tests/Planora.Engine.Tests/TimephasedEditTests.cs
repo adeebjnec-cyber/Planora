@@ -148,6 +148,45 @@ public class TimephasedEditTests
     }
 
     [Fact]
+    public void ManualTasksKeepTheirDatesWhenReshaped()
+    {
+        var p = new Project("Test", D(5, 8));
+        var task = p.AddTask("Manual", 3 * Day);
+        var a = p.Assign(task, p.AddResource("R"));
+        task.Mode = TaskMode.ManuallyScheduled;
+        task.ManualStart = D(5, 8);
+        task.ManualFinish = D(7, 17);
+        ProjectScheduler.Schedule(p);
+
+        p.SetTimephasedWork(a, D(6), D(7), 2 * 60);
+        ProjectScheduler.Schedule(p);
+
+        Assert.Equal((D(5, 8), D(7, 17)), (task.Start, task.Finish));
+        Assert.Equal(3 * Day, task.DurationMinutes);
+        Assert.Equal(2, Hours(a, 6), 3);
+        Assert.Equal(8, Hours(a, 7), 3);
+        Assert.Throws<InvalidOperationException>(() => p.SetTimephasedWork(a, D(8), D(9), 60)); // after the finish
+    }
+
+    [Fact]
+    public void SplitTasksCanBeReshaped()
+    {
+        var p = new Project("Test", D(5, 8));
+        var task = p.AddTask("Split", 2 * Day);
+        var a = p.Assign(task, p.AddResource("R"));
+        task.Split(Day, Day); // works Mon, pauses Tue, works Wed
+        ProjectScheduler.Schedule(p);
+
+        p.SetTimephasedWork(a, D(7), D(8), 3 * 60);
+        ProjectScheduler.Schedule(p);
+
+        Assert.Equal(8, Hours(a, 5), 3);
+        Assert.Equal(0, Hours(a, 6), 3);
+        Assert.Equal(3, Hours(a, 7), 3);
+        Assert.Equal(D(7, 17), task.Finish);
+    }
+
+    [Fact]
     public void InvalidEditsAreRejected()
     {
         var (p, task, a) = TwoDayTask();
