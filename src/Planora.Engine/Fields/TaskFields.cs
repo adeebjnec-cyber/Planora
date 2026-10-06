@@ -81,6 +81,8 @@ public static class TaskFields
         F("RemainingDuration", "Remaining Duration", FieldType.Duration, (_, t) => t.RemainingDurationMinutes),
         F("Work", "Work", FieldType.Work, (_, t) => t.WorkMinutes),
         F("ActualWork", "Actual Work", FieldType.Work, (_, t) => t.ActualWorkMinutes),
+        F("OvertimeWork", "Overtime Work", FieldType.Work, (p, t) => p.Subtree(t).SelectMany(x => x.Assignments).Sum(a => a.OvertimeWorkMinutes)),
+        F("RegularWork", "Regular Work", FieldType.Work, (p, t) => t.WorkMinutes - p.Subtree(t).SelectMany(x => x.Assignments).Sum(a => a.OvertimeWorkMinutes)),
         F("RemainingWork", "Remaining Work", FieldType.Work, (_, t) => t.RemainingWorkMinutes),
         F("Cost", "Cost", FieldType.Cost, (_, t) => t.Cost),
         F("FixedCost", "Fixed Cost", FieldType.Cost, (_, t) => t.FixedCost),

@@ -156,12 +156,27 @@ public sealed class Assignment
     /// <summary>Whether this assignment does work over time (and so drives the task's duration).</summary>
     public bool IsWork => Resource.Type == ResourceType.Work;
 
-    /// <summary>Working minutes this assignment needs to complete its work at its units and contour.</summary>
+    /// <summary>
+    /// Part of <see cref="WorkMinutes"/> done as overtime, outside the resource's working time. It does not
+    /// take calendar time, so it shortens the assignment, and it is costed at the overtime rate.
+    /// </summary>
+    public long OvertimeWorkMinutes
+    {
+        get => Math.Min(_overtimeMinutes, WorkMinutes);
+        set => _overtimeMinutes = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Overtime cannot be negative.");
+    }
+
+    private long _overtimeMinutes;
+
+    /// <summary>Work done within working time.</summary>
+    public long RegularWorkMinutes => WorkMinutes - OvertimeWorkMinutes;
+
+    /// <summary>Working minutes this assignment needs to complete its regular work at its units and contour.</summary>
     public long SpanMinutes => IsContoured
         ? Math.Max(1, _pieces![^1].End)
         : Units <= 0
         ? Task.DurationMinutes
-        : (long)Math.Round(WorkMinutes / (Units * WorkContours.AverageFactor(Contour)));
+        : (long)Math.Round(RegularWorkMinutes / (Units * WorkContours.AverageFactor(Contour)));
 
     public override string ToString() => $"{Resource.Name} on {Task.Name}";
 }

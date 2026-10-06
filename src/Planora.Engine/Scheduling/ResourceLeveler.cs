@@ -19,11 +19,20 @@ public sealed class LevelingOptions
 {
     public LevelingOrder Order { get; set; } = LevelingOrder.Standard;
 
+    /// <summary>How over-allocation is judged; Microsoft Project levels day by day by default.</summary>
+    public OverallocationBasis Basis { get; set; } = OverallocationBasis.DayByDay;
+
     /// <summary>Only delay tasks if the project finish date does not move.</summary>
     public bool LevelWithinAvailableSlack { get; set; }
 
-    /// <summary>Remove earlier leveling delays before leveling again.</summary>
+    /// <summary>Remove earlier leveling delays (and leveling splits) before leveling again.</summary>
     public bool ClearLevelingValuesFirst { get; set; } = true;
+
+    /// <summary>
+    /// Allow leveling to interrupt a task that is already under way when the conflict starts, pausing its
+    /// remaining work until the resource is free, instead of delaying the whole task.
+    /// </summary>
+    public bool CanSplitRemainingWork { get; set; }
 
     /// <summary>Only resolve over-allocations that overlap this range (null = whole project).</summary>
     public DateTime? From { get; set; }
@@ -32,14 +41,15 @@ public sealed class LevelingOptions
     public int MaxIterations { get; set; } = 5000;
 }
 
-/// <param name="DelayedTasks">Tasks that received a leveling delay.</param>
+/// <param name="DelayedTasks">Tasks that received a leveling delay or split.</param>
 /// <param name="Unresolved">Over-allocations leveling could not remove (e.g. a single task over-using a resource).</param>
 public sealed record LevelingResult(IReadOnlyList<ProjectTask> DelayedTasks, IReadOnlyList<Overallocation> Unresolved);
 
 /// <summary>
-/// Resolves resource over-allocations by delaying tasks (setting <see cref="ProjectTask.LevelingDelayMinutes"/>).
-/// Repeatedly takes the earliest over-allocation, keeps the highest-ranked tasks, and delays the
-/// lowest-ranked movable task until the resource is free, then reschedules.
+/// Resolves resource over-allocations by delaying tasks (<see cref="ProjectTask.LevelingDelayMinutes"/>)
+/// or, when allowed, splitting their remaining work. Repeatedly takes the earliest over-allocation, keeps
+/// the highest-ranked tasks, and moves the lowest-ranked movable task's work until the resource is free,
+/// then reschedules.
 /// </summary>
 public static class ResourceLeveler
 {
@@ -49,7 +59,10 @@ public static class ResourceLeveler
         if (options.ClearLevelingValuesFirst)
         {
             foreach (var task in project.Tasks)
+            {
                 task.LevelingDelayMinutes = 0;
+                task.RemoveLevelingSplits();
+            }
         }
         ProjectScheduler.Schedule(project);
 
@@ -58,13 +71,13 @@ public static class ResourceLeveler
 
         for (int iteration = 0; iteration < options.MaxIterations; iteration++)
         {
-            var conflict = InRange(ResourceAnalysis.FindOverallocations(project), options)
+            var conflict = InRange(ResourceAnalysis.FindOverallocations(project, options.Basis), options)
                 .FirstOrDefault(o => !skipped.Contains((o.Resource, o.From)));
             if (conflict is null)
                 break;
 
             var competing = ResourceAnalysis.ScheduledAssignments(project, conflict.Resource)
-                .Where(a => a.IsWork && a.Units > 0 && a.Start < conflict.To && a.Finish > conflict.From)
+                .Where(a => a.IsWork && a.WorkMinutes > 0 && a.Start < conflict.To && a.Finish > conflict.From)
                 .ToList();
             var victim = competing.Count < 2
                 ? null
@@ -75,35 +88,85 @@ public static class ResourceLeveler
                 continue;
             }
 
-            // Assignment edges are breakpoints, so every competitor covers the whole conflict period;
-            // the earliest of their finishes is when the resource next has room.
-            var resumeAt = competing.Where(a => a != victim).Min(a => a.Finish);
-            long delay = (long)Math.Ceiling((resumeAt - victim.Start).TotalMinutes);
+            // The resource next has room when another competing assignment finishes (after the victim
+            // starts), or at the end of the over-allocated period.
+            var finishes = competing.Where(a => a != victim && a.Finish > victim.Start).Select(a => a.Finish).ToList();
+            var resumeAt = finishes.Count > 0 ? finishes.Min() : conflict.To;
+            var task = victim.Task;
             var finishBefore = project.Finish;
+            var splitsBefore = task.Splits.ToList();
+            long delayBefore = task.LevelingDelayMinutes;
 
-            victim.Task.LevelingDelayMinutes += delay;
+            if (!Move(project, task, conflict.From, resumeAt, options))
+            {
+                skipped.Add((conflict.Resource, conflict.From));
+                continue;
+            }
             ProjectScheduler.Schedule(project);
 
             if (options.LevelWithinAvailableSlack && project.Finish > finishBefore)
             {
-                victim.Task.LevelingDelayMinutes -= delay;
+                task.LevelingDelayMinutes = delayBefore;
+                task.RestoreSplits(splitsBefore);
                 ProjectScheduler.Schedule(project);
                 skipped.Add((conflict.Resource, conflict.From));
                 continue;
             }
 
-            if (!delayed.Contains(victim.Task))
-                delayed.Add(victim.Task);
+            if (!delayed.Contains(task))
+                delayed.Add(task);
         }
 
-        return new LevelingResult(delayed, InRange(ResourceAnalysis.FindOverallocations(project), options).ToList());
+        return new LevelingResult(delayed, InRange(ResourceAnalysis.FindOverallocations(project, options.Basis), options).ToList());
     }
 
-    /// <summary>Removes leveling delays from the given tasks (or all tasks) and reschedules.</summary>
+    /// <summary>
+    /// Moves a task's work out of the way until <paramref name="resumeAt"/>: splits it at the conflict
+    /// when it is already under way there (and splitting is allowed), otherwise delays its start.
+    /// Returns false if nothing could be moved.
+    /// </summary>
+    private static bool Move(Project project, ProjectTask task, DateTime conflictFrom, DateTime resumeAt, LevelingOptions options)
+    {
+        var cal = task.Calendar ?? project.Calendar;
+        if (options.CanSplitRemainingWork && task.Start < conflictFrom && task.DurationMinutes > 0 && !task.Assignments.Any(a => a.IsContoured))
+        {
+            long workBefore = WorkBefore(task, cal, conflictFrom);
+            long gap = cal.WorkingMinutesBetween(conflictFrom, resumeAt);
+            if (workBefore > 0 && workBefore < task.DurationMinutes && gap > 0)
+            {
+                task.Split(workBefore, gap, fromLeveling: true);
+                return true;
+            }
+        }
+
+        long delay = (long)Math.Ceiling((resumeAt - task.Start).TotalMinutes);
+        if (delay <= 0)
+            return false;
+        task.LevelingDelayMinutes += delay;
+        return true;
+    }
+
+    /// <summary>Working minutes of the task's own work (split gaps excluded) before a moment.</summary>
+    private static long WorkBefore(ProjectTask task, Calendars.WorkingCalendar cal, DateTime moment)
+    {
+        double minutes = 0;
+        foreach (var segment in task.Segments)
+        {
+            if (moment <= segment.Start)
+                break;
+            minutes += cal.WorkingTimeBetween(segment.Start, moment < segment.Finish ? moment : segment.Finish).TotalMinutes;
+        }
+        return (long)Math.Round(minutes);
+    }
+
+    /// <summary>Removes leveling delays and leveling splits from the given tasks (or all tasks) and reschedules.</summary>
     public static void ClearLeveling(Project project, IEnumerable<ProjectTask>? tasks = null)
     {
         foreach (var task in tasks ?? project.Tasks)
+        {
             task.LevelingDelayMinutes = 0;
+            task.RemoveLevelingSplits();
+        }
         ProjectScheduler.Schedule(project);
     }
 

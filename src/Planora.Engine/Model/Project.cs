@@ -356,11 +356,12 @@ public sealed class Project
             if (task.Type == TaskType.FixedWork)
             {
                 if (durationMinutes > 0)
-                    a.Units = a.WorkMinutes / (durationMinutes * WorkContours.AverageFactor(a.Contour));
+                    a.Units = a.RegularWorkMinutes / (durationMinutes * WorkContours.AverageFactor(a.Contour));
             }
             else
             {
-                a.WorkMinutes = WorkFor(a, durationMinutes);
+                // Overtime is extra to the work that fits in the duration.
+                a.WorkMinutes = WorkFor(a, durationMinutes) + a.OvertimeWorkMinutes;
             }
         }
     }

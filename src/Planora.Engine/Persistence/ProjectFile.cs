@@ -117,6 +117,7 @@ public static class ProjectFile
                 AccrueAt = r.AccrueAt,
                 IsBudget = r.IsBudget,
                 RateTables = r.CostRateTables.Select(t => t.ToList()).ToList(),
+                Availability = r.Availability.Count == 0 ? null : r.Availability.ToList(),
             }).ToList(),
             Tasks = project.Tasks.Select(t => new TaskDto
             {
@@ -169,6 +170,7 @@ public static class ProjectFile
                     Contour = a.Contour,
                     CostRateTable = a.CostRateTable,
                     DelayMinutes = a.DelayMinutes,
+                    OvertimeWorkMinutes = a.OvertimeWorkMinutes,
                     Pieces = a.IsContoured ? a.Pieces.ToList() : null,
                     Baselines = Sparse(a.Baselines),
                 }).ToList(),
@@ -297,6 +299,8 @@ public static class ProjectFile
             resource.MaxUnits = r.MaxUnits;
             resource.AccrueAt = r.AccrueAt;
             resource.IsBudget = r.IsBudget;
+            if (r.Availability is not null)
+                resource.Availability.AddRange(r.Availability);
             for (int i = 0; i < Resource.RateTableCount && i < r.RateTables.Count; i++)
             {
                 if (r.RateTables[i].Count == 0)
@@ -335,7 +339,7 @@ public static class ProjectFile
                 });
             }
             foreach (var s in t.Splits)
-                task.Split(s.AfterWorkMinutes, s.GapMinutes);
+                task.Split(s.AfterWorkMinutes, s.GapMinutes, s.FromLeveling);
             task.Recurrence = t.Recurrence;
             task.Type = t.Type;
             task.IsEffortDriven = t.IsEffortDriven;
@@ -364,6 +368,7 @@ public static class ProjectFile
                 assignment.Contour = a.Contour;
                 assignment.CostRateTable = a.CostRateTable;
                 assignment.DelayMinutes = a.DelayMinutes;
+                assignment.OvertimeWorkMinutes = a.OvertimeWorkMinutes;
                 if (a.Pieces is { Count: > 0 })
                     assignment.SetPieces(a.Pieces);
                 Fill(assignment.Baselines, a.Baselines);
@@ -549,6 +554,7 @@ public static class ProjectFile
         public CostAccrual AccrueAt { get; set; } = CostAccrual.Prorated;
         public bool IsBudget { get; set; }
         public List<List<CostRate>> RateTables { get; set; } = new();
+        public List<AvailabilityPeriod>? Availability { get; set; }
     }
 
     private sealed class TaskDto
@@ -607,6 +613,7 @@ public static class ProjectFile
         public WorkContour Contour { get; set; }
         public int CostRateTable { get; set; }
         public long DelayMinutes { get; set; }
+        public long OvertimeWorkMinutes { get; set; }
         public List<WorkPiece>? Pieces { get; set; }
         public Dictionary<int, BaselineValues>? Baselines { get; set; }
     }

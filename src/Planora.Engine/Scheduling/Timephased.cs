@@ -58,14 +58,18 @@ public static class Timephased
     public static double FractionBetween(Assignment assignment, DateTime from, DateTime to) =>
         to <= from ? 0 : CumulativeFraction(assignment, to) - CumulativeFraction(assignment, from);
 
-    /// <summary>Average units the assignment works at between two moments (counting only its working time).</summary>
+    /// <summary>Average units the assignment works at between two moments (regular work over its working time).</summary>
     public static double UnitsBetween(Assignment assignment, DateTime from, DateTime to)
     {
         var cal = assignment.EffectiveCalendar;
         if (cal is null || !assignment.IsWork)
             return 0;
         double minutes = cal.WorkingTimeBetween(from, to).TotalMinutes;
-        return minutes <= 0 ? 0 : WorkBetween(assignment, from, to) / minutes;
+        if (minutes <= 0 || assignment.WorkMinutes <= 0)
+            return 0;
+        // Overtime is outside working time, so it does not count against available units.
+        double regularShare = (double)assignment.RegularWorkMinutes / assignment.WorkMinutes;
+        return WorkBetween(assignment, from, to) * regularShare / minutes;
     }
 
     /// <summary>Work in each period between consecutive <paramref name="boundaries"/>.</summary>

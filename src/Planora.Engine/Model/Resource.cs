@@ -26,6 +26,9 @@ public enum CostAccrual
 /// One row of a cost rate table, effective from a date until the next row. Rates for work resources
 /// are per hour; for material resources they are per unit of material.
 /// </summary>
+/// <summary>Units available from <see cref="From"/> until <see cref="To"/> (open-ended when null). 1.0 = 100%.</summary>
+public readonly record struct AvailabilityPeriod(DateTime From, DateTime? To, double Units);
+
 public readonly record struct CostRate(DateTime EffectiveFrom, decimal StandardRate, decimal OvertimeRate = 0, decimal CostPerUse = 0);
 
 public sealed class Resource
@@ -62,6 +65,23 @@ public sealed class Resource
     {
         get => _maxUnits;
         set => _maxUnits = value >= 0 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Max units cannot be negative.");
+    }
+
+    /// <summary>
+    /// Availability that varies over time (Microsoft Project's Resource Availability table): within a
+    /// period, the period's units replace <see cref="MaxUnits"/>. Periods should not overlap.
+    /// </summary>
+    public List<AvailabilityPeriod> Availability { get; } = new();
+
+    /// <summary>Maximum units available at a moment, from the availability table or <see cref="MaxUnits"/>.</summary>
+    public double MaxUnitsAt(DateTime moment)
+    {
+        foreach (var period in Availability)
+        {
+            if (moment >= period.From && (period.To is null || moment < period.To))
+                return period.Units;
+        }
+        return MaxUnits;
     }
 
     /// <summary>The resource's own working calendar; null means the project calendar.</summary>

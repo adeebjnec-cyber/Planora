@@ -271,6 +271,13 @@ public static class MspdiFile
             }
         }
         resource.Add(rates);
+        if (r.Availability.Count > 0)
+        {
+            resource.Add(new XElement(Ns + "AvailabilityPeriods", r.Availability.Select(p => new XElement(Ns + "AvailabilityPeriod",
+                E("AvailableFrom", p.From),
+                E("AvailableTo", p.To ?? new DateTime(2049, 12, 31, 23, 59, 0)),
+                E("AvailableUnits", p.Units)))));
+        }
         return resource;
     }
 
@@ -282,6 +289,7 @@ public static class MspdiFile
             E("ResourceUID", a.Resource.Id),
             E("Units", a.Units),
             E("Work", Duration(a.WorkMinutes)),
+            E("OvertimeWork", Duration(a.OvertimeWorkMinutes)),
             E("ActualWork", Duration(a.ActualWorkMinutes)),
             E("RemainingWork", Duration(a.RemainingWorkMinutes)),
             E("Cost", Cents(a.Resource.Type == ResourceType.Cost ? a.CostAmount : a.Cost)),
@@ -409,6 +417,13 @@ public static class MspdiFile
             resource.OvertimeRate = Money(r, "OvertimeRate") ?? 0;
             resource.CostPerUse = Cents(r, "CostPerUse") ?? 0;
 
+            foreach (var period in Children(r, "AvailabilityPeriods", "AvailabilityPeriod"))
+            {
+                if (Date(period, "AvailableFrom") is not { } from)
+                    continue;
+                var to = Date(period, "AvailableTo");
+                resource.Availability.Add(new AvailabilityPeriod(from, to is { Year: >= 2049 } ? null : to, Double(period, "AvailableUnits") ?? resource.MaxUnits));
+            }
             foreach (var group in Children(r, "Rates", "Rate").GroupBy(x => Int(x, "RateTable") ?? 0))
             {
                 if (group.Key is < 0 or >= Resource.RateTableCount)
@@ -523,6 +538,7 @@ public static class MspdiFile
                 continue;
             var assignment = Project.RestoreAssignment(task, resource, Double(a, "Units") ?? 1);
             assignment.WorkMinutes = Math.Max(0, Minutes(a, "Work") ?? 0);
+            assignment.OvertimeWorkMinutes = Math.Max(0, Minutes(a, "OvertimeWork") ?? 0);
             // Code 8 (contoured) carries time-phased data Planora does not read; it is treated as flat.
             assignment.Contour = Int(a, "WorkContour") is { } contour and >= 0 and <= 7 ? (WorkContour)contour : WorkContour.Flat;
             assignment.CostRateTable = Math.Clamp(Int(a, "CostRateTable") ?? 0, 0, Resource.RateTableCount - 1);

@@ -68,7 +68,7 @@ public sealed class ProjectTask
     /// Pauses the task for <paramref name="gapMinutes"/> of working time after <paramref name="afterWorkMinutes"/>
     /// of its work. A split at the same point as an existing one lengthens that gap.
     /// </summary>
-    public void Split(long afterWorkMinutes, long gapMinutes)
+    public void Split(long afterWorkMinutes, long gapMinutes, bool fromLeveling = false)
     {
         if (afterWorkMinutes <= 0 || afterWorkMinutes >= DurationMinutes)
             throw new ArgumentOutOfRangeException(nameof(afterWorkMinutes), "A split must fall inside the task's duration.");
@@ -79,11 +79,20 @@ public sealed class ProjectTask
         if (existing >= 0)
             _splits[existing] = _splits[existing] with { GapMinutes = _splits[existing].GapMinutes + gapMinutes };
         else
-            _splits.Add(new TaskSplit(afterWorkMinutes, gapMinutes));
+            _splits.Add(new TaskSplit(afterWorkMinutes, gapMinutes, fromLeveling));
         _splits.Sort((a, b) => a.AfterWorkMinutes.CompareTo(b.AfterWorkMinutes));
     }
 
     public void RemoveSplits() => _splits.Clear();
+
+    /// <summary>Removes the splits made by resource leveling, keeping the user's own.</summary>
+    public void RemoveLevelingSplits() => _splits.RemoveAll(s => s.FromLeveling);
+
+    internal void RestoreSplits(IEnumerable<TaskSplit> splits)
+    {
+        _splits.Clear();
+        _splits.AddRange(splits);
+    }
 
     /// <summary>Working time from start to finish, including split gaps.</summary>
     internal long SpanMinutes => DurationMinutes + _splits.Where(s => s.AfterWorkMinutes < DurationMinutes).Sum(s => s.GapMinutes);

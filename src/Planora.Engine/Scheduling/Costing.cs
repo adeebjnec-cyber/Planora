@@ -45,7 +45,10 @@ internal static class Costing
     private static decimal WorkCost(Assignment a, int table)
     {
         if (a.Finish <= a.Start)
-            return Math.Round((decimal)(a.WorkMinutes / 60.0) * a.Resource.RateAt(table, a.Start).StandardRate, 2);
+        {
+            var rate = a.Resource.RateAt(table, a.Start);
+            return Math.Round((decimal)(a.RegularWorkMinutes / 60.0) * rate.StandardRate + (decimal)(a.OvertimeWorkMinutes / 60.0) * rate.OvertimeRate, 2);
+        }
 
         var rates = a.Resource.CostRateTables[table];
         decimal cost = 0;
@@ -53,8 +56,12 @@ internal static class Costing
         {
             var from = rates[i].EffectiveFrom > a.Start ? rates[i].EffectiveFrom : a.Start;
             var to = i + 1 < rates.Count && rates[i + 1].EffectiveFrom < a.Finish ? rates[i + 1].EffectiveFrom : a.Finish;
-            if (to > from)
-                cost += (decimal)(Timephased.WorkBetween(a, from, to) / 60.0) * rates[i].StandardRate;
+            if (to <= from)
+                continue;
+            // Overtime is spread like the rest of the work and costed at the overtime rate.
+            double hours = Timephased.WorkBetween(a, from, to) / 60.0;
+            double overtimeShare = a.WorkMinutes > 0 ? (double)a.OvertimeWorkMinutes / a.WorkMinutes : 0;
+            cost += (decimal)(hours * (1 - overtimeShare)) * rates[i].StandardRate + (decimal)(hours * overtimeShare) * rates[i].OvertimeRate;
         }
         return Math.Round(cost, 2);
     }
