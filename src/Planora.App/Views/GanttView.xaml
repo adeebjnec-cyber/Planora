@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:Planora.App.Controls"
              xmlns:vm="clr-namespace:Planora.App.ViewModels">
-    <Grid>
+    <Grid x:Name="Layout">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="5*" MinWidth="200" />
             <ColumnDefinition Width="5" />
@@ -81,9 +81,9 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{StaticResource ChromeBorder}" />
+        <GridSplitter x:Name="Splitter" Grid.Column="1" HorizontalAlignment="Stretch" Background="{StaticResource ChromeBorder}" />
 
-        <Grid Grid.Column="2">
+        <Grid x:Name="ChartArea" Grid.Column="2">
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition Height="Auto" />

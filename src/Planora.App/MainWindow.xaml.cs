@@ -52,6 +52,10 @@ public partial class MainWindow : Window
         ViewKind.Calendar => new DiagramView(new CalendarCanvas(), scroll: false),
         ViewKind.TaskBoard => new DiagramView(new TaskBoard()),
         ViewKind.Timeline => new DiagramView(new TimelineCanvas(), scroll: false),
+        ViewKind.TaskSheet => new GanttView { ShowChart = false },
+        ViewKind.ResourceGraph => new TimelineView(new ResourceGraph()),
+        ViewKind.TeamPlanner => new TimelineView(new TeamPlanner()),
+        ViewKind.RelationshipDiagram => new DiagramView(new RelationshipDiagram()),
         _ => new TextBlock
         {
             Text = "This view is being built.",

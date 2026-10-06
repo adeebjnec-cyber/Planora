@@ -13,7 +13,7 @@ public partial class App : Application
         var window = new MainWindow();
         MainWindow = window;
 
-        // Developer aid: "--screenshot out.png [--view Kind] [--dialog Name] [file]" renders the window
+        // Developer aid: "--screenshot out.png [--view Kind] [--dialog Name] [--select row] [--details 1] [file]" renders the window
         // (or a dialog) to an image and exits.
         var options = ParseOptions(e.Args, out var positional);
 
@@ -79,6 +79,10 @@ public partial class App : Application
                 window.ViewModel.ShowProgressLines = true;
             if (options.TryGetValue("--group", out var group))
                 window.ViewModel.CurrentGroupName = group;
+            if (options.TryGetValue("--select", out var select) && int.TryParse(select, out var row) && row >= 1 && row <= window.ViewModel.Project.Tasks.Count)
+                window.ViewModel.SelectTask(window.ViewModel.Project.Tasks[row - 1]);
+            if (options.ContainsKey("--details"))
+                window.ViewModel.ShowTaskForm = true;
             window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
             {
                 if (options.TryGetValue("--dialog", out var dialogName))

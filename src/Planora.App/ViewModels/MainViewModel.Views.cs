@@ -17,6 +17,10 @@ public enum ViewKind
     TaskUsage,
     ResourceSheet,
     ResourceUsage,
+    TaskSheet,
+    ResourceGraph,
+    TeamPlanner,
+    RelationshipDiagram,
 }
 
 /// <summary>An entry in the view bar.</summary>
@@ -38,7 +42,20 @@ public sealed partial class MainViewModel
         new ViewOption(ViewKind.TaskUsage, "Task Usage", ""),
         new ViewOption(ViewKind.ResourceSheet, "Resource Sheet", ""),
         new ViewOption(ViewKind.ResourceUsage, "Resource Usage", ""),
+        new ViewOption(ViewKind.TaskSheet, "Task Sheet", ""),
+        new ViewOption(ViewKind.ResourceGraph, "Resource Graph", ""),
+        new ViewOption(ViewKind.TeamPlanner, "Team Planner", ""),
+        new ViewOption(ViewKind.RelationshipDiagram, "Relationship Diagram", ""),
     };
+
+    private bool _showTaskForm;
+
+    /// <summary>View > Details: the Task Form under the current view.</summary>
+    public bool ShowTaskForm
+    {
+        get => _showTaskForm;
+        set => SetProperty(ref _showTaskForm, value);
+    }
 
     public ViewKind CurrentView
     {

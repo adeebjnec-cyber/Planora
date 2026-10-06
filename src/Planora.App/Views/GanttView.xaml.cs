@@ -14,6 +14,19 @@ public partial class GanttView : UserControl
     private ScrollViewer? _sheetScroller;
     private MainViewModel? _viewModel;
 
+    /// <summary>False for the Task Sheet view: the task table alone, without the chart.</summary>
+    public bool ShowChart
+    {
+        get => ChartArea.Visibility == Visibility.Visible;
+        set
+        {
+            ChartArea.Visibility = Splitter.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+            Layout.ColumnDefinitions[1].Width = new GridLength(value ? 5 : 0);
+            Layout.ColumnDefinitions[2].Width = value ? new GridLength(6, GridUnitType.Star) : new GridLength(0);
+            Layout.ColumnDefinitions[2].MinWidth = value ? 200 : 0;
+        }
+    }
+
     public GanttView()
     {
         InitializeComponent();
