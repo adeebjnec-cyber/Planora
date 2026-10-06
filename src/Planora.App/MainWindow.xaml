@@ -20,6 +20,8 @@
         <KeyBinding Key="Insert" Command="{Binding InsertTaskCommand}" />
         <KeyBinding Key="Right" Modifiers="Alt+Shift" Command="{Binding IndentCommand}" />
         <KeyBinding Key="Left" Modifiers="Alt+Shift" Command="{Binding OutdentCommand}" />
+        <KeyBinding Key="Up" Modifiers="Alt+Shift" Command="{Binding MoveTaskUpCommand}" />
+        <KeyBinding Key="Down" Modifiers="Alt+Shift" Command="{Binding MoveTaskDownCommand}" />
         <KeyBinding Key="F2" Modifiers="Control" Command="{Binding LinkCommand}" />
         <KeyBinding Key="F2" Modifiers="Control+Shift" Command="{Binding UnlinkCommand}" />
         <KeyBinding Key="F5" Modifiers="Control+Shift" Command="{Binding ScrollToTaskCommand}" />
@@ -70,6 +72,8 @@
                 <RibbonGroup Header="Schedule">
                     <RibbonButton Label="Outdent" SmallImageSource="{infra:Glyph &#xE72B;}" Command="{Binding OutdentCommand}" ToolTipTitle="Outdent (Alt+Shift+Left)" />
                     <RibbonButton Label="Indent" SmallImageSource="{infra:Glyph &#xE72A;}" Command="{Binding IndentCommand}" ToolTipTitle="Indent (Alt+Shift+Right)" />
+                    <RibbonButton Label="Move Up" SmallImageSource="{infra:Glyph &#xE74A;}" Command="{Binding MoveTaskUpCommand}" ToolTipTitle="Move task up (Alt+Shift+Up)" />
+                    <RibbonButton Label="Move Down" SmallImageSource="{infra:Glyph &#xE74B;}" Command="{Binding MoveTaskDownCommand}" ToolTipTitle="Move task down (Alt+Shift+Down)" />
                     <RibbonButton Label="Link" SmallImageSource="{infra:Glyph &#xE71B;}" Command="{Binding LinkCommand}" ToolTipTitle="Link selected tasks (Ctrl+F2)" />
                     <RibbonButton Label="Unlink" SmallImageSource="{infra:Glyph &#xE8D8;}" Command="{Binding UnlinkCommand}" ToolTipTitle="Unlink tasks (Ctrl+Shift+F2)" />
                     <RibbonButton Label="Split Task" SmallImageSource="{infra:Glyph &#xE8C6;}" Command="{Binding SplitTaskCommand}" />
@@ -89,6 +93,7 @@
                 <RibbonGroup Header="Properties">
                     <RibbonButton Label="Information" LargeImageSource="{infra:Glyph &#xE946;}" Command="{Binding TaskInformationCommand}" ToolTipTitle="Task Information (Shift+F2)" />
                     <RibbonButton Label="Delete" SmallImageSource="{infra:Glyph &#xE74D;}" Command="{Binding DeleteTaskCommand}" ToolTipTitle="Delete selected tasks (Del)" />
+                    <RibbonButton Label="Open Hyperlink" SmallImageSource="{infra:Glyph &#xE71B;}" Command="{Binding OpenHyperlinkCommand}" ToolTipTitle="Open the selected task's hyperlink (set it in Task Information > Advanced)" />
                 </RibbonGroup>
             </RibbonTab>
 

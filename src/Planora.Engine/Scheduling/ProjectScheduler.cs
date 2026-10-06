@@ -312,7 +312,7 @@ public static class ProjectScheduler
         private (DateTime Start, DateTime Finish) AssignmentDates(Assignment a, DateTime taskStart)
         {
             var cal = AssignmentCalendar(a);
-            var start = cal.NextWorkingMoment(cal.AddWorkingMinutes(taskStart, a.DelayMinutes));
+            var start = cal.NextWorkingMoment(cal.AddWorkingMinutes(taskStart, a.DelayMinutes + a.LevelingDelayMinutes));
             return (start, cal.AddWorkingMinutes(start, a.SpanMinutes));
         }
 

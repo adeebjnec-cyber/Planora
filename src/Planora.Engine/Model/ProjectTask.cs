@@ -140,6 +140,17 @@ public sealed class ProjectTask
     /// <summary>Use only the resource calendars, ignoring this task's own calendar, for its assignments.</summary>
     public bool IgnoreResourceCalendar { get; set; }
 
+    /// <summary>Hyperlink display text, address (URL or file) and sub-address (a location within it).</summary>
+    public string Hyperlink { get; set; } = "";
+    public string HyperlinkAddress { get; set; } = "";
+    public string HyperlinkSubAddress { get; set; } = "";
+
+    /// <summary>The Marked flag, used to pick out tasks for filters and macros.</summary>
+    public bool IsMarked { get; set; }
+
+    /// <summary>Hides the task's bar in the Gantt Chart.</summary>
+    public bool HideBar { get; set; }
+
     /// <summary>Assignments to this task; edit them through <see cref="Project.Assign"/> and related methods.</summary>
     public IReadOnlyList<Assignment> Assignments => _assignments;
     internal List<Assignment> AssignmentList => _assignments;

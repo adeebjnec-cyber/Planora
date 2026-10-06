@@ -48,6 +48,7 @@ public sealed class FilterDefinition
             new FilterCondition("PercentComplete", FilterOperator.LessThan, "100"),
             new FilterCondition("FinishVariance", FilterOperator.GreaterThan, "0d")),
         new FilterDefinition("Milestones", new FilterCondition("Milestone", FilterOperator.Equals, "Yes")),
+        new FilterDefinition("Marked Tasks", new FilterCondition("Marked", FilterOperator.Equals, "Yes")),
         new FilterDefinition("Summary Tasks", new FilterCondition("Summary", FilterOperator.Equals, "Yes")),
         new FilterDefinition("Manually Scheduled Tasks", new FilterCondition("Mode", FilterOperator.Equals, "Manually Scheduled")),
         new FilterDefinition("Tasks With Deadlines", new FilterCondition("Deadline", FilterOperator.NotEquals, "NA")),

@@ -133,6 +133,9 @@ public static class ResourcePool
             target.MaxUnits = source.MaxUnits;
             target.AccrueAt = source.AccrueAt;
             target.IsBudget = source.IsBudget;
+            target.IsGeneric = source.IsGeneric;
+            target.BookingType = source.BookingType;
+            target.CanLevel = source.CanLevel;
             target.Availability.Clear();
             target.Availability.AddRange(source.Availability);
             for (int i = 0; i < Resource.RateTableCount; i++)

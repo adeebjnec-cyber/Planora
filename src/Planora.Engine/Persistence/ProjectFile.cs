@@ -127,6 +127,9 @@ public static class ProjectFile
                 CalendarId = CalendarId(r.Calendar),
                 AccrueAt = r.AccrueAt,
                 IsBudget = r.IsBudget,
+                IsGeneric = r.IsGeneric,
+                BookingType = r.BookingType,
+                CanLevel = r.CanLevel,
                 RateTables = r.CostRateTables.Select(t => t.ToList()).ToList(),
                 Availability = r.Availability.Count == 0 ? null : r.Availability.ToList(),
             }).ToList(),
@@ -166,6 +169,11 @@ public static class ProjectFile
                 Type = t.Type,
                 IsEffortDriven = t.IsEffortDriven,
                 IgnoreResourceCalendar = t.IgnoreResourceCalendar,
+                Hyperlink = t.Hyperlink,
+                HyperlinkAddress = t.HyperlinkAddress,
+                HyperlinkSubAddress = t.HyperlinkSubAddress,
+                IsMarked = t.IsMarked,
+                HideBar = t.HideBar,
                 FixedCost = t.FixedCost,
                 FixedCostAccrual = t.FixedCostAccrual,
                 Priority = t.Priority,
@@ -182,6 +190,7 @@ public static class ProjectFile
                     Contour = a.Contour,
                     CostRateTable = a.CostRateTable,
                     DelayMinutes = a.DelayMinutes,
+                    LevelingDelayMinutes = a.LevelingDelayMinutes,
                     OvertimeWorkMinutes = a.OvertimeWorkMinutes,
                     Pieces = a.IsContoured ? a.Pieces.ToList() : null,
                     Baselines = Sparse(a.Baselines),
@@ -328,6 +337,9 @@ public static class ProjectFile
             resource.MaxUnits = r.MaxUnits;
             resource.AccrueAt = r.AccrueAt;
             resource.IsBudget = r.IsBudget;
+            resource.IsGeneric = r.IsGeneric;
+            resource.BookingType = r.BookingType;
+            resource.CanLevel = r.CanLevel;
             if (r.Availability is not null)
                 resource.Availability.AddRange(r.Availability);
             for (int i = 0; i < Resource.RateTableCount && i < r.RateTables.Count; i++)
@@ -374,6 +386,11 @@ public static class ProjectFile
             task.Type = t.Type;
             task.IsEffortDriven = t.IsEffortDriven;
             task.IgnoreResourceCalendar = t.IgnoreResourceCalendar;
+            task.Hyperlink = t.Hyperlink;
+            task.HyperlinkAddress = t.HyperlinkAddress;
+            task.HyperlinkSubAddress = t.HyperlinkSubAddress;
+            task.IsMarked = t.IsMarked;
+            task.HideBar = t.HideBar;
             task.FixedCost = t.FixedCost;
             task.FixedCostAccrual = t.FixedCostAccrual;
             task.Priority = t.Priority;
@@ -398,6 +415,7 @@ public static class ProjectFile
                 assignment.Contour = a.Contour;
                 assignment.CostRateTable = a.CostRateTable;
                 assignment.DelayMinutes = a.DelayMinutes;
+                assignment.LevelingDelayMinutes = a.LevelingDelayMinutes;
                 assignment.OvertimeWorkMinutes = a.OvertimeWorkMinutes;
                 if (a.Pieces is { Count: > 0 })
                     assignment.SetPieces(a.Pieces);
@@ -598,6 +616,9 @@ public static class ProjectFile
         public int? CalendarId { get; set; }
         public CostAccrual AccrueAt { get; set; } = CostAccrual.Prorated;
         public bool IsBudget { get; set; }
+        public bool IsGeneric { get; set; }
+        public BookingType BookingType { get; set; }
+        public bool CanLevel { get; set; } = true;
         public List<List<CostRate>> RateTables { get; set; } = new();
         public List<AvailabilityPeriod>? Availability { get; set; }
     }
@@ -631,6 +652,11 @@ public static class ProjectFile
         public TaskType Type { get; set; }
         public bool IsEffortDriven { get; set; }
         public bool IgnoreResourceCalendar { get; set; }
+        public string Hyperlink { get; set; } = "";
+        public string HyperlinkAddress { get; set; } = "";
+        public string HyperlinkSubAddress { get; set; } = "";
+        public bool IsMarked { get; set; }
+        public bool HideBar { get; set; }
         public decimal FixedCost { get; set; }
         public CostAccrual FixedCostAccrual { get; set; } = CostAccrual.Prorated;
         public int Priority { get; set; } = 500;
@@ -659,6 +685,7 @@ public static class ProjectFile
         public WorkContour Contour { get; set; }
         public int CostRateTable { get; set; }
         public long DelayMinutes { get; set; }
+        public long LevelingDelayMinutes { get; set; }
         public long OvertimeWorkMinutes { get; set; }
         public List<WorkPiece>? Pieces { get; set; }
         public Dictionary<int, BaselineValues>? Baselines { get; set; }

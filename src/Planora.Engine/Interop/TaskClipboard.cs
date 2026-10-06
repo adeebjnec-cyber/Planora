@@ -124,6 +124,7 @@ public static class TaskClipboard
                 assignment.Contour = a.Contour;
                 assignment.CostRateTable = a.CostRateTable;
                 assignment.DelayMinutes = a.DelayMinutes;
+                assignment.LevelingDelayMinutes = a.LevelingDelayMinutes;
             }
         }
         return created;
@@ -180,6 +181,11 @@ public static class TaskClipboard
         to.Type = from.Type;
         to.IsEffortDriven = from.IsEffortDriven;
         to.IgnoreResourceCalendar = from.IgnoreResourceCalendar;
+        to.Hyperlink = from.Hyperlink;
+        to.HyperlinkAddress = from.HyperlinkAddress;
+        to.HyperlinkSubAddress = from.HyperlinkSubAddress;
+        to.IsMarked = from.IsMarked;
+        to.HideBar = from.HideBar;
         to.FixedCost = from.FixedCost;
         to.FixedCostAccrual = from.FixedCostAccrual;
         to.Priority = from.Priority;

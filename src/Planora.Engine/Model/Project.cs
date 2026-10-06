@@ -287,6 +287,36 @@ public sealed class Project
         RemoveTask(task);
     }
 
+    /// <summary>
+    /// Moves a task (with its subtasks) above its previous sibling or below its next sibling, keeping its
+    /// outline level (Microsoft Project's Move Task Up / Down). Returns false at the edge of its parent.
+    /// </summary>
+    public bool MoveTask(ProjectTask task, bool up)
+    {
+        int index = RequireIndex(task);
+        var block = Subtree(task).ToList();
+        int neighbourIndex;
+        if (up)
+        {
+            if (Neighbour(index, -1, task.OutlineLevel) is not { } previous)
+                return false;
+            neighbourIndex = _tasks.IndexOf(previous);
+            _tasks.RemoveRange(index, block.Count);
+            _tasks.InsertRange(neighbourIndex, block);
+        }
+        else
+        {
+            int after = index + block.Count;
+            if (after >= _tasks.Count || _tasks[after].OutlineLevel != task.OutlineLevel)
+                return false;
+            int nextCount = Subtree(_tasks[after]).Count();
+            _tasks.RemoveRange(index, block.Count);
+            _tasks.InsertRange(index + nextCount, block);
+        }
+        RebuildHierarchy();
+        return true;
+    }
+
     /// <summary>The nearest row above or below <paramref name="index"/> at the given outline level, stopping at a parent.</summary>
     private ProjectTask? Neighbour(int index, int step, int level)
     {
@@ -568,7 +598,7 @@ public sealed class Project
 
     private static void UpdateDurationFromAssignments(ProjectTask task)
     {
-        var spans = WorkAssignments(task).Where(a => a.Units > 0).Select(a => a.SpanMinutes + a.DelayMinutes).ToList();
+        var spans = WorkAssignments(task).Where(a => a.Units > 0).Select(a => a.SpanMinutes + a.DelayMinutes + a.LevelingDelayMinutes).ToList();
         if (spans.Count > 0)
             task.DurationMinutes = spans.Max();
     }

@@ -206,6 +206,8 @@ public sealed class GanttChart : TimelineElement
 
     private void DrawTask(DrawingContext dc, ProjectTask task, int row)
     {
+        if (task.HideBar)
+            return;
         double top = RowTop(row);
         double center = top + RowHeight / 2;
 
@@ -378,6 +380,8 @@ public sealed class GanttChart : TimelineElement
             {
                 if (project.GetTask(link.PredecessorId) is not { } predecessor || !rowIndex.TryGetValue(predecessor, out int predRow))
                     continue;
+                if (predecessor.HideBar || successor.HideBar)
+                    continue;
                 if (Math.Max(predRow, succRow) < firstRow || Math.Min(predRow, succRow) > lastRow)
                     continue;
                 bool critical = ShowCritical(predecessor) && ShowCritical(successor);
@@ -534,7 +538,7 @@ public sealed class GanttChart : TimelineElement
 
     private DragMode HitTest(ProjectTask task, Point p)
     {
-        if (task.IsSummary)
+        if (task.IsSummary || task.HideBar)
             return DragMode.None;
         var (start, end) = BarEdges(task);
         if (p.X < start - EdgeGrip || p.X > end + EdgeGrip)

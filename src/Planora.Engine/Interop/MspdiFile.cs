@@ -208,7 +208,11 @@ public static class MspdiFile
             E("IgnoreResourceCalendar", t.IgnoreResourceCalendar),
             E("LevelingDelay", t.LevelingDelayMinutes * 10),
             E("LevelingDelayFormat", 8),
-            E("HideBar", false),
+            E("HideBar", t.HideBar),
+            E("Marked", t.IsMarked),
+            string.IsNullOrEmpty(t.Hyperlink) ? null : E("Hyperlink", t.Hyperlink),
+            string.IsNullOrEmpty(t.HyperlinkAddress) ? null : E("HyperlinkAddress", t.HyperlinkAddress),
+            string.IsNullOrEmpty(t.HyperlinkSubAddress) ? null : E("HyperlinkSubAddress", t.HyperlinkSubAddress),
             string.IsNullOrEmpty(t.Notes) ? null : E("Notes", t.Notes));
 
         if (t.Mode == TaskMode.ManuallyScheduled)
@@ -272,6 +276,9 @@ public static class MspdiFile
             E("AccrueAt", Accrual(r.AccrueAt)),
             E("CalendarUID", r.Calendar is { } cal ? calendarUid[cal] : -1),
             E("IsBudget", r.IsBudget),
+            E("IsGeneric", r.IsGeneric),
+            E("BookingType", r.BookingType == BookingType.Proposed ? 1 : 0),
+            E("CanLevel", r.CanLevel),
             string.IsNullOrEmpty(r.Notes) ? null : E("Notes", r.Notes));
 
         var rates = new XElement(Ns + "Rates");
@@ -319,6 +326,8 @@ public static class MspdiFile
             E("Start", a.Start),
             E("Finish", a.Finish),
             E("Delay", a.DelayMinutes * 10),
+            E("LevelingDelay", a.LevelingDelayMinutes * 10),
+            E("LevelingDelayFormat", 7),
             E("WorkContour", (int)a.Contour),
             E("CostRateTable", a.CostRateTable));
         for (int i = 0; i < Model.Baseline.Count; i++)
@@ -437,6 +446,9 @@ public static class MspdiFile
             resource.MaxUnits = Double(r, "MaxUnits") ?? 1.0;
             resource.AccrueAt = ReadAccrual(Int(r, "AccrueAt"));
             resource.IsBudget = Text(r, "IsBudget") == "1";
+            resource.IsGeneric = Text(r, "IsGeneric") == "1";
+            resource.BookingType = Int(r, "BookingType") == 1 ? BookingType.Proposed : BookingType.Committed;
+            resource.CanLevel = Text(r, "CanLevel") != "0";
             resource.Notes = Text(r, "Notes") ?? "";
             resource.StandardRate = Money(r, "StandardRate") ?? 0;
             resource.OvertimeRate = Money(r, "OvertimeRate") ?? 0;
@@ -493,6 +505,11 @@ public static class MspdiFile
             task.Deadline = Date(t, "Deadline");
             task.Calendar = Int(t, "CalendarUID") is { } tc && calendars.TryGetValue(tc, out var taskCal) ? taskCal : null;
             task.IgnoreResourceCalendar = Text(t, "IgnoreResourceCalendar") == "1";
+            task.HideBar = Text(t, "HideBar") == "1";
+            task.IsMarked = Text(t, "Marked") == "1";
+            task.Hyperlink = Text(t, "Hyperlink") ?? "";
+            task.HyperlinkAddress = Text(t, "HyperlinkAddress") ?? "";
+            task.HyperlinkSubAddress = Text(t, "HyperlinkSubAddress") ?? "";
             task.LevelingDelayMinutes = (Long(t, "LevelingDelay") ?? 0) / 10;
             task.PercentComplete = Math.Clamp(Double(t, "PercentComplete") ?? 0, 0, 100);
             task.ActualStart = Date(t, "ActualStart");
@@ -568,6 +585,7 @@ public static class MspdiFile
             assignment.Contour = Int(a, "WorkContour") is { } contour and >= 0 and <= 7 ? (WorkContour)contour : WorkContour.Flat;
             assignment.CostRateTable = Math.Clamp(Int(a, "CostRateTable") ?? 0, 0, Resource.RateTableCount - 1);
             assignment.DelayMinutes = (Long(a, "Delay") ?? 0) / 10;
+            assignment.LevelingDelayMinutes = (Long(a, "LevelingDelay") ?? 0) / 10;
             if (resource.Type == ResourceType.Cost)
                 assignment.CostAmount = Cents(a, "Cost") ?? 0;
             foreach (var b in a.Elements().Where(e => e.Name.LocalName == "Baseline"))

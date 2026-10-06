@@ -92,6 +92,15 @@ public sealed class Resource
     /// <summary>Budget resources are assigned only at project level to hold budget amounts.</summary>
     public bool IsBudget { get; set; }
 
+    /// <summary>A generic resource stands for a skill (e.g. "Developer") rather than a person.</summary>
+    public bool IsGeneric { get; set; }
+
+    /// <summary>Proposed bookings are tentative: leveling leaves them alone and they can be filtered out.</summary>
+    public BookingType BookingType { get; set; }
+
+    /// <summary>Whether resource leveling may move this resource's assignments (Microsoft Project's "Can Level").</summary>
+    public bool CanLevel { get; set; } = true;
+
     /// <summary>Cost rate tables A-E, each ordered by <see cref="CostRate.EffectiveFrom"/>.</summary>
     public List<CostRate>[] CostRateTables { get; } = new List<CostRate>[RateTableCount];
 
@@ -145,4 +154,10 @@ public sealed class Resource
     public bool IsOverallocated { get; internal set; }
 
     public override string ToString() => $"{Id}: {Name}";
+}
+
+public enum BookingType
+{
+    Committed,
+    Proposed,
 }

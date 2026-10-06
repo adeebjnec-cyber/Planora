@@ -44,6 +44,9 @@ public sealed partial class MainViewModel : ObservableObject
         DeleteTaskCommand = new RelayCommand(DeleteTasks, () => SelectedTasks.Count > 0);
         IndentCommand = new RelayCommand(() => Indent(true), () => SelectedTasks.Count > 0);
         OutdentCommand = new RelayCommand(() => Indent(false), () => SelectedTasks.Any(t => t.OutlineLevel > 1));
+        MoveTaskUpCommand = new RelayCommand(() => MoveTasks(true), () => SelectedTasks.Count > 0);
+        OpenHyperlinkCommand = new RelayCommand(OpenHyperlink, () => SelectedTasks.Count == 1 && SelectedTasks[0].HyperlinkAddress.Length > 0);
+        MoveTaskDownCommand = new RelayCommand(() => MoveTasks(false), () => SelectedTasks.Count > 0);
         LinkCommand = new RelayCommand(LinkSelected, () => SelectedTasks.Count > 1);
         UnlinkCommand = new RelayCommand(UnlinkSelected, () => SelectedTasks.Count > 0);
         InsertMilestoneCommand = new RelayCommand(InsertMilestone);
@@ -167,6 +170,9 @@ public sealed partial class MainViewModel : ObservableObject
     public ICommand DeleteTaskCommand { get; }
     public ICommand IndentCommand { get; }
     public ICommand OutdentCommand { get; }
+    public ICommand MoveTaskUpCommand { get; }
+    public ICommand OpenHyperlinkCommand { get; }
+    public ICommand MoveTaskDownCommand { get; }
     public ICommand LinkCommand { get; }
     public ICommand UnlinkCommand { get; }
     public ICommand ToggleModeCommand { get; }
@@ -260,6 +266,43 @@ public sealed partial class MainViewModel : ObservableObject
                 else
                     p.RemoveTask(task);
             }
+        });
+    }
+
+    /// <summary>Opens the selected task's hyperlink (a web address or file) with the default program.</summary>
+    private void OpenHyperlink()
+    {
+        var task = SelectedTasks[0];
+        var target = task.HyperlinkAddress;
+        bool isWeb = Uri.TryCreate(target, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeMailto);
+        if (isWeb && task.HyperlinkSubAddress.Length > 0)
+            target += "#" + task.HyperlinkSubAddress;
+        if (!isWeb && !System.IO.File.Exists(target) && !System.IO.Directory.Exists(target))
+        {
+            MessageBox.Show($"Cannot open '{target}': it is not a web address or an existing file.", "Planora", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(target) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            MessageBox.Show($"Cannot open '{target}': {ex.Message}", "Planora", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    /// <summary>Move Task Up / Down: each selected task (with its subtasks) swaps with its neighbouring sibling.</summary>
+    private void MoveTasks(bool up)
+    {
+        var ids = SelectedTasks.Select(t => t.Id).ToList();
+        TryEdit(up ? "Move task up" : "Move task down", p =>
+        {
+            var tasks = ids.Select(p.GetRequiredTask).Where(t => !ids.Contains(t.Parent?.Id ?? -1)).OrderBy(p.IndexOf).ToList();
+            if (!up)
+                tasks.Reverse();
+            foreach (var t in tasks)
+                p.MoveTask(t, up);
         });
     }
 

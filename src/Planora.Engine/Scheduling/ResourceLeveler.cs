@@ -34,6 +34,15 @@ public sealed class LevelingOptions
     /// </summary>
     public bool CanSplitRemainingWork { get; set; }
 
+    /// <summary>
+    /// "Leveling can adjust individual assignments on a task": on a task with several resources, delay
+    /// just the over-allocated resource's assignment instead of the whole task.
+    /// </summary>
+    public bool LevelIndividualAssignments { get; set; } = true;
+
+    /// <summary>Level only these resources (Microsoft Project's Level Resource); null = all.</summary>
+    public IReadOnlyCollection<Resource>? Resources { get; set; }
+
     /// <summary>Only resolve over-allocations that overlap this range (null = whole project).</summary>
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
@@ -46,8 +55,9 @@ public sealed class LevelingOptions
 public sealed record LevelingResult(IReadOnlyList<ProjectTask> DelayedTasks, IReadOnlyList<Overallocation> Unresolved);
 
 /// <summary>
-/// Resolves resource over-allocations by delaying tasks (<see cref="ProjectTask.LevelingDelayMinutes"/>)
-/// or, when allowed, splitting their remaining work. Repeatedly takes the earliest over-allocation, keeps
+/// Resolves resource over-allocations by delaying tasks (<see cref="ProjectTask.LevelingDelayMinutes"/>),
+/// delaying single assignments on multi-resource tasks, or, when allowed, splitting remaining work.
+/// Resources with <see cref="Resource.CanLevel"/> off, and proposed bookings, are left alone. Repeatedly takes the earliest over-allocation, keeps
 /// the highest-ranked tasks, and moves the lowest-ranked movable task's work until the resource is free,
 /// then reschedules.
 /// </summary>
@@ -59,10 +69,7 @@ public static class ResourceLeveler
         if (options.ClearLevelingValuesFirst)
         {
             foreach (var task in project.Tasks)
-            {
-                task.LevelingDelayMinutes = 0;
-                task.RemoveLevelingSplits();
-            }
+                ClearTask(task);
         }
         ProjectScheduler.Schedule(project);
 
@@ -96,8 +103,9 @@ public static class ResourceLeveler
             var finishBefore = project.Finish;
             var splitsBefore = task.Splits.ToList();
             long delayBefore = task.LevelingDelayMinutes;
+            long assignmentDelayBefore = victim.LevelingDelayMinutes;
 
-            if (!Move(project, task, conflict.From, resumeAt, options))
+            if (!MoveAssignment(victim, resumeAt, options) && !Move(project, task, conflict.From, resumeAt, options))
             {
                 skipped.Add((conflict.Resource, conflict.From));
                 continue;
@@ -107,6 +115,7 @@ public static class ResourceLeveler
             if (options.LevelWithinAvailableSlack && project.Finish > finishBefore)
             {
                 task.LevelingDelayMinutes = delayBefore;
+                victim.LevelingDelayMinutes = assignmentDelayBefore;
                 task.RestoreSplits(splitsBefore);
                 ProjectScheduler.Schedule(project);
                 skipped.Add((conflict.Resource, conflict.From));
@@ -118,6 +127,23 @@ public static class ResourceLeveler
         }
 
         return new LevelingResult(delayed, InRange(ResourceAnalysis.FindOverallocations(project, options.Basis), options).ToList());
+    }
+
+    /// <summary>
+    /// On a task whose dates come from several resources, delays only this assignment until
+    /// <paramref name="resumeAt"/>. Returns false when the whole task should move instead.
+    /// </summary>
+    private static bool MoveAssignment(Assignment victim, DateTime resumeAt, LevelingOptions options)
+    {
+        var task = victim.Task;
+        if (!options.LevelIndividualAssignments || task.Splits.Count > 0 || victim.IsContoured
+            || task.Assignments.Count(a => a.IsWork && a.Units > 0) < 2 || victim.EffectiveCalendar is not { } cal)
+            return false;
+        long delay = cal.WorkingMinutesBetween(victim.Start, resumeAt);
+        if (delay <= 0)
+            return false;
+        victim.LevelingDelayMinutes += delay;
+        return true;
     }
 
     /// <summary>
@@ -163,15 +189,22 @@ public static class ResourceLeveler
     public static void ClearLeveling(Project project, IEnumerable<ProjectTask>? tasks = null)
     {
         foreach (var task in tasks ?? project.Tasks)
-        {
-            task.LevelingDelayMinutes = 0;
-            task.RemoveLevelingSplits();
-        }
+            ClearTask(task);
         ProjectScheduler.Schedule(project);
     }
 
+    private static void ClearTask(ProjectTask task)
+    {
+        task.LevelingDelayMinutes = 0;
+        task.RemoveLevelingSplits();
+        foreach (var a in task.Assignments)
+            a.LevelingDelayMinutes = 0;
+    }
+
     private static IEnumerable<Overallocation> InRange(IEnumerable<Overallocation> overallocations, LevelingOptions options) =>
-        overallocations.Where(o => (options.From is null || o.To > options.From) && (options.To is null || o.From < options.To));
+        overallocations.Where(o => o.Resource.CanLevel && o.Resource.BookingType == BookingType.Committed
+            && (options.Resources is null || options.Resources.Contains(o.Resource))
+            && (options.From is null || o.To > options.From) && (options.To is null || o.From < options.To));
 
     private static bool CanDelay(ProjectTask task) =>
         task.Mode == TaskMode.AutoScheduled

@@ -34,6 +34,9 @@ public partial class ResourceInformationDialog : Window
         CalendarIndex = resource.Calendar?.BaseCalendar is { } baseCalendar ? project.Calendars.IndexOf(baseCalendar) : 0;
         AccrualIndex = (int)resource.AccrueAt;
         IsBudget = resource.IsBudget;
+        IsGeneric = resource.IsGeneric;
+        CanLevel = resource.CanLevel;
+        BookingTypeIndex = (int)resource.BookingType;
         Notes = resource.Notes;
         foreach (var period in resource.Availability)
         {
@@ -77,6 +80,9 @@ public partial class ResourceInformationDialog : Window
     public IReadOnlyList<string> Accruals => ResourceRowViewModel.Accruals;
     public int AccrualIndex { get; set; }
     public bool IsBudget { get; set; }
+    public bool IsGeneric { get; set; }
+    public bool CanLevel { get; set; }
+    public int BookingTypeIndex { get; set; }
     public string Notes { get; set; }
     public ObservableCollection<AvailabilityRow> AvailabilityRows { get; } = new();
 
@@ -141,6 +147,9 @@ public partial class ResourceInformationDialog : Window
         r.MaterialLabel = MaterialLabel;
         r.AccrueAt = (CostAccrual)AccrualIndex;
         r.IsBudget = IsBudget;
+        r.IsGeneric = IsGeneric;
+        r.CanLevel = CanLevel;
+        r.BookingType = (BookingType)BookingTypeIndex;
         r.Notes = Notes;
 
         if (!double.TryParse(MaxUnits.Trim().TrimEnd('%'), NumberStyles.Float, CultureInfo.CurrentCulture, out var maxUnits) || maxUnits < 0)

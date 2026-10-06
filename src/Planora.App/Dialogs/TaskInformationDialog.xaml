@@ -124,6 +124,9 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <TextBlock Text="Deadline:" Style="{StaticResource FormLabel}" />
                     <TextBox Grid.Column="1" Text="{Binding Deadline}" Style="{StaticResource FormText}" ToolTip="Leave empty for no deadline" />
@@ -147,6 +150,17 @@
                     <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding FixedCost}" Style="{StaticResource FormText}" />
                     <TextBlock Grid.Row="4" Grid.Column="3" Text="Fixed cost accrual:" Style="{StaticResource FormLabel}" />
                     <ComboBox Grid.Row="4" Grid.Column="4" ItemsSource="{Binding Accruals}" SelectedIndex="{Binding FixedCostAccrualIndex}" Style="{StaticResource FormCombo}" />
+
+                    <TextBlock Grid.Row="5" Text="Hyperlink text:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Hyperlink}" Style="{StaticResource FormText}" />
+                    <TextBlock Grid.Row="5" Grid.Column="3" Text="Address:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="5" Grid.Column="4" Text="{Binding HyperlinkAddress}" Style="{StaticResource FormText}" ToolTip="A web address or a file path" />
+
+                    <TextBlock Grid.Row="6" Text="Sub-address:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding HyperlinkSubAddress}" Style="{StaticResource FormText}" />
+
+                    <CheckBox Grid.Row="7" Grid.Column="1" Content="Marked" IsChecked="{Binding IsMarked}" Style="{StaticResource FormCheck}" />
+                    <CheckBox Grid.Row="7" Grid.Column="4" Content="Hide task bar" IsChecked="{Binding HideBar}" Style="{StaticResource FormCheck}" />
                 </Grid>
             </TabItem>
 

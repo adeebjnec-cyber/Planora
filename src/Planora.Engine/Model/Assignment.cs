@@ -133,6 +133,9 @@ public sealed class Assignment
     /// <summary>Working time after the task start before this assignment begins.</summary>
     public long DelayMinutes { get; set; }
 
+    /// <summary>Extra delay added by resource leveling when it moves this assignment on its own.</summary>
+    public long LevelingDelayMinutes { get; set; }
+
     /// <summary>Baseline work and cost (index 0 = Baseline, 1-10 = Baseline1-10).</summary>
     public BaselineValues?[] Baselines { get; } = new BaselineValues?[Baseline.Count];
 

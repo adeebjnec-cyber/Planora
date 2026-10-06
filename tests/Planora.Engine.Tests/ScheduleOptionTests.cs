@@ -93,3 +93,33 @@ public class ScheduleOptionTests
         Assert.Empty(x.Predecessors);
     }
 }
+
+public class MoveTaskTests
+{
+    [Fact]
+    public void MovingASummaryCarriesItsSubtasksPastItsSibling()
+    {
+        var p = new Project("Test", new DateTime(2026, 1, 5, 8, 0, 0));
+        var a = p.AddTask("A", 480);
+        var s = p.AddTask("S");
+        var s1 = p.AddTask("S1", 480);
+        var s2 = p.AddTask("S2", 480);
+        p.Indent(s1);
+        p.Indent(s2);
+        var b = p.AddTask("B", 480);
+
+        Assert.True(p.MoveTask(s, up: true));
+        Assert.Equal(new[] { "S", "S1", "S2", "A", "B" }, p.Tasks.Select(t => t.Name));
+        Assert.False(p.MoveTask(s, up: true));
+
+        Assert.True(p.MoveTask(s, up: false));
+        Assert.True(p.MoveTask(s, up: false));
+        Assert.Equal(new[] { "A", "B", "S", "S1", "S2" }, p.Tasks.Select(t => t.Name));
+        Assert.Equal(s, s1.Parent);
+
+        Assert.False(p.MoveTask(s1, up: true));   // stays inside its summary
+        Assert.True(p.MoveTask(s1, up: false));
+        Assert.Equal(new[] { "A", "B", "S", "S2", "S1" }, p.Tasks.Select(t => t.Name));
+        Assert.False(p.MoveTask(s1, up: false));
+    }
+}

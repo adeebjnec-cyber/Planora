@@ -52,6 +52,11 @@ public partial class TaskInformationDialog : Window
         CalendarChoices = new[] { "None" }.Concat(project.Calendars.Select(c => c.Name)).ToArray();
         CalendarIndex = task.Calendar is null ? 0 : project.Calendars.IndexOf(task.Calendar) + 1;
         IgnoreResourceCalendar = task.IgnoreResourceCalendar;
+        Hyperlink = task.Hyperlink;
+        HyperlinkAddress = task.HyperlinkAddress;
+        HyperlinkSubAddress = task.HyperlinkSubAddress;
+        IsMarked = task.IsMarked;
+        HideBar = task.HideBar;
         FixedCost = task.FixedCost.ToString("0.##", CultureInfo.CurrentCulture);
         FixedCostAccrualIndex = (int)task.FixedCostAccrual;
         Notes = task.Notes;
@@ -106,6 +111,11 @@ public partial class TaskInformationDialog : Window
     public IReadOnlyList<string> CalendarChoices { get; }
     public int CalendarIndex { get; set; }
     public bool IgnoreResourceCalendar { get; set; }
+    public string Hyperlink { get; set; } = "";
+    public string HyperlinkAddress { get; set; } = "";
+    public string HyperlinkSubAddress { get; set; } = "";
+    public bool IsMarked { get; set; }
+    public bool HideBar { get; set; }
     public string FixedCost { get; set; }
     public IReadOnlyList<string> Accruals => ResourceRowViewModel.Accruals;
     public int FixedCostAccrualIndex { get; set; }
@@ -143,6 +153,11 @@ public partial class TaskInformationDialog : Window
         t.FixedCostAccrual = (CostAccrual)FixedCostAccrualIndex;
         t.Calendar = CalendarIndex <= 0 ? null : p.Calendars[CalendarIndex - 1];
         t.IgnoreResourceCalendar = IgnoreResourceCalendar;
+        t.Hyperlink = Hyperlink.Trim();
+        t.HyperlinkAddress = HyperlinkAddress.Trim();
+        t.HyperlinkSubAddress = HyperlinkSubAddress.Trim();
+        t.IsMarked = IsMarked;
+        t.HideBar = HideBar;
         t.Deadline = ParseOptionalDate(Deadline, cal, endOfDay: true, "deadline");
 
         if (!t.IsSummary)
