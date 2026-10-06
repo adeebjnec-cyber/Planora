@@ -214,6 +214,36 @@ public sealed class Project
     public bool Unlink(ProjectTask predecessor, ProjectTask successor) =>
         successor.Predecessors.RemoveAll(l => l.PredecessorId == predecessor.Id) > 0;
 
+    // ------------------------------------------------------------------ loading (used by the file reader)
+
+    /// <summary>Appends a task with a known ID and outline level, as read from a file.</summary>
+    internal ProjectTask RestoreTask(int id, string name, int outlineLevel)
+    {
+        if (GetTask(id) is not null)
+            throw new InvalidDataException($"Duplicate task ID {id}.");
+        var task = new ProjectTask(id, name) { OutlineLevel = outlineLevel };
+        _tasks.Add(task);
+        _nextId = Math.Max(_nextId, id + 1);
+        return task;
+    }
+
+    internal Resource RestoreResource(int id, string name, ResourceType type, WorkingCalendar? calendar)
+    {
+        if (GetResource(id) is not null)
+            throw new InvalidDataException($"Duplicate resource ID {id}.");
+        var resource = new Resource(id, name, type, calendar);
+        _resources.Add(resource);
+        _nextResourceId = Math.Max(_nextResourceId, id + 1);
+        return resource;
+    }
+
+    internal static Assignment RestoreAssignment(ProjectTask task, Resource resource, double units)
+    {
+        var assignment = new Assignment(task, resource, units);
+        task.AssignmentList.Add(assignment);
+        return assignment;
+    }
+
     // ------------------------------------------------------------------ resources
 
     /// <summary>Adds a resource. Work resources get their own calendar based on the project calendar.</summary>
