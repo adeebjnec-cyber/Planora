@@ -92,7 +92,6 @@ public class FieldAndLevelingOptionTests
         {
             var lt = loaded.Tasks[0];
             Assert.Equal(("Spec", "https://example.com/spec", "section-2"), (lt.Hyperlink, lt.HyperlinkAddress, lt.HyperlinkSubAddress));
-            Assert.True(lt.IsMarked);
             Assert.True(lt.HideBar);
             var lr = loaded.Resources[0];
             Assert.True(lr.IsGeneric);
@@ -100,5 +99,7 @@ public class FieldAndLevelingOptionTests
             Assert.False(lr.CanLevel);
         }
         Assert.Equal(true, TaskFields.Get(p, "Marked").Get(p, t));
+        // Marked is kept in .planora files; Microsoft Project XML has no element for it.
+        Assert.True(ProjectFile.Deserialize(ProjectFile.Serialize(p)).Tasks[0].IsMarked);
     }
 }

@@ -81,7 +81,8 @@ public static class MspdiFile
             E("DaysPerMonth", o.DaysPerMonth),
             E("CriticalSlackLimit", (int)(o.CriticalSlackLimitMinutes / Math.Max(1, o.MinutesPerDay))),
             E("MultipleCriticalPaths", o.CalculateMultipleCriticalPaths),
-            E("MoveRemainingPartsBackToStatusDate", o.RescheduleUncompletedWorkToStatusDate),
+            // "Move start of remaining parts before the status date forward to the status date".
+            E("MoveRemainingStartsForward", o.RescheduleUncompletedWorkToStatusDate),
             E("HonorConstraints", o.HonorConstraints),
             E("Autolink", o.AutolinkInsertedTasks),
             E("EarnedValueMethod", (int)o.DefaultEarnedValueMethod),
@@ -92,7 +93,10 @@ public static class MspdiFile
             new XElement(Ns + "Tasks", project.Tasks.Select(t => WriteTask(project, t, calendarUid))),
             new XElement(Ns + "Resources", project.Resources.Select(r => WriteResource(r, calendarUid))),
             new XElement(Ns + "Assignments", project.Assignments.Select((a, i) => WriteAssignment(a, i + 1))));
-        return new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), root);
+        var document = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), root);
+        // Microsoft Project validates against its schema: put every element in schema order.
+        MspdiSchema.Normalize(document);
+        return document;
     }
 
     private static XElement WriteCalendar(WorkingCalendar c, Dictionary<WorkingCalendar, int> uid, Project project)
@@ -217,7 +221,6 @@ public static class MspdiFile
             E("LevelingDelay", t.LevelingDelayMinutes * 10),
             E("LevelingDelayFormat", 8),
             E("HideBar", t.HideBar),
-            E("Marked", t.IsMarked),
             E("PhysicalPercentComplete", (int)Math.Round(t.PhysicalPercentComplete)),
             E("EarnedValueMethod", (int)t.EarnedValueMethod),
             string.IsNullOrEmpty(t.Hyperlink) ? null : E("Hyperlink", t.Hyperlink),
@@ -418,7 +421,7 @@ public static class MspdiFile
         o.DaysPerMonth = Int(root, "DaysPerMonth") ?? 20;
         o.CriticalSlackLimitMinutes = (Int(root, "CriticalSlackLimit") ?? 0) * (long)o.MinutesPerDay;
         o.CalculateMultipleCriticalPaths = Text(root, "MultipleCriticalPaths") == "1";
-        o.RescheduleUncompletedWorkToStatusDate = Text(root, "MoveRemainingPartsBackToStatusDate") == "1";
+        o.RescheduleUncompletedWorkToStatusDate = Text(root, "MoveRemainingStartsForward") == "1" || Text(root, "MoveRemainingPartsBackToStatusDate") == "1";
         o.HonorConstraints = Text(root, "HonorConstraints") != "0";
         o.AutolinkInsertedTasks = Text(root, "Autolink") != "0";
         o.DefaultEarnedValueMethod = Int(root, "EarnedValueMethod") == 1 ? EarnedValueMethod.PhysicalPercentComplete : EarnedValueMethod.PercentComplete;
