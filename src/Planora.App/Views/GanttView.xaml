@@ -75,7 +75,7 @@
                     </DataGridTemplateColumn.CellTemplate>
                     <DataGridTemplateColumn.CellEditingTemplate>
                         <DataTemplate DataType="vm:TaskRowViewModel">
-                            <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="{Binding IndentWidth, Converter={StaticResource IndentConverter}}"
+                            <TextBox SpellCheck.IsEnabled="True" Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="{Binding IndentWidth, Converter={StaticResource IndentConverter}}"
                                      Style="{StaticResource CellEditor}" Loaded="OnEditorLoaded" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>

@@ -34,6 +34,8 @@ internal static class DialogFactory
             "assignment" => new AssignmentInformationDialog(vm, task.Assignments.First()),
             "updatetasks" => new UpdateTasksDialog(vm),
             "updateproject" => new UpdateProjectDialog(vm),
+            "replace" => new FindReplaceDialog(vm, replace: true),
+            "spelling" => new SpellingDialog(vm),
             _ => throw new ArgumentException($"Unknown dialog '{name}'."),
         };
     }

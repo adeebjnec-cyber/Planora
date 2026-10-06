@@ -32,6 +32,8 @@ public partial class GanttView : UserControl
         if (_viewModel is not null)
         {
             _viewModel.ScrollToTaskRequested -= OnScrollToTask;
+            _viewModel.SelectTaskRequested -= OnSelectTaskRequested;
+            _viewModel.FillDownRequested -= OnFillDown;
             _viewModel.TableChanged -= OnTableChanged;
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         }
@@ -41,6 +43,8 @@ public partial class GanttView : UserControl
         if (viewModel is not null)
         {
             viewModel.ScrollToTaskRequested += OnScrollToTask;
+            viewModel.SelectTaskRequested += OnSelectTaskRequested;
+            viewModel.FillDownRequested += OnFillDown;
             viewModel.TableChanged += OnTableChanged;
             viewModel.PropertyChanged += OnViewModelPropertyChanged;
         }
@@ -97,6 +101,55 @@ public partial class GanttView : UserControl
         TaskSheet.SelectedItems.Clear();
         foreach (var row in _viewModel.Rows.Where(r => r.Task is not null && selected.Contains(r.Task)))
             TaskSheet.SelectedItems.Add(row);
+    }
+
+    private void OnSelectTaskRequested(object? sender, ProjectTask task)
+    {
+        var row = _viewModel?.Rows.FirstOrDefault(r => r.Task == task);
+        if (row is null)
+            return;
+        TaskSheet.SelectedItems.Clear();
+        TaskSheet.SelectedItems.Add(row);
+        TaskSheet.ScrollIntoView(row);
+        OnScrollToTask(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Fill Down: copies the top selected row's value in the current column to the other selected rows,
+    /// through the same cell bindings typing would use.
+    /// </summary>
+    private void OnFillDown(object? sender, EventArgs e)
+    {
+        TaskSheet.CommitEdit(DataGridEditingUnit.Row, true);
+        if (TaskSheet.CurrentColumn is not DataGridBoundColumn { IsReadOnly: false, Binding: System.Windows.Data.Binding binding })
+        {
+            _viewModel?.ShowError("Click an editable cell in the column to fill, then select the rows below it.");
+            return;
+        }
+        var rows = TaskSheet.SelectedItems.OfType<TaskRowViewModel>().Where(r => r.Task is not null)
+            .OrderBy(r => _viewModel!.Rows.IndexOf(r)).ToList();
+        if (rows.Count < 2)
+            return;
+        string path = binding.Path.Path;
+        var value = CellValue(rows[0], path);
+        var ids = rows.Skip(1).Select(r => r.Task!.Id).ToList();
+        foreach (var id in ids)
+        {
+            // Rows are rebuilt after each edit, so look each one up again.
+            if (_viewModel!.Rows.FirstOrDefault(r => r.Task?.Id == id) is { } row)
+                SetCellValue(row, path, value);
+        }
+    }
+
+    private static string? CellValue(TaskRowViewModel row, string path) =>
+        path.StartsWith('[') ? row[path.Trim('[', ']')] : typeof(TaskRowViewModel).GetProperty(path)?.GetValue(row)?.ToString();
+
+    private static void SetCellValue(TaskRowViewModel row, string path, string? value)
+    {
+        if (path.StartsWith('['))
+            row[path.Trim('[', ']')] = value ?? "";
+        else if (typeof(TaskRowViewModel).GetProperty(path) is { CanWrite: true, PropertyType: var type } property && type == typeof(string))
+            property.SetValue(row, value);
     }
 
     private void SelectTask(ProjectTask task)

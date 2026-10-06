@@ -21,6 +21,10 @@
         <KeyBinding Key="Right" Modifiers="Alt+Shift" Command="{Binding IndentCommand}" />
         <KeyBinding Key="Left" Modifiers="Alt+Shift" Command="{Binding OutdentCommand}" />
         <KeyBinding Key="Up" Modifiers="Alt+Shift" Command="{Binding MoveTaskUpCommand}" />
+        <KeyBinding Key="F" Modifiers="Ctrl" Command="{Binding FindCommand}" />
+        <KeyBinding Key="H" Modifiers="Ctrl" Command="{Binding ReplaceCommand}" />
+        <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding FillDownCommand}" />
+        <KeyBinding Key="F7" Command="{Binding SpellingCommand}" />
         <KeyBinding Key="Down" Modifiers="Alt+Shift" Command="{Binding MoveTaskDownCommand}" />
         <KeyBinding Key="F2" Modifiers="Control" Command="{Binding LinkCommand}" />
         <KeyBinding Key="F2" Modifiers="Control+Shift" Command="{Binding UnlinkCommand}" />
@@ -98,6 +102,12 @@
                     <RibbonButton Label="Summary" SmallImageSource="{infra:Glyph &#xE8FD;}" Command="{Binding InsertSummaryCommand}" />
                     <RibbonButton Label="Milestone" SmallImageSource="{infra:Glyph &#xE7C1;}" Command="{Binding InsertMilestoneCommand}" />
                     <RibbonButton Label="Recurring Task" SmallImageSource="{infra:Glyph &#xE8EE;}" Command="{Binding RecurringTaskCommand}" />
+                </RibbonGroup>
+                <RibbonGroup Header="Editing">
+                    <RibbonButton Label="Find" SmallImageSource="{infra:Glyph &#xE721;}" Command="{Binding FindCommand}" ToolTipTitle="Find (Ctrl+F)" />
+                    <RibbonButton Label="Replace" SmallImageSource="{infra:Glyph &#xE8AB;}" Command="{Binding ReplaceCommand}" ToolTipTitle="Replace (Ctrl+H)" />
+                    <RibbonButton Label="Fill Down" SmallImageSource="{infra:Glyph &#xE74B;}" Command="{Binding FillDownCommand}" ToolTipTitle="Copy the top cell down the selected rows (Ctrl+D)" />
+                    <RibbonButton Label="Spelling" SmallImageSource="{infra:Glyph &#xF87B;}" Command="{Binding SpellingCommand}" ToolTipTitle="Check spelling (F7)" />
                 </RibbonGroup>
                 <RibbonGroup Header="Properties">
                     <RibbonButton Label="Information" LargeImageSource="{infra:Glyph &#xE946;}" Command="{Binding TaskInformationCommand}" ToolTipTitle="Task Information (Shift+F2)" />
