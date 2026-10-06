@@ -114,4 +114,41 @@ public class MspdiSchemaTests
             File.Delete(path);
         }
     }
+
+    [Fact]
+    public void ContouredWorkRoundTripsAsTimephasedWork()
+    {
+        var p = new Project("Contour", new DateTime(2026, 1, 5, 8, 0, 0));
+        var bob = p.AddResource("Bob");
+        var t = p.AddTask("Shaped", 2 * 480);
+        var a = p.Assign(t, bob);
+        ProjectScheduler.Schedule(p);
+        p.SetTimephasedWork(a, new DateTime(2026, 1, 6), new DateTime(2026, 1, 7), 4 * 60);
+        ProjectScheduler.Schedule(p);
+        Assert.True(a.IsContoured);
+
+        var loaded = MspdiFile.Read(MspdiFile.Write(p));
+        ProjectScheduler.Schedule(loaded);
+        var la = loaded.Tasks[0].Assignments[0];
+        Assert.True(la.IsContoured);
+        Assert.Equal(a.WorkMinutes, la.WorkMinutes);
+        Assert.Equal(t.Finish, loaded.Tasks[0].Finish);
+        Assert.Equal(4 * 60, Timephased.WorkBetween(la, new DateTime(2026, 1, 6), new DateTime(2026, 1, 7)), 3);
+        Assert.Empty(loaded.Tasks[0].Splits);
+
+        var path = Path.Combine(Path.GetTempPath(), $"planora-contour-{Guid.NewGuid():N}.xml");
+        try
+        {
+            MspdiFile.Save(p, path);
+            var file = new org.mpxj.mspdi.MSPDIReader().read(path);
+            var mpxjTask = file.getTasks().toArray().OfType<org.mpxj.Task>().First(x => x.getName() == "Shaped");
+            var assignment = mpxjTask.getResourceAssignments().toArray().OfType<org.mpxj.ResourceAssignment>().Single();
+            Assert.Equal(org.mpxj.WorkContour.CONTOURED, assignment.getWorkContour());
+            Assert.Equal(12.0, assignment.getWork().getDuration(), 3);   // 8h + 4h, in hours
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
 }

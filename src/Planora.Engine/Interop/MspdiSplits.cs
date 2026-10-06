@@ -7,9 +7,10 @@ using Planora.Engine.Scheduling;
 namespace Planora.Engine.Interop;
 
 /// <summary>
-/// Task splits in Microsoft Project XML. Microsoft Project keeps a split as the assignments' time-phased
-/// work: one period per working segment and a zero-work period for each gap (Type 1 remaining work,
-/// Type 2 actual work). Unassigned tasks use a placeholder assignment to resource -65535.
+/// Task splits and hand-edited (contoured) work in Microsoft Project XML. Microsoft Project keeps both as
+/// the assignments' time-phased work: one period per working segment or piece, and zero-work periods for
+/// gaps (Type 1 remaining work, Type 2 actual work). Unassigned split tasks use a placeholder assignment
+/// to resource -65535.
 /// (Checked by reading the result back with MPXJ, whose split detection follows Microsoft Project's files.)
 /// </summary>
 internal static class MspdiSplits
@@ -22,7 +23,7 @@ internal static class MspdiSplits
         var placeholders = new List<XElement>();
         int nextUid = assignments.Elements().Count() + 1;
         var byTask = assignments.Elements().GroupBy(a => (int?)a.Element(ns + "TaskUID")).ToDictionary(g => g.Key ?? -1, g => g.ToList());
-        foreach (var task in project.Tasks.Where(t => !t.IsSummary && t.Segments.Count > 1))
+        foreach (var task in project.Tasks.Where(t => !t.IsSummary && (t.Segments.Count > 1 || t.Assignments.Any(a => a.IsContoured))))
         {
             var cal = task.Calendar ?? project.Calendar;
             var work = task.Assignments.Where(a => a.IsWork && a.WorkMinutes > 0).ToList();
@@ -34,10 +35,13 @@ internal static class MspdiSplits
                     if (work.FirstOrDefault(a => a.Resource.Id == resourceUid) is not { } assignment)
                         continue;
                     int uid = (int?)element.Element(ns + "UID") ?? 0;
-                    element.Add(Periods(ns, uid, task, cal, (from, to) => Timephased.WorkBetween(assignment, from, to)));
+                    if (assignment.IsContoured)
+                        element.Add(PiecePeriods(ns, uid, assignment, project));
+                    else if (task.Segments.Count > 1)
+                        element.Add(Periods(ns, uid, task, cal, (from, to) => Timephased.WorkBetween(assignment, from, to)));
                 }
             }
-            else if (work.Count == 0)
+            else if (work.Count == 0 && task.Segments.Count > 1)
             {
                 int uid = nextUid++;
                 var placeholder = new XElement(ns + "Assignment",
@@ -75,6 +79,21 @@ internal static class MspdiSplits
         }
     }
 
+    /// <summary>A contoured assignment's hand-edited pieces, as work periods (Type 2 up to the complete-through point).</summary>
+    private static IEnumerable<XElement> PiecePeriods(XNamespace ns, int uid, Assignment assignment, Project project)
+    {
+        var cal = assignment.EffectiveCalendar ?? assignment.Resource.Calendar ?? project.Calendar;
+        var task = assignment.Task;
+        var doneUntil = task.PercentComplete >= 100 ? task.Finish : task.PercentComplete > 0 ? task.CompleteThrough : DateTime.MinValue;
+        var start = assignment.Start;
+        foreach (var piece in assignment.Pieces)
+        {
+            var from = cal.AddWorkingMinutes(start, piece.Offset);
+            var to = cal.AddWorkingMinutes(start, piece.End);
+            yield return Period(ns, uid, to <= doneUntil ? 2 : 1, from, to, piece.WorkMinutes);
+        }
+    }
+
     private static XElement Period(XNamespace ns, int uid, int type, DateTime start, DateTime finish, double minutes) =>
         new(ns + "TimephasedData",
             new XElement(ns + "Type", type),
@@ -96,10 +115,17 @@ internal static class MspdiSplits
     public static void Read(XElement root, Project project)
     {
         var periodsByTask = new Dictionary<int, List<(DateTime Start, DateTime Finish, bool HasWork)>>();
+        var contouredTasks = new HashSet<int>();
         foreach (var assignment in root.Elements().Where(e => e.Name.LocalName == "Assignments").SelectMany(e => e.Elements()))
         {
             if (!int.TryParse(Child(assignment, "TaskUID"), out var taskUid))
                 continue;
+            if (Child(assignment, "WorkContour") == "8")
+            {
+                contouredTasks.Add(taskUid);
+                ReadPieces(assignment, project, taskUid);
+                continue;
+            }
             foreach (var data in assignment.Elements().Where(e => e.Name.LocalName == "TimephasedData"))
             {
                 if (Child(data, "Type") is not ("1" or "2") || !DateTime.TryParse(Child(data, "Start"), CultureInfo.InvariantCulture, DateTimeStyles.None, out var start)
@@ -122,7 +148,7 @@ internal static class MspdiSplits
 
         foreach (var (taskUid, periods) in periodsByTask)
         {
-            if (project.GetTask(taskUid) is not { IsSummary: false } task || task.Splits.Count > 0)
+            if (project.GetTask(taskUid) is not { IsSummary: false } task || task.Splits.Count > 0 || contouredTasks.Contains(taskUid))
                 continue;
             var cal = task.Calendar ?? project.Calendar;
             // Working segments: runs of periods with work, separated by zero-work periods covering working time.
@@ -151,6 +177,38 @@ internal static class MspdiSplits
                     task.Split(done, gap);
             }
         }
+    }
+
+    /// <summary>A contoured assignment's time-phased work becomes its hand-edited pieces.</summary>
+    private static void ReadPieces(XElement element, Project project, int taskUid)
+    {
+        if (project.GetTask(taskUid) is not { } task || !int.TryParse(Child(element, "ResourceUID"), out var resourceUid)
+            || task.Assignments.FirstOrDefault(a => a.Resource.Id == resourceUid) is not { IsWork: true } assignment
+            || !DateTime.TryParse(Child(element, "Start"), CultureInfo.InvariantCulture, DateTimeStyles.None, out var start))
+            return;
+        var cal = assignment.Resource.Calendar ?? task.Calendar ?? project.Calendar;
+        var pieces = new List<WorkPiece>();
+        foreach (var data in element.Elements().Where(e => e.Name.LocalName == "TimephasedData").OrderBy(e => Child(e, "Start")))
+        {
+            if (Child(data, "Type") is not ("1" or "2") || !DateTime.TryParse(Child(data, "Start"), CultureInfo.InvariantCulture, DateTimeStyles.None, out var from)
+                || !DateTime.TryParse(Child(data, "Finish"), CultureInfo.InvariantCulture, DateTimeStyles.None, out var to) || to <= from)
+                continue;
+            long work;
+            try
+            {
+                work = (long)Math.Round(XmlConvert.ToTimeSpan(Child(data, "Value") ?? "PT0M").TotalMinutes);
+            }
+            catch (FormatException)
+            {
+                continue;
+            }
+            long offset = cal.WorkingMinutesBetween(start, from);
+            long length = cal.WorkingMinutesBetween(from, to);
+            if (offset >= 0 && length > 0)
+                pieces.Add(new WorkPiece(offset, length, work));
+        }
+        if (pieces.Count > 0)
+            assignment.SetPieces(pieces);
     }
 
     private static string? Child(XElement parent, string name) => parent.Elements().FirstOrDefault(e => e.Name.LocalName == name)?.Value;
