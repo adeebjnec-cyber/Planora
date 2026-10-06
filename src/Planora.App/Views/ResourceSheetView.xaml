@@ -1,0 +1,56 @@
+<UserControl x:Class="Planora.App.Views.ResourceSheetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Planora.App.ViewModels">
+    <DataGrid x:Name="Sheet"
+              ItemsSource="{Binding ResourceRows}"
+              Style="{StaticResource SheetStyle}"
+              SelectionChanged="OnSelectionChanged"
+              PreviewKeyDown="OnPreviewKeyDown"
+              BeginningEdit="OnBeginningEdit"
+              MouseDoubleClick="OnDoubleClick">
+        <DataGrid.RowStyle>
+            <Style TargetType="DataGridRow" BasedOn="{StaticResource SheetRowStyle}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsOverallocated}" Value="True">
+                        <Setter Property="Foreground" Value="#C62828" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </DataGrid.RowStyle>
+        <DataGrid.Columns>
+            <DataGridTextColumn Header="" Binding="{Binding RowNumber}" IsReadOnly="True" Width="34" CellStyle="{StaticResource RowNumberCell}" />
+            <DataGridTextColumn Header="ⓘ" Binding="{Binding Indicators}" IsReadOnly="True" Width="36" />
+            <DataGridTextColumn Header="Resource Name" Binding="{Binding Name}" Width="170" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridComboBoxColumn Header="Type" Width="80" SelectedItemBinding="{Binding Type}"
+                                    ItemsSource="{x:Static vm:ResourceRowViewModel.Types}" />
+            <DataGridTextColumn Header="Material Label" Binding="{Binding MaterialLabel}" Width="90" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridTextColumn Header="Initials" Binding="{Binding Initials}" Width="60" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridTextColumn Header="Group" Binding="{Binding Group}" Width="90" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridTextColumn Header="Max. Units" Binding="{Binding MaxUnits}" Width="75" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridTextColumn Header="Std. Rate" Binding="{Binding StandardRate}" Width="90" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridTextColumn Header="Ovt. Rate" Binding="{Binding OvertimeRate}" Width="90" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridTextColumn Header="Cost/Use" Binding="{Binding CostPerUse}" Width="80" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridComboBoxColumn Header="Accrue At" Width="80" SelectedItemBinding="{Binding AccrueAt}"
+                                    ItemsSource="{x:Static vm:ResourceRowViewModel.Accruals}" />
+            <DataGridTemplateColumn Header="Base Calendar" Width="110">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate DataType="vm:ResourceRowViewModel">
+                        <TextBlock Text="{Binding BaseCalendar}" VerticalAlignment="Center" />
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+                <DataGridTemplateColumn.CellEditingTemplate>
+                    <DataTemplate DataType="vm:ResourceRowViewModel">
+                        <ComboBox ItemsSource="{Binding CalendarNames}" SelectedItem="{Binding BaseCalendar, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding IsWork}" />
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellEditingTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTextColumn Header="Code" Binding="{Binding Code}" Width="60" EditingElementStyle="{StaticResource CellEditor}" />
+            <DataGridTextColumn Header="Peak" Binding="{Binding PeakUnits}" Width="60" IsReadOnly="True" />
+            <DataGridTextColumn Header="Work" Binding="{Binding Work}" Width="80" IsReadOnly="True" />
+            <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="90" IsReadOnly="True" />
+        </DataGrid.Columns>
+    </DataGrid>
+</UserControl>

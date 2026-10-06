@@ -1,0 +1,90 @@
+<Window x:Class="Planora.App.Dialogs.ProjectInformationDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Project Information" Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="12">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="OK" IsDefault="True" Style="{StaticResource DialogButton}" Click="OnOk" />
+            <Button Content="Cancel" IsCancel="True" Style="{StaticResource DialogButton}" />
+        </StackPanel>
+
+        <TabControl Width="560">
+            <TabItem Header="Project">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Project name:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Column="1" Text="{Binding ProjectName}" Style="{StaticResource FormText}" />
+                    <TextBlock Grid.Row="1" Text="Schedule from:" Style="{StaticResource FormLabel}" />
+                    <ComboBox Grid.Row="1" Grid.Column="1" SelectedIndex="{Binding ScheduleFromIndex}" Style="{StaticResource FormCombo}">
+                        <ComboBoxItem Content="Project Start Date" />
+                        <ComboBoxItem Content="Project Finish Date" />
+                    </ComboBox>
+                    <TextBlock Grid.Row="2" Text="Start date:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding StartDate}" Style="{StaticResource FormText}"
+                             ToolTip="Used when scheduling from the project start" />
+                    <TextBlock Grid.Row="3" Text="Finish date:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding FinishDate}" Style="{StaticResource FormText}"
+                             ToolTip="Used when scheduling from the project finish" />
+                    <TextBlock Grid.Row="4" Text="Status date:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding StatusDate}" Style="{StaticResource FormText}"
+                             ToolTip="Leave empty for none (today is used for earned value)" />
+                    <TextBlock Grid.Row="5" Text="Calendar:" Style="{StaticResource FormLabel}" />
+                    <ComboBox Grid.Row="5" Grid.Column="1" ItemsSource="{Binding CalendarNames}" SelectedIndex="{Binding CalendarIndex}" Style="{StaticResource FormCombo}" />
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Schedule Options">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Hours per day:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Column="1" Text="{Binding HoursPerDay}" Style="{StaticResource FormText}" />
+                    <TextBlock Grid.Row="1" Text="Hours per week:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding HoursPerWeek}" Style="{StaticResource FormText}" />
+                    <TextBlock Grid.Row="2" Text="Days per month:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding DaysPerMonth}" Style="{StaticResource FormText}" />
+                    <TextBlock Grid.Row="3" Text="Tasks are critical if slack is less than or equal to:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding CriticalSlack}" Style="{StaticResource FormText}" ToolTip="e.g. 0d, 2d" />
+                    <CheckBox Grid.Row="4" Grid.ColumnSpan="2" Content="Calculate multiple critical paths" IsChecked="{Binding MultipleCriticalPaths}" Style="{StaticResource FormCheck}" />
+                    <CheckBox Grid.Row="5" Grid.ColumnSpan="2" Content="Reschedule uncompleted work to start after the status date" IsChecked="{Binding RescheduleToStatusDate}" Style="{StaticResource FormCheck}" />
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Statistics">
+                <DataGrid Margin="8" ItemsSource="{Binding Statistics}" AutoGenerateColumns="False" IsReadOnly="True"
+                          HeadersVisibility="Column" RowHeight="24" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource GridLine}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="" Binding="{Binding Label}" Width="90" FontWeight="SemiBold" />
+                        <DataGridTextColumn Header="Start" Binding="{Binding Start}" Width="*" />
+                        <DataGridTextColumn Header="Finish" Binding="{Binding Finish}" Width="*" />
+                        <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="*" />
+                        <DataGridTextColumn Header="Work" Binding="{Binding Work}" Width="*" />
+                        <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

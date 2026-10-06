@@ -1,0 +1,63 @@
+<Window x:Class="Planora.App.Dialogs.ChangeWorkingTimeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Change Working Time" Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner">
+    <DockPanel Margin="12" Width="640">
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="OK" IsDefault="True" Style="{StaticResource DialogButton}" Click="OnOk" />
+            <Button Content="Cancel" IsCancel="True" Style="{StaticResource DialogButton}" />
+        </StackPanel>
+
+        <Grid DockPanel.Dock="Top" Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="For calendar:" Style="{StaticResource FormLabel}" />
+            <ComboBox x:Name="CalendarPicker" Grid.Column="1" DisplayMemberPath="Label" SelectionChanged="OnCalendarChanged" Style="{StaticResource FormCombo}" />
+            <Button Grid.Column="2" Content="Create New Calendar..." Margin="8,3,0,3" Padding="10,2" Click="OnCreateCalendar" />
+        </Grid>
+        <TextBlock DockPanel.Dock="Top" x:Name="BaseInfo" Foreground="#555" Margin="0,0,0,8" />
+
+        <StackPanel x:Name="NewCalendarPanel" DockPanel.Dock="Top" Orientation="Horizontal" Visibility="Collapsed" Margin="0,0,0,8">
+            <TextBlock Text="Name:" Style="{StaticResource FormLabel}" />
+            <TextBox x:Name="NewCalendarName" Width="160" Style="{StaticResource FormText}" />
+            <RadioButton x:Name="NewBlank" Content="Create new base calendar" IsChecked="True" Margin="12,0,0,0" VerticalAlignment="Center" />
+            <RadioButton x:Name="NewCopy" Content="Make a copy of the selected calendar" Margin="12,0,0,0" VerticalAlignment="Center" />
+            <Button Content="Create" Margin="10,3,0,3" Padding="10,2" Click="OnConfirmCreate" />
+        </StackPanel>
+
+        <TabControl Height="330">
+            <TabItem Header="Work Week">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="#555" Margin="0,0,0,6"
+                               Text="Working times as ranges, e.g. 8:00-12:00, 13:00-17:00. Leave empty for a nonworking day. Tick 'Use base' to inherit the base calendar's hours." />
+                    <DataGrid x:Name="WeekGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                              HeadersVisibility="Column" RowHeight="24" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource GridLine}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Day" Binding="{Binding DayName}" IsReadOnly="True" Width="100" />
+                            <DataGridCheckBoxColumn Header="Use base" Binding="{Binding UseBase, UpdateSourceTrigger=PropertyChanged}" Width="70" />
+                            <DataGridTextColumn Header="Working Times" Binding="{Binding WorkingTimes}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Exceptions">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="#555" Margin="0,0,0,6"
+                               Text="Holidays and special days. Leave Working Times empty for a nonworking exception." />
+                    <DataGrid x:Name="ExceptionGrid" AutoGenerateColumns="False" CanUserAddRows="True" CanUserDeleteRows="True"
+                              HeadersVisibility="Column" RowHeight="24" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource GridLine}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
+                            <DataGridTextColumn Header="Start" Binding="{Binding Start}" Width="100" />
+                            <DataGridTextColumn Header="Finish" Binding="{Binding Finish}" Width="100" />
+                            <DataGridTextColumn Header="Working Times" Binding="{Binding WorkingTimes}" Width="180" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

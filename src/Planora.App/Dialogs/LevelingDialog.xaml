@@ -1,0 +1,44 @@
+<Window x:Class="Planora.App.Dialogs.LevelingDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Resource Leveling" Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="14" Width="440">
+        <GroupBox Header="Leveling range">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <RadioButton x:Name="WholeProject" Grid.ColumnSpan="2" Content="Level entire project" IsChecked="True" Margin="0,2" />
+                <RadioButton x:Name="Range" Grid.Row="1" Content="Level from:" VerticalAlignment="Center" Margin="0,2,10,2" />
+                <TextBox x:Name="RangeFrom" Grid.Row="1" Grid.Column="1" Style="{StaticResource FormText}" IsEnabled="{Binding IsChecked, ElementName=Range}" />
+                <TextBlock Grid.Row="2" Text="To:" Margin="18,0,10,0" VerticalAlignment="Center" />
+                <TextBox x:Name="RangeTo" Grid.Row="2" Grid.Column="1" Style="{StaticResource FormText}" IsEnabled="{Binding IsChecked, ElementName=Range}" />
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Resolving overallocations">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Leveling order:" Style="{StaticResource FormLabel}" />
+                    <ComboBox x:Name="Order" Style="{StaticResource FormCombo}" SelectedIndex="1">
+                        <ComboBoxItem Content="ID Only" />
+                        <ComboBoxItem Content="Standard" />
+                        <ComboBoxItem Content="Priority, Standard" />
+                    </ComboBox>
+                </StackPanel>
+                <CheckBox x:Name="WithinSlack" Content="Level only within available slack" Style="{StaticResource FormCheck}" />
+                <CheckBox x:Name="ClearFirst" Content="Clear leveling values before leveling" IsChecked="True" Style="{StaticResource FormCheck}" />
+            </StackPanel>
+        </GroupBox>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="Clear Leveling" Style="{StaticResource DialogButton}" Click="OnClear" />
+            <Button Content="Level All" IsDefault="True" Style="{StaticResource DialogButton}" Click="OnLevel" />
+            <Button Content="Cancel" IsCancel="True" Style="{StaticResource DialogButton}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

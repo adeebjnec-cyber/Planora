@@ -13,19 +13,41 @@ public partial class App : Application
         var window = new MainWindow();
         MainWindow = window;
 
-        // Developer aid: "--screenshot out.png [file]" renders the window to an image and exits.
-        int shot = Array.IndexOf(e.Args, "--screenshot");
-        if (shot >= 0 && shot + 1 < e.Args.Length)
+        // Developer aid: "--screenshot out.png [--view Kind] [--dialog Name] [file]" renders the window
+        // (or a dialog) to an image and exits.
+        var options = ParseOptions(e.Args, out var positional);
+        if (options.TryGetValue("--screenshot", out var output))
         {
-            var output = e.Args[shot + 1];
-            var file = e.Args.Where((_, i) => i != shot && i != shot + 1).FirstOrDefault();
+            // Never block on a message box in this unattended mode: log the error and exit.
+            DispatcherUnhandledException -= OnUnhandledException;
+            DispatcherUnhandledException += (_, args) =>
+            {
+                System.IO.File.WriteAllText(output + ".error.txt", args.Exception.ToString());
+                args.Handled = true;
+                Shutdown(1);
+            };
             window.Show();
-            if (file is not null)
+            if (positional.FirstOrDefault() is { } file)
                 window.ViewModel.OpenFile(file);
             else
                 window.ViewModel.LoadSample();
+            if (options.TryGetValue("--view", out var view))
+                window.ViewModel.CurrentView = Enum.Parse<ViewModels.ViewKind>(view, ignoreCase: true);
             window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
             {
+                if (options.TryGetValue("--dialog", out var dialogName))
+                {
+                    var dialog = Dialogs.DialogFactory.ForScreenshot(window.ViewModel, dialogName);
+                    dialog.Owner = window;
+                    dialog.ContentRendered += (_, _) => dialog.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
+                    {
+                        Dialogs.DialogFactory.SaveScreenshot(dialog, output);
+                        window.ViewModel.Document.DeleteAutosave();
+                        Shutdown();
+                    });
+                    dialog.Show();
+                    return;
+                }
                 window.SaveScreenshot(output);
                 window.ViewModel.Document.DeleteAutosave();
                 Shutdown();
@@ -36,6 +58,21 @@ public partial class App : Application
         window.Show();
         if (e.Args.Length > 0)
             window.ViewModel.OpenFile(e.Args[0]);
+    }
+
+    /// <summary>Splits "--name value" pairs from positional arguments.</summary>
+    private static Dictionary<string, string> ParseOptions(string[] args, out List<string> positional)
+    {
+        var options = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        positional = new List<string>();
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i].StartsWith("--", StringComparison.Ordinal) && i + 1 < args.Length)
+                options[args[i]] = args[++i];
+            else
+                positional.Add(args[i]);
+        }
+        return options;
     }
 
     /// <summary>Last-resort handler: report the problem instead of closing and losing work.</summary>

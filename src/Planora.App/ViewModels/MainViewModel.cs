@@ -12,7 +12,7 @@ using Planora.Engine.Scheduling;
 
 namespace Planora.App.ViewModels;
 
-public sealed class MainViewModel : ObservableObject
+public sealed partial class MainViewModel : ObservableObject
 {
     /// <summary>Gantt zoom steps in pixels per day, from years down to hours.</summary>
     public static readonly double[] ZoomLevels = { 0.5, 1.5, 4, 10, 24, 48, 120, 300 };
@@ -51,6 +51,8 @@ public sealed class MainViewModel : ObservableObject
         ZoomInCommand = new RelayCommand(() => ZoomIndex++, () => ZoomIndex < ZoomLevels.Length - 1);
         ZoomOutCommand = new RelayCommand(() => ZoomIndex--, () => ZoomIndex > 0);
         ScrollToTaskCommand = new RelayCommand(() => ScrollToTaskRequested?.Invoke(this, EventArgs.Empty), () => SelectedTasks.Count > 0);
+        InitializeViewCommands();
+        InitializeDialogCommands();
 
         _autosaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(2) };
         _autosaveTimer.Tick += (_, _) => Autosave();
@@ -497,6 +499,8 @@ public sealed class MainViewModel : ObservableObject
             else if (current != i)
                 Rows.Move(current, i);
         }
+
+        SyncResourceRows();
 
         // Keep the selection pointing at the current task objects (undo replaces them).
         var selectedIds = SelectedTasks.Select(t => t.Id).ToList();

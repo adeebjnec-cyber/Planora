@@ -1,0 +1,36 @@
+<Window x:Class="Planora.App.Dialogs.BaselineDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Set Baseline" Style="{StaticResource DialogWindow}" WindowStartupLocation="CenterOwner">
+    <StackPanel Margin="14" Width="420">
+        <RadioButton x:Name="BaselineMode" Content="Set baseline" IsChecked="True" Margin="0,0,0,4" Checked="OnModeChanged" />
+        <ComboBox x:Name="BaselinePicker" Margin="20,0,0,10" Style="{StaticResource FormCombo}" />
+
+        <RadioButton x:Name="InterimMode" Content="Set interim plan" Margin="0,0,0,4" Checked="OnModeChanged" />
+        <Grid x:Name="InterimPanel" Margin="20,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock x:Name="CopyLabel" Text="Copy:" Style="{StaticResource FormLabel}" />
+            <ComboBox x:Name="CopyFrom" Grid.Column="1" Style="{StaticResource FormCombo}" />
+            <TextBlock Grid.Row="1" Text="Into:" Style="{StaticResource FormLabel}" />
+            <ComboBox x:Name="CopyInto" Grid.Row="1" Grid.Column="1" Style="{StaticResource FormCombo}" />
+        </Grid>
+
+        <TextBlock Text="For:" FontWeight="SemiBold" Margin="0,4,0,4" />
+        <RadioButton x:Name="EntireProject" Content="Entire project" IsChecked="True" Margin="20,0,0,2" />
+        <RadioButton x:Name="SelectedTasks" Content="Selected tasks" Margin="20,0,0,2" />
+        <CheckBox x:Name="RollUp" Content="Roll up baselines to all summary tasks" Margin="40,2,0,0"
+                  IsEnabled="{Binding IsChecked, ElementName=SelectedTasks}" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="OK" IsDefault="True" Style="{StaticResource DialogButton}" Click="OnOk" />
+            <Button Content="Cancel" IsCancel="True" Style="{StaticResource DialogButton}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

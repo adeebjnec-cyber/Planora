@@ -282,33 +282,8 @@ public sealed class TaskRowViewModel : ObservableObject
         _owner.TryEdit(description, p => change(p, p.GetRequiredTask(id)));
     }
 
-    /// <summary>The user's short date format with a two-digit year, e.g. "Mon 28-09-26".</summary>
-    private static readonly string ShortDatePattern =
-        CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern.Replace("yyyy", "yy");
+    public static string FormatDate(DateTime date) => DateText.Format(date);
 
-    public static string FormatDate(DateTime date) =>
-        date.ToString("ddd ", CultureInfo.CurrentCulture) + date.ToString(ShortDatePattern, CultureInfo.CurrentCulture) +
-        (date.TimeOfDay is { } t && t != TimeSpan.FromHours(8) && t != TimeSpan.FromHours(17) ? date.ToString(" t", CultureInfo.CurrentCulture) : "");
-
-    /// <summary>Parses a typed date. A date without a time means the start (or end) of that day's working time.</summary>
-    private bool TryParseDate(string text, bool endOfDay, out DateTime date)
-    {
-        var cleaned = text.Trim();
-        // Accept the displayed format, which starts with a day name.
-        int space = cleaned.IndexOf(' ');
-        if (space > 0 && !char.IsDigit(cleaned[0]))
-            cleaned = cleaned[(space + 1)..];
-
-        if (!DateTime.TryParse(cleaned, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out date))
-            return false;
-
-        if (date.TimeOfDay == TimeSpan.Zero)
-        {
-            var cal = Task?.Calendar ?? Project.Calendar;
-            date = endOfDay
-                ? cal.PreviousWorkingMoment(date.AddDays(1))
-                : cal.NextWorkingMoment(date);
-        }
-        return true;
-    }
+    private bool TryParseDate(string text, bool endOfDay, out DateTime date) =>
+        DateText.TryParse(text, Task?.Calendar ?? Project.Calendar, endOfDay, out date);
 }

@@ -56,6 +56,26 @@ public sealed class WorkingCalendar
         return calendar;
     }
 
+    /// <summary>
+    /// A copy of this calendar's own settings (work-week overrides and exceptions) on a different base
+    /// calendar, or a standalone copy when <paramref name="newBase"/> is null. Days that inherited from
+    /// the old base keep their effective hours in a standalone copy.
+    /// </summary>
+    public WorkingCalendar Rebase(WorkingCalendar? newBase, string? name = null)
+    {
+        var copy = new WorkingCalendar(name ?? Name, newBase);
+        foreach (DayOfWeek day in Enum.GetValues<DayOfWeek>())
+        {
+            if (_week[(int)day] is { } own)
+                copy._week[(int)day] = own;
+            else if (newBase is null)
+                copy._week[(int)day] = GetWorkWeekDay(day);
+        }
+        foreach (var e in Exceptions)
+            copy.Exceptions.Add(new CalendarException(e.Name, e.From, e.To, e.WorkingTimes));
+        return copy;
+    }
+
     /// <summary>Sets the working times for a day of the week. No times means a non-working day.</summary>
     public void SetWorkWeekDay(DayOfWeek day, params WorkingTime[] times) =>
         _week[(int)day] = WorkingTime.Normalize(times);
