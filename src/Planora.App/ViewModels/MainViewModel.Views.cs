@@ -50,6 +50,14 @@ public sealed partial class MainViewModel
 
     private bool _showTaskForm;
     private bool _showTimelinePane;
+    private bool _showInspector;
+
+    /// <summary>Task > Inspect: the Task Inspector pane.</summary>
+    public bool ShowInspector
+    {
+        get => _showInspector;
+        set => SetProperty(ref _showInspector, value);
+    }
 
     /// <summary>View > Timeline: the Timeline above the current view.</summary>
     public bool ShowTimelinePane

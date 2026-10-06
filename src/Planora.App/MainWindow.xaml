@@ -96,6 +96,7 @@
                 </RibbonGroup>
                 <RibbonGroup Header="Tasks">
                     <RibbonButton Label="Manual / Auto" LargeImageSource="{infra:Glyph &#xE718;}" Command="{Binding ToggleModeCommand}" ToolTipTitle="Switch selected tasks between manual and automatic scheduling" />
+                    <RibbonToggleButton Label="Inspect" SmallImageSource="{infra:Glyph &#xE721;}" IsChecked="{Binding ShowInspector}" ToolTipTitle="Task Inspector: what drives the selected task, and its problems" />
                     <RibbonButton Label="Go to Task" SmallImageSource="{infra:Glyph &#xE8B0;}" Command="{Binding ScrollToTaskCommand}" ToolTipTitle="Scroll the chart to the selected task (Ctrl+Shift+F5)" />
                     <RibbonButton Label="Add to Timeline" SmallImageSource="{infra:Glyph &#xE823;}" Command="{Binding AddToTimelineCommand}" />
                 </RibbonGroup>
@@ -350,6 +351,7 @@
             </ListBox>
         </Border>
 
+        <views:InspectorPanel DockPanel.Dock="Right" Width="300" Visibility="{Binding ShowInspector, Converter={StaticResource BoolToVisibility}}" />
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
