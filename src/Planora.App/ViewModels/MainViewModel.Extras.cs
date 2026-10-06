@@ -151,7 +151,7 @@ public sealed partial class MainViewModel
     {
         var dialog = new Microsoft.Win32.OpenFileDialog { Filter = ProjectFilesFilter, Title = "Share Resources: choose the resource pool file" };
         if (dialog.ShowDialog() == true)
-            PoolAction("Share resources", p => Engine.Interop.ResourcePool.Share(p, dialog.FileName));
+            PoolAction("Share resources", p => Engine.Interop.ResourcePool.Share(p, dialog.FileName, Document.FilePath));
     }
 
     private void PoolAction(string description, Func<Project, int> action)
@@ -159,6 +159,30 @@ public sealed partial class MainViewModel
         int added = 0;
         if (TryEdit(description, p => added = action(p)))
             Status = added == 0 ? "Resources updated from the pool" : $"Resources updated from the pool; {added} added";
+    }
+
+    public ICommand LinkExternalCommand { get; private set; } = null!;
+    public ICommand RefreshExternalLinksCommand { get; private set; } = null!;
+    public ICommand PoolOverallocationsCommand { get; private set; } = null!;
+
+    private void InitializeMultiProjectCommands()
+    {
+        LinkExternalCommand = new RelayCommand(() => ShowDialog(new ExternalLinkDialog(this, SelectedTasks[0])), () => SelectedTasks.Count == 1 && !SelectedTasks[0].IsSummary);
+        RefreshExternalLinksCommand = new RelayCommand(RefreshExternalLinks, () => Project.Tasks.Any(t => t.ExternalPredecessors.Count > 0));
+        PoolOverallocationsCommand = new RelayCommand(() => ShowDialog(new PoolOverallocationsDialog(this)), () => Project.ResourcePoolPath is not null);
+    }
+
+    /// <summary>Re-reads the dates of predecessor tasks in other project files.</summary>
+    private void RefreshExternalLinks()
+    {
+        IReadOnlyList<(ProjectTask Task, ExternalLink Link, string Problem)> problems = Array.Empty<(ProjectTask, ExternalLink, string)>();
+        if (!TryEdit("Refresh external links", p => problems = Engine.Interop.ExternalLinks.Refresh(p)))
+            return;
+        if (problems.Count == 0)
+            Status = "External links refreshed";
+        else
+            ShowError("Some external links kept their last known dates:" + Environment.NewLine
+                + string.Join(Environment.NewLine, problems.Select(x => $"{x.Task.Name}: {x.Problem}")));
     }
 
     private void UpdatePool()

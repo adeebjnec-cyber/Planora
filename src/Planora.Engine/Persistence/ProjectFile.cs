@@ -72,6 +72,7 @@ public static class ProjectFile
             ScheduleFromFinish = project.ScheduleFromFinish,
             StatusDate = project.StatusDate,
             ResourcePoolPath = project.ResourcePoolPath,
+            PoolSharers = project.PoolSharers.Count == 0 ? null : project.PoolSharers.ToList(),
             CalendarId = calendarIds[project.Calendar],
             BaseCalendarIds = project.Calendars.Select(c => calendarIds[c]).ToList(),
             Options = new OptionsDto
@@ -166,6 +167,7 @@ public static class ProjectFile
                     LagPercent = l.LagPercent,
                 }).ToList(),
                 Splits = t.Splits.ToList(),
+                ExternalPredecessors = t.ExternalPredecessors.Count == 0 ? null : t.ExternalPredecessors.ToList(),
                 Recurrence = t.Recurrence,
                 Type = t.Type,
                 IsEffortDriven = t.IsEffortDriven,
@@ -392,6 +394,8 @@ public static class ProjectFile
             }
             foreach (var s in t.Splits)
                 task.Split(s.AfterWorkMinutes, s.GapMinutes, s.FromLeveling);
+            if (t.ExternalPredecessors is not null)
+                task.ExternalPredecessors.AddRange(t.ExternalPredecessors);
             task.Recurrence = t.Recurrence;
             task.Type = t.Type;
             task.IsEffortDriven = t.IsEffortDriven;
@@ -463,6 +467,8 @@ public static class ProjectFile
             project.Groups.Add(new GroupDefinition(g.Name, g.Levels.ToArray()) { ShowSummaryTasks = g.ShowSummaryTasks });
         if (dto.GanttFormat is { } format)
             project.GanttFormat = format;
+        if (dto.PoolSharers is not null)
+            project.PoolSharers.AddRange(dto.PoolSharers);
         if (dto.CustomReports is { } reports)
             project.CustomReports.AddRange(reports);
         foreach (var v in dto.SavedViews ?? new())
@@ -511,6 +517,7 @@ public static class ProjectFile
         public bool ScheduleFromFinish { get; set; }
         public DateTime? StatusDate { get; set; }
         public string? ResourcePoolPath { get; set; }
+        public List<string>? PoolSharers { get; set; }
         public int CalendarId { get; set; }
         public List<int> BaseCalendarIds { get; set; } = new();
         public OptionsDto? Options { get; set; }
@@ -673,6 +680,7 @@ public static class ProjectFile
         public DateTime? ActualFinish { get; set; }
         public List<LinkDto> Predecessors { get; set; } = new();
         public List<TaskSplit> Splits { get; set; } = new();
+        public List<ExternalLink>? ExternalPredecessors { get; set; }
         public RecurrencePattern? Recurrence { get; set; }
         public TaskType Type { get; set; }
         public bool IsEffortDriven { get; set; }

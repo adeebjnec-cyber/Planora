@@ -231,6 +231,23 @@ public static class MspdiFile
             task.Add(E("ManualFinish", t.ManualFinish ?? t.Finish));
         }
 
+        foreach (var external in t.ExternalPredecessors)
+        {
+            task.Add(new XElement(Ns + "PredecessorLink",
+                E("PredecessorUID", external.TaskId),
+                E("Type", external.Type switch
+                {
+                    LinkType.FinishToFinish => 0,
+                    LinkType.StartToFinish => 2,
+                    LinkType.StartToStart => 3,
+                    _ => 1,
+                }),
+                E("CrossProject", true),
+                E("CrossProjectName", $"{external.ProjectPath}\\{external.TaskId}"),
+                E("LinkLag", external.LagMinutes * 10),
+                E("LagFormat", 7)));
+        }
+
         foreach (var link in t.Predecessors)
         {
             bool percent = link.LagFormat == LagFormat.PercentOfPredecessor;
@@ -555,7 +572,12 @@ public static class MspdiFile
 
         foreach (var (task, link) in links)
         {
-            if (Text(link, "CrossProject") == "1" || Int(link, "PredecessorUID") is not { } predUid || project.GetTask(predUid) is not { } pred)
+            if (Text(link, "CrossProject") == "1")
+            {
+                ReadExternalLink(task, link);
+                continue;
+            }
+            if (Int(link, "PredecessorUID") is not { } predUid || project.GetTask(predUid) is not { } pred)
                 continue;
             var type = (Int(link, "Type") ?? 1) switch
             {
@@ -722,6 +744,29 @@ public static class MspdiFile
                 break;
         }
         return new CalendarException(range.Name, range.From, range.From, range.WorkingTimes) { Recurrence = pattern };
+    }
+
+    /// <summary>A cross-project link: CrossProjectName is the other file's path, a backslash and the task's unique ID.</summary>
+    private static void ReadExternalLink(ProjectTask task, XElement link)
+    {
+        var name = Text(link, "CrossProjectName");
+        int cut = name?.LastIndexOf('\\') ?? -1;
+        if (name is null || cut <= 0 || !int.TryParse(name[(cut + 1)..], out var uid))
+            return;
+        task.ExternalPredecessors.Add(new ExternalLink
+        {
+            ProjectPath = name[..cut],
+            TaskId = uid,
+            TaskName = $"Task {uid}",
+            Type = (Int(link, "Type") ?? 1) switch
+            {
+                0 => LinkType.FinishToFinish,
+                2 => LinkType.StartToFinish,
+                3 => LinkType.StartToStart,
+                _ => LinkType.FinishToStart,
+            },
+            LagMinutes = (Long(link, "LinkLag") ?? 0) / 10,
+        });
     }
 
     private static CalendarException? AddException(WorkingCalendar calendar, string name, XElement period, IReadOnlyList<WorkingTime> times)

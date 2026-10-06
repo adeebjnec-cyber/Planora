@@ -140,6 +140,7 @@ public sealed class TaskRowViewModel : ObservableObject
                 return "";
             var parts = new List<string>();
             if (Task.IsSubproject) parts.Add("⧉");
+            if (Task.ExternalPredecessors.Count > 0) parts.Add("⇄");
             if (IsRecurring) parts.Add("↻");
             if (HasConstraint) parts.Add("▦");
             if (MissesDeadline) parts.Add("!");

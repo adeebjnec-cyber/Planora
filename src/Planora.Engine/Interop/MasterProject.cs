@@ -5,11 +5,15 @@ using Planora.Engine.Scheduling;
 
 namespace Planora.Engine.Interop;
 
-/// <summary>Opens Planora (.planora) or Microsoft Project XML (.xml) files by extension.</summary>
+/// <summary>Opens a project file by extension: Planora, Microsoft Project XML, or (through MPXJ) .mpp and other formats.</summary>
 public static class ProjectLoader
 {
-    public static Project Load(string path) =>
-        Path.GetExtension(path).Equals(MspdiFile.Extension, StringComparison.OrdinalIgnoreCase) ? MspdiFile.Load(path) : ProjectFile.Load(path);
+    public static Project Load(string path) => Path.GetExtension(path).ToLowerInvariant() switch
+    {
+        ".planora" => ProjectFile.Load(path),
+        ".xml" => MspdiFile.Load(path),
+        _ => ForeignFormats.Load(path),
+    };
 }
 
 /// <summary>
@@ -80,12 +84,94 @@ public static class MasterProject
 /// </summary>
 public static class ResourcePool
 {
-    /// <summary>Uses the pool's resources in this project (matching by name, adding the rest). Returns how many were added.</summary>
-    public static int Share(Project project, string poolPath)
+    /// <summary>
+    /// Uses the pool's resources in this project (matching by name, adding the rest). Returns how many were
+    /// added. When the project's own file is given and the pool is a Planora file, the pool records it as a
+    /// sharer, so over-allocations can be checked across all sharing projects.
+    /// </summary>
+    public static int Share(Project project, string poolPath, string? projectPath = null)
     {
         var pool = ProjectLoader.Load(poolPath);
         project.ResourcePoolPath = poolPath;
-        return Merge(from: pool, into: project);
+        int added = Merge(from: pool, into: project);
+        if (projectPath is not null && Path.GetExtension(poolPath).Equals(ProjectFile.Extension, StringComparison.OrdinalIgnoreCase))
+        {
+            var full = Path.GetFullPath(projectPath);
+            if (!pool.PoolSharers.Contains(full, StringComparer.OrdinalIgnoreCase))
+            {
+                pool.PoolSharers.Add(full);
+                ProjectFile.Save(pool, poolPath);
+            }
+        }
+        return added;
+    }
+
+    /// <summary>The project files recorded as sharing a pool.</summary>
+    public static IReadOnlyList<string> Sharers(string poolPath) => ProjectLoader.Load(poolPath).PoolSharers;
+
+    /// <summary>
+    /// Over-allocations of this project's pool resources once the work booked in the other sharing projects
+    /// is added (checked day by day, matching resources by name). <paramref name="thisProjectPath"/> is
+    /// skipped among the sharers, since this project's current (possibly unsaved) plan is used instead.
+    /// </summary>
+    public static IReadOnlyList<PoolOverallocation> SharedOverallocations(Project project, string? thisProjectPath = null)
+    {
+        var path = project.ResourcePoolPath ?? throw new InvalidOperationException("This project does not use a resource pool.");
+        var others = new List<Project>();
+        foreach (var sharer in Sharers(path))
+        {
+            if (thisProjectPath is not null && string.Equals(Path.GetFullPath(sharer), Path.GetFullPath(thisProjectPath), StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (!File.Exists(sharer))
+                continue;
+            var other = ProjectLoader.Load(sharer);
+            ProjectScheduler.Schedule(other);
+            others.Add(other);
+        }
+        ProjectScheduler.Schedule(project);
+
+        var result = new List<PoolOverallocation>();
+        foreach (var resource in project.Resources.Where(r => r.Type == ResourceType.Work && !r.IsBudget))
+        {
+            var booked = new List<(Assignment Assignment, string Project)>();
+            booked.AddRange(ResourceAnalysis.ScheduledAssignments(project, resource).Select(a => (a, project.Name)));
+            foreach (var other in others)
+            {
+                if (other.Resources.FirstOrDefault(r => r.Name.Equals(resource.Name, StringComparison.OrdinalIgnoreCase)) is { } match)
+                    booked.AddRange(ResourceAnalysis.ScheduledAssignments(other, match).Select(a => (a, other.Name)));
+            }
+            if (booked.Count == 0)
+                continue;
+            var calendar = resource.Calendar ?? project.Calendar;
+            var first = booked.Min(b => b.Assignment.Start).Date;
+            var last = booked.Max(b => b.Assignment.Finish).Date;
+            PoolOverallocation? open = null;
+            for (var day = first; day <= last; day = day.AddDays(1))
+            {
+                var next = day.AddDays(1);
+                double working = calendar.WorkingMinutesBetween(day, next);
+                double available = working * resource.MaxUnitsAt(day);
+                var today = booked.Where(b => b.Assignment.Start < next && b.Assignment.Finish > day).ToList();
+                double load = today.Sum(b => Timephased.WorkBetween(b.Assignment, day, next));
+                if (load > available + 0.5)
+                {
+                    // Load as a percentage of one full-time person's working day.
+                    double percent = 100 * load / (working > 0 ? working : project.Options.MinutesPerDay);
+                    var projects = today.Where(b => Timephased.WorkBetween(b.Assignment, day, next) > 0).Select(b => b.Project).Distinct().ToList();
+                    if (open is not null && open.To == day)
+                        open = open with { To = next, PeakPercent = Math.Max(open.PeakPercent, percent), Projects = open.Projects.Union(projects).ToList() };
+                    else
+                    {
+                        if (open is not null)
+                            result.Add(open);
+                        open = new PoolOverallocation(resource.Name, day, next, percent, projects);
+                    }
+                }
+            }
+            if (open is not null)
+                result.Add(open);
+        }
+        return result;
     }
 
     /// <summary>Brings the pool's latest resource details into this project.</summary>
@@ -153,3 +239,6 @@ public static class ResourcePool
         return added;
     }
 }
+
+/// <summary>A pool resource over-allocated when all sharing projects are counted: the days, the peak load and the projects involved.</summary>
+public sealed record PoolOverallocation(string Resource, DateTime From, DateTime To, double PeakPercent, IReadOnlyList<string> Projects);

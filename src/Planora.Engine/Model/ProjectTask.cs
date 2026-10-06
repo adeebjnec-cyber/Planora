@@ -139,6 +139,9 @@ public sealed class ProjectTask
 
     public List<TaskLink> Predecessors { get; } = new();
 
+    /// <summary>Predecessors in other project files (cross-project links).</summary>
+    public List<ExternalLink> ExternalPredecessors { get; } = new();
+
     // ---- Resources and cost ----
 
     public TaskType Type { get; set; } = TaskType.FixedUnits;

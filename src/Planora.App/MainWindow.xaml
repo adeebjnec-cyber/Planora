@@ -131,6 +131,7 @@
                     <RibbonButton Label="Share Resources" LargeImageSource="{infra:Glyph &#xE716;}" Command="{Binding ShareResourcesCommand}" ToolTipTitle="Use the resources of a resource pool file" />
                     <RibbonButton Label="Refresh from Pool" SmallImageSource="{infra:Glyph &#xE72C;}" Command="{Binding RefreshPoolCommand}" />
                     <RibbonButton Label="Update Pool" SmallImageSource="{infra:Glyph &#xE74E;}" Command="{Binding UpdatePoolCommand}" />
+                    <RibbonButton Label="Pool Over-allocations" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding PoolOverallocationsCommand}" ToolTipTitle="Check pool resources across every project that shares the pool" />
                 </RibbonGroup>                <RibbonGroup Header="Level">
                     <RibbonButton Label="Leveling Options" LargeImageSource="{infra:Glyph &#xE9F5;}" Command="{Binding LevelResourcesCommand}" ToolTipTitle="Level resources, or clear leveling" />
                 </RibbonGroup>
@@ -177,6 +178,10 @@
                 <RibbonGroup Header="Schedule">
                     <RibbonButton Label="Set Baseline" LargeImageSource="{infra:Glyph &#xE9D9;}" Command="{Binding SetBaselineCommand}" />
                     <RibbonButton Label="Clear Baseline" SmallImageSource="{infra:Glyph &#xE894;}" Command="{Binding ClearBaselineCommand}" />
+                </RibbonGroup>
+                <RibbonGroup Header="External Links">
+                    <RibbonButton Label="Link to Other Project" SmallImageSource="{infra:Glyph &#xE71B;}" Command="{Binding LinkExternalCommand}" ToolTipTitle="Make a task in another project file a predecessor of the selected task" />
+                    <RibbonButton Label="Refresh Links" SmallImageSource="{infra:Glyph &#xE72C;}" Command="{Binding RefreshExternalLinksCommand}" ToolTipTitle="Re-read the dates of predecessor tasks in other project files" />
                 </RibbonGroup>
                 <RibbonGroup Header="Status">
                     <RibbonButton Label="Update Project" LargeImageSource="{infra:Glyph &#xE895;}" Command="{Binding UpdateProjectCommand}" ToolTipTitle="Mark work complete through a date, or reschedule unfinished work" />

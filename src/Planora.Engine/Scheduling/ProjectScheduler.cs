@@ -474,6 +474,27 @@ public static class ProjectScheduler
                     }
                 }
 
+                // Links from tasks in other project files use their last refreshed dates.
+                foreach (var external in task.ExternalPredecessors)
+                {
+                    DateTime Lagged(DateTime moment) => _project.Calendar.AddWorkingMinutes(moment, external.LagMinutes);
+                    switch (external.Type)
+                    {
+                        case LinkType.FinishToStart when external.Finish is { } f:
+                            start = Max(start, Lagged(f));
+                            break;
+                        case LinkType.StartToStart when external.Start is { } s:
+                            start = Max(start, Lagged(s));
+                            break;
+                        case LinkType.FinishToFinish when external.Finish is { } f:
+                            finishNoEarlierThan = Max(finishNoEarlierThan, Lagged(f));
+                            break;
+                        case LinkType.StartToFinish when external.Start is { } s:
+                            finishNoEarlierThan = Max(finishNoEarlierThan, Lagged(s));
+                            break;
+                    }
+                }
+
                 if (_options.RescheduleUncompletedWorkToStatusDate && _project.StatusDate is { } statusDate && task.PercentComplete == 0)
                     start = Max(start, statusDate);
 

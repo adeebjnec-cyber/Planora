@@ -38,6 +38,9 @@ public sealed class Project
     /// <summary>A shared resource pool file this project takes its resources from, if any.</summary>
     public string? ResourcePoolPath { get; set; }
 
+    /// <summary>In a resource pool file: the project files that share its resources.</summary>
+    public List<string> PoolSharers { get; } = new();
+
     /// <summary>The project calendar, used by tasks that have no calendar of their own.</summary>
     public WorkingCalendar Calendar { get; set; }
 
