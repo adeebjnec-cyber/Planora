@@ -20,6 +20,7 @@ public partial class App : Application
         // Developer aid: "--export out.pdf|out.png [--report Name] [file]" writes output without dialogs.
         if (options.TryGetValue("--export", out var exportPath))
         {
+            window.ViewModel.IsHeadless = true;
             window.Show();
             if (positional.FirstOrDefault() is { } source)
                 window.ViewModel.OpenFile(source);
@@ -74,6 +75,7 @@ public partial class App : Application
                 args.Handled = true;
                 Shutdown(1);
             };
+            window.ViewModel.IsHeadless = true;
             window.Show();
             if (positional.FirstOrDefault() is { } file)
                 window.ViewModel.OpenFile(file);
@@ -91,6 +93,12 @@ public partial class App : Application
                 window.ViewModel.CurrentGroupName = group;
             if (options.TryGetValue("--select", out var select) && int.TryParse(select, out var row) && row >= 1 && row <= window.ViewModel.Project.Tasks.Count)
                 window.ViewModel.SelectTask(window.ViewModel.Project.Tasks[row - 1]);
+            if (options.TryGetValue("--theme", out var theme))
+                window.ViewModel.Theme = theme;
+            if (options.ContainsKey("--backstage"))
+                window.ShowBackstage();
+            if (options.ContainsKey("--timeline"))
+                window.ViewModel.ShowTimelinePane = true;
             if (options.ContainsKey("--details"))
                 window.ViewModel.ShowTaskForm = true;
             if (options.TryGetValue("--usagedetails", out var usage) && int.TryParse(usage, out var flags))

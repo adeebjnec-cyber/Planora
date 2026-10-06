@@ -36,7 +36,7 @@
     </Window.InputBindings>
 
     <DockPanel>
-        <Ribbon DockPanel.Dock="Top" x:Name="MainRibbon" Background="{StaticResource ChromeBackground}">
+        <Ribbon DockPanel.Dock="Top" x:Name="MainRibbon" Background="{DynamicResource ChromeBackground}">
             <Ribbon.QuickAccessToolBar>
                 <RibbonQuickAccessToolBar>
                     <RibbonButton SmallImageSource="{infra:Glyph &#xE74E;}" Command="{Binding SaveCommand}" ToolTipTitle="Save (Ctrl+S)" />
@@ -46,7 +46,7 @@
             </Ribbon.QuickAccessToolBar>
 
             <Ribbon.ApplicationMenu>
-                <RibbonApplicationMenu SmallImageSource="{infra:Glyph &#xE8A5;}" Label="File">
+                <RibbonApplicationMenu SmallImageSource="{infra:Glyph &#xE8A5;}" Label="File" DropDownOpened="OnFileMenuOpened">
                     <RibbonApplicationMenuItem Header="New" ImageSource="{infra:Glyph &#xE8A5;}" Command="{Binding NewCommand}" />
                     <RibbonApplicationMenuItem Header="New from Template..." ImageSource="{infra:Glyph &#xE8F4;}" Command="{Binding NewFromTemplateCommand}" />
                     <RibbonApplicationMenuItem Header="Open..." ImageSource="{infra:Glyph &#xE8E5;}" Command="{Binding OpenCommand}" />
@@ -266,6 +266,7 @@
                 </RibbonGroup>
                 <RibbonGroup Header="Split View">
                     <StackPanel Margin="4,2">
+                        <CheckBox Content="Timeline" IsChecked="{Binding ShowTimelinePane}" Margin="0,2" ToolTip="Show the Timeline above the view" />
                         <CheckBox Content="Details (Task Form)" IsChecked="{Binding ShowTaskForm}" Margin="0,2" ToolTip="Show the selected task's details under the view" />
                     </StackPanel>
                 </RibbonGroup>
@@ -284,14 +285,14 @@
             </RibbonTab>
         </Ribbon>
 
-        <StatusBar DockPanel.Dock="Bottom" Background="{StaticResource ChromeBackground}">
+        <StatusBar DockPanel.Dock="Bottom" Background="{DynamicResource ChromeBackground}">
             <StatusBarItem>
                 <TextBlock Text="{Binding Status}" />
             </StatusBarItem>
         </StatusBar>
 
         <!-- View bar, as in Microsoft Project -->
-        <Border DockPanel.Dock="Left" Background="#2B579A" Width="92">
+        <Border DockPanel.Dock="Left" Background="{DynamicResource ViewBarBackground}" Width="92">
             <ListBox ItemsSource="{Binding Views}" SelectedItem="{Binding CurrentViewOption}"
                      Background="Transparent" BorderThickness="0" Foreground="White"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -331,11 +332,14 @@
 
         <Grid>
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <ContentControl x:Name="ViewHost" />
-            <views:TaskFormPanel Grid.Row="1" Height="230" Visibility="{Binding ShowTaskForm, Converter={StaticResource BoolToVisibility}}" />
+            <Border x:Name="TimelinePane" Height="185" BorderBrush="{DynamicResource ChromeBorder}" BorderThickness="0,0,0,1"
+                    Visibility="{Binding ShowTimelinePane, Converter={StaticResource BoolToVisibility}}" />
+            <ContentControl x:Name="ViewHost" Grid.Row="1" />
+            <views:TaskFormPanel Grid.Row="2" Height="230" Visibility="{Binding ShowTaskForm, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
     </DockPanel>
 </Window>

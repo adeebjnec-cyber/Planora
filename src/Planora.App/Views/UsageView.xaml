@@ -37,7 +37,7 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{StaticResource ChromeBorder}" />
+        <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{DynamicResource ChromeBorder}" />
 
         <Grid Grid.Column="2">
             <Grid.RowDefinitions>

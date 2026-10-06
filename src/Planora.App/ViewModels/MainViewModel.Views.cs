@@ -49,6 +49,14 @@ public sealed partial class MainViewModel
     };
 
     private bool _showTaskForm;
+    private bool _showTimelinePane;
+
+    /// <summary>View > Timeline: the Timeline above the current view.</summary>
+    public bool ShowTimelinePane
+    {
+        get => _showTimelinePane;
+        set => SetProperty(ref _showTimelinePane, value);
+    }
 
     /// <summary>View > Details: the Task Form under the current view.</summary>
     public bool ShowTaskForm

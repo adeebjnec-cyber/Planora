@@ -11,6 +11,12 @@ public sealed class AppSettings
 
     public int AutosaveMinutes { get; set; } = 2;
 
+    /// <summary>Recently opened or saved files, newest first.</summary>
+    public List<string> RecentFiles { get; set; } = new();
+
+    /// <summary>Office theme name (see <see cref="Themes"/>).</summary>
+    public string Theme { get; set; } = Themes.Default;
+
     public static AppSettings Load()
     {
         try

@@ -139,6 +139,7 @@ public sealed partial class MainViewModel
             Document = new ProjectDocument(project);
             DefinitionsChanged();
             Status = $"Imported {Path.GetFileName(path)}: {project.Tasks.Count} tasks";
+            AddRecentFile(path);
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or InvalidOperationException)
         {

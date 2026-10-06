@@ -81,7 +81,7 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <GridSplitter x:Name="Splitter" Grid.Column="1" HorizontalAlignment="Stretch" Background="{StaticResource ChromeBorder}" />
+        <GridSplitter x:Name="Splitter" Grid.Column="1" HorizontalAlignment="Stretch" Background="{DynamicResource ChromeBorder}" />
 
         <Grid x:Name="ChartArea" Grid.Column="2">
             <Grid.RowDefinitions>

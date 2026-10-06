@@ -9,6 +9,7 @@
         <SolidColorBrush x:Key="ChromeBorder" Color="#D4D4D4" />
         <SolidColorBrush x:Key="Accent" Color="#2B579A" />
         <SolidColorBrush x:Key="AccentLight" Color="#DCE9F7" />
+        <SolidColorBrush x:Key="ViewBarBackground" Color="#2B579A" />
         <SolidColorBrush x:Key="GridLine" Color="#E1E1E1" />
 
         <infra:IndentConverter x:Key="IndentConverter" />
@@ -48,12 +49,12 @@
             <Setter Property="FontSize" Value="18" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="Margin" Value="0,2,0,3" />
-            <Setter Property="Foreground" Value="{StaticResource Accent}" />
+            <Setter Property="Foreground" Value="{DynamicResource Accent}" />
         </Style>
         <Style x:Key="ToolSeparator" TargetType="Rectangle">
             <Setter Property="Width" Value="1" />
             <Setter Property="Margin" Value="6,4" />
-            <Setter Property="Fill" Value="{StaticResource ChromeBorder}" />
+            <Setter Property="Fill" Value="{DynamicResource ChromeBorder}" />
         </Style>
 
         <!-- Task sheet -->
@@ -79,8 +80,8 @@
             <Setter Property="ColumnHeaderStyle">
                 <Setter.Value>
                     <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="{StaticResource ChromeBackground}" />
-                        <Setter Property="BorderBrush" Value="{StaticResource ChromeBorder}" />
+                        <Setter Property="Background" Value="{DynamicResource ChromeBackground}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource ChromeBorder}" />
                         <Setter Property="BorderThickness" Value="0,0,1,1" />
                         <Setter Property="Padding" Value="5,0" />
                         <Setter Property="VerticalContentAlignment" Value="Bottom" />
@@ -104,7 +105,7 @@
                         </Setter>
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="{StaticResource AccentLight}" />
+                                <Setter Property="Background" Value="{DynamicResource AccentLight}" />
                                 <Setter Property="Foreground" Value="Black" />
                             </Trigger>
                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
@@ -119,7 +120,7 @@
             <Setter Property="Background" Value="White" />
         </Style>
         <Style x:Key="RowNumberCell" TargetType="DataGridCell">
-            <Setter Property="Background" Value="{StaticResource ChromeBackground}" />
+            <Setter Property="Background" Value="{DynamicResource ChromeBackground}" />
             <Setter Property="Foreground" Value="#666666" />
             <Setter Property="HorizontalContentAlignment" Value="Right" />
             <Setter Property="Template">
@@ -139,7 +140,7 @@
             <Setter Property="SizeToContent" Value="WidthAndHeight" />
             <Setter Property="FontFamily" Value="Segoe UI" />
             <Setter Property="FontSize" Value="12" />
-            <Setter Property="Background" Value="{StaticResource ChromeBackground}" />
+            <Setter Property="Background" Value="{DynamicResource ChromeBackground}" />
         </Style>
         <Style x:Key="FormLabel" TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center" />

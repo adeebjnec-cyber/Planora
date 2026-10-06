@@ -67,6 +67,7 @@ public sealed partial class MainViewModel : ObservableObject
         _autosaveTimer = new DispatcherTimer();
         _autosaveTimer.Tick += (_, _) => Autosave();
         AutosaveMinutes = _settings.AutosaveMinutes;
+        Themes.Apply(_settings.Theme);
     }
 
     /// <summary>Minutes between autosaves of unsaved changes; 0 turns autosave off.</summary>
@@ -472,10 +473,12 @@ public sealed partial class MainViewModel : ObservableObject
             {
                 Document = new ProjectDocument(LoadAnyProject(path));
                 Status = $"Opened {Path.GetFileName(path)} (save it as a Planora project to keep changes)";
+                AddRecentFile(path);
                 return;
             }
             Document = source == path ? ProjectDocument.Open(path) : ProjectDocument.Recover(source, path);
             Status = $"Opened {Path.GetFileName(path)}";
+            AddRecentFile(path);
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or InvalidOperationException)
         {
@@ -507,6 +510,7 @@ public sealed partial class MainViewModel : ObservableObject
         {
             Document.Save(path);
             Status = $"Saved {Path.GetFileName(path)}";
+            AddRecentFile(path);
             OnPropertyChanged(nameof(WindowTitle));
             return true;
         }

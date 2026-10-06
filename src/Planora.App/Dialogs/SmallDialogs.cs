@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using Planora.App.Infrastructure;
 using Planora.App.ViewModels;
 using Planora.Engine.Model;
 
@@ -248,6 +249,7 @@ public sealed class OptionsDialog : Window
         var effort = new CheckBox { Content = "New tasks are effort driven", IsChecked = o.NewTasksEffortDriven, Margin = new Thickness(0, 6, 0, 0) };
         var manual = new CheckBox { Content = "New tasks are manually scheduled", IsChecked = o.NewTasksManuallyScheduled, Margin = new Thickness(0, 6, 0, 0) };
         var autosave = Form.Box(owner.AutosaveMinutes.ToString(CultureInfo.CurrentCulture), 60);
+        var theme = new ComboBox { ItemsSource = Themes.Names, SelectedItem = Themes.Names.Contains(owner.Theme) ? owner.Theme : Themes.Default, Width = 160, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 3, 0, 3) };
 
         Content = new StackPanel
         {
@@ -261,7 +263,7 @@ public sealed class OptionsDialog : Window
                 manual,
                 new TextBlock { Text = "Hours per day, critical slack and status-date rules are under Project > Project Information.", TextWrapping = TextWrapping.Wrap, Foreground = System.Windows.Media.Brushes.Gray, Margin = new Thickness(0, 8, 0, 0) },
                 new TextBlock { Text = "Planora", FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 14, 0, 6) },
-                Form.Fields(("Autosave every (minutes, 0 = off):", autosave)),
+                Form.Fields(("Autosave every (minutes, 0 = off):", autosave), ("Office theme:", theme)),
                 Form.Buttons(this, () =>
                 {
                     if (!int.TryParse(autosave.Text, out var minutes) || minutes is < 0 or > 120)
@@ -270,6 +272,7 @@ public sealed class OptionsDialog : Window
                         return;
                     }
                     owner.AutosaveMinutes = minutes;
+                    owner.Theme = theme.SelectedItem as string ?? Themes.Default;
                     bool ok = owner.TryEdit("Options", p =>
                     {
                         p.Options.DefaultTaskType = (TaskType)taskType.SelectedIndex;

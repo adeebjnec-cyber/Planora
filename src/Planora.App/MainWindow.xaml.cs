@@ -26,6 +26,26 @@ public partial class MainWindow : Window
         };
         ShowView(ViewModel.CurrentView);
         ViewModel.CurrentViewElement = () => ViewHost.Content as FrameworkElement;
+        TimelinePane.Child = new DiagramView(new TimelineCanvas(), scroll: false) { DataContext = ViewModel };
+
+        // The File tab opens a full-window page over everything (Microsoft Project's Backstage).
+        var main = (UIElement)Content;
+        Content = null;
+        _backstage = new Backstage(ViewModel) { Visibility = Visibility.Collapsed };
+        _backstage.CloseRequested += (_, _) => _backstage.Visibility = Visibility.Collapsed;
+        Content = new Grid { Children = { main, _backstage } };
+    }
+
+    private readonly Backstage _backstage;
+
+    /// <summary>Shows the File page (also used by the --backstage screenshot option).</summary>
+    public void ShowBackstage() => _backstage.Visibility = Visibility.Visible;
+
+    private void OnFileMenuOpened(object sender, EventArgs e)
+    {
+        if (sender is System.Windows.Controls.Ribbon.RibbonApplicationMenu menu)
+            menu.IsDropDownOpen = false;
+        ShowBackstage();
     }
 
     public MainViewModel ViewModel { get; }
