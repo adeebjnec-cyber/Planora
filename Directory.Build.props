@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <!--
+      MPXJ (used to read .mpp and other project formats) is a Java library converted to .NET by IKVM
+      on the first build. The converter reports Java classes it skips or cannot find; these do not
+      affect Planora, so they are shown as messages rather than warnings.
+    -->
+    <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);IKVM0100;IKVM0101;IKVM0108;IKVM0109;IKVM0111;IKVM0112</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+</Project>

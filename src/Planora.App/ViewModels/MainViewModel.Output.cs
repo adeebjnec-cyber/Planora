@@ -15,11 +15,43 @@ namespace Planora.App.ViewModels;
 /// <summary>Import/export, printing, PDF and image output, clipboard, templates and recovery.</summary>
 public sealed partial class MainViewModel
 {
-    private const string ImportFilter =
-        "All supported files|*.xml;*.xlsx;*.csv;*.planora|Microsoft Project XML (*.xml)|*.xml|Excel workbook (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv|Planora project (*.planora)|*.planora";
+    /// <summary>Everything Planora can import: its own files, Microsoft Project (.mpp and XML), spreadsheets and other schedulers.</summary>
+    internal static readonly string ImportFilter =
+        "All supported files|*.planora;*.mpp;*.mpt;*.xml;*.xlsx;*.csv;*.mpx;*.xer;*.pmxml;*.pp;*.ppx;*.gan;*.sdef;*.fts;*.pod;*.cdpx;*.schedule_grid" +
+        "|Microsoft Project (*.mpp;*.mpt)|*.mpp;*.mpt|Microsoft Project XML (*.xml)|*.xml|Excel workbook (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv" +
+        "|Planora project (*.planora)|*.planora|" +
+        string.Join("|", ForeignFormats.ReadableFormats.Skip(1).Select(f => $"{f.Name} ({f.Pattern})|{f.Pattern}"));
 
     private const string ExportFilter =
-        "Microsoft Project XML (*.xml)|*.xml|Excel workbook (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv";
+        "Microsoft Project XML (*.xml)|*.xml|Excel workbook (*.xlsx)|*.xlsx|CSV (*.csv)|*.csv|MPX (*.mpx)|*.mpx" +
+        "|Primavera P6 XML (*.xml)|*.xml|Primavera P6 XER (*.xer)|*.xer";
+
+    /// <summary>Reads any supported file into a project (used by Open and Import).</summary>
+    internal static Project LoadAnyProject(string path)
+    {
+        var name = Path.GetFileNameWithoutExtension(path);
+        return Path.GetExtension(path).ToLowerInvariant() switch
+        {
+            ".planora" => ProjectFile.Load(path),
+            ".xlsx" => SpreadsheetFile.Import(SpreadsheetFile.LoadXlsx(path), name),
+            ".csv" => SpreadsheetFile.Import(SpreadsheetFile.LoadCsv(path), name),
+            ".xml" => LoadXml(path),
+            _ => ForeignFormats.Load(path),
+        };
+
+        // Microsoft Project XML is read directly; other XML formats (e.g. Primavera P6) go through MPXJ.
+        static Project LoadXml(string path)
+        {
+            try
+            {
+                return MspdiFile.Load(path);
+            }
+            catch (InvalidDataException)
+            {
+                return ForeignFormats.Load(path);
+            }
+        }
+    }
 
     /// <summary>Supplies the element showing the current view (set by the main window), for printing non-Gantt views.</summary>
     public Func<FrameworkElement?>? CurrentViewElement { get; set; }
@@ -65,18 +97,12 @@ public sealed partial class MainViewModel
         try
         {
             var path = dialog.FileName;
-            var name = Path.GetFileNameWithoutExtension(path);
-            var project = Path.GetExtension(path).ToLowerInvariant() switch
-            {
-                ".xml" => MspdiFile.Load(path),
-                ".xlsx" => SpreadsheetFile.Import(SpreadsheetFile.LoadXlsx(path), name),
-                ".csv" => SpreadsheetFile.Import(SpreadsheetFile.LoadCsv(path), name),
-                _ => ProjectFile.Load(path),
-            };
+            var project = LoadAnyProject(path);
+
             Document = new ProjectDocument(project);
             Status = $"Imported {Path.GetFileName(path)}";
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException)
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or InvalidOperationException)
         {
             ShowError($"Could not import the file: {ex.Message}");
         }
@@ -91,12 +117,21 @@ public sealed partial class MainViewModel
         {
             var path = dialog.FileName;
             var tasks = Rows.Where(r => r.Task is not null).Select(r => r.Task!).ToList();
-            switch (Path.GetExtension(path).ToLowerInvariant())
+            switch (dialog.FilterIndex)
             {
-                case ".xlsx":
+                case 4:
+                    ForeignFormats.Save(Project, path, ForeignFormats.ExportFormat.Mpx);
+                    break;
+                case 5:
+                    ForeignFormats.Save(Project, path, ForeignFormats.ExportFormat.PrimaveraXml);
+                    break;
+                case 6:
+                    ForeignFormats.Save(Project, path, ForeignFormats.ExportFormat.PrimaveraXer);
+                    break;
+                case 2:
                     SpreadsheetFile.SaveXlsx(SpreadsheetFile.Rows(Project, CurrentTable, tasks), path);
                     break;
-                case ".csv":
+                case 3:
                     SpreadsheetFile.SaveCsv(SpreadsheetFile.Rows(Project, CurrentTable, tasks), path);
                     break;
                 default:

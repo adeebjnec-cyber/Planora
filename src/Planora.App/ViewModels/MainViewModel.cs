@@ -385,7 +385,8 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (!ConfirmDiscard())
             return;
-        var dialog = new OpenFileDialog { Filter = FileFilter, DefaultExt = ProjectFile.Extension };
+        // Open accepts every importable format; non-Planora files open as new, unsaved projects.
+        var dialog = new OpenFileDialog { Filter = ImportFilter, DefaultExt = ProjectFile.Extension };
         if (dialog.ShowDialog() == true)
             OpenFile(dialog.FileName);
     }
@@ -406,10 +407,16 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             var source = ChooseRecoveredVersion(path);
+            if (!path.EndsWith(ProjectFile.Extension, StringComparison.OrdinalIgnoreCase))
+            {
+                Document = new ProjectDocument(LoadAnyProject(path));
+                Status = $"Opened {Path.GetFileName(path)} (save it as a Planora project to keep changes)";
+                return;
+            }
             Document = source == path ? ProjectDocument.Open(path) : ProjectDocument.Recover(source, path);
             Status = $"Opened {Path.GetFileName(path)}";
         }
-        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or InvalidOperationException)
         {
             ShowError($"Could not open the project: {ex.Message}");
         }
