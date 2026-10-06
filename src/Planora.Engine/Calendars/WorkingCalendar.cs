@@ -72,7 +72,7 @@ public sealed class WorkingCalendar
                 copy._week[(int)day] = GetWorkWeekDay(day);
         }
         foreach (var e in Exceptions)
-            copy.Exceptions.Add(new CalendarException(e.Name, e.From, e.To, e.WorkingTimes));
+            copy.Exceptions.Add(new CalendarException(e.Name, e.From, e.To, e.WorkingTimes) { RepeatYearly = e.RepeatYearly });
         return copy;
     }
 

@@ -87,10 +87,18 @@ public sealed class Project
 
     public int IndexOf(ProjectTask task) => _tasks.IndexOf(task);
 
+    /// <summary>A new task with the project's defaults for task type, effort driving and schedule mode.</summary>
+    private ProjectTask NewTask(string name, long durationMinutes) => new(_nextId++, name)
+    {
+        DurationMinutes = durationMinutes,
+        Type = Options.DefaultTaskType,
+        IsEffortDriven = Options.NewTasksEffortDriven,
+        Mode = Options.NewTasksManuallyScheduled ? TaskMode.ManuallyScheduled : TaskMode.AutoScheduled,
+    };
     /// <summary>Appends a top-level task.</summary>
     public ProjectTask AddTask(string name, long durationMinutes = 0)
     {
-        var task = new ProjectTask(_nextId++, name) { DurationMinutes = durationMinutes };
+        var task = NewTask(name, durationMinutes);
         _tasks.Add(task);
         RebuildHierarchy();
         return task;
@@ -105,7 +113,7 @@ public sealed class Project
         if (index < 0 || index > _tasks.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
 
-        var task = new ProjectTask(_nextId++, name) { DurationMinutes = durationMinutes };
+        var task = NewTask(name, durationMinutes);
         if (index < _tasks.Count)
             task.OutlineLevel = _tasks[index].OutlineLevel;
         else if (index > 0)

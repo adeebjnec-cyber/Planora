@@ -81,6 +81,9 @@ public static class ProjectFile
                 CriticalSlackLimitMinutes = project.Options.CriticalSlackLimitMinutes,
                 CalculateMultipleCriticalPaths = project.Options.CalculateMultipleCriticalPaths,
                 RescheduleUncompletedWorkToStatusDate = project.Options.RescheduleUncompletedWorkToStatusDate,
+                DefaultTaskType = project.Options.DefaultTaskType,
+                NewTasksEffortDriven = project.Options.NewTasksEffortDriven,
+                NewTasksManuallyScheduled = project.Options.NewTasksManuallyScheduled,
             },
             Calendars = calendars.Select(c => new CalendarDto
             {
@@ -95,6 +98,7 @@ public static class ProjectFile
                     From = e.From,
                     To = e.To,
                     Times = e.WorkingTimes.Select(TimeDto.Of).ToList(),
+                    RepeatYearly = e.RepeatYearly,
                 }).ToList(),
             }).ToList(),
             Resources = project.Resources.Select(r => new ResourceDto
@@ -168,7 +172,7 @@ public static class ProjectFile
                     Baselines = Sparse(a.Baselines),
                 }).ToList(),
             }).ToList(),
-            CustomFields = project.CustomFields.Select(cf => new CustomFieldDto { Key = cf.Key, Alias = cf.Alias, ValueList = cf.ValueList.ToList() }).ToList(),
+            CustomFields = project.CustomFields.Select(cf => new CustomFieldDto { Key = cf.Key, Alias = cf.Alias, ValueList = cf.ValueList.ToList(), Formula = cf.Formula }).ToList(),
             Tables = project.Tables.Select(t => new TableDto { Name = t.Name, Columns = t.Columns.ToList() }).ToList(),
             Filters = project.Filters.Select(fl => new FilterDto { Name = fl.Name, Conditions = fl.Conditions.ToList(), ShowRelatedSummaryRows = fl.ShowRelatedSummaryRows }).ToList(),
             Groups = project.Groups.Select(g => new GroupDto { Name = g.Name, Levels = g.Levels.ToList(), ShowSummaryTasks = g.ShowSummaryTasks }).ToList(),
@@ -244,7 +248,7 @@ public static class ProjectFile
                     calendar.SetWorkWeekDay((DayOfWeek)d);
             }
             foreach (var e in c.Exceptions)
-                calendar.AddException(e.Name, e.From, e.To, e.Times.Select(t => t.ToWorkingTime()).ToArray());
+                calendar.AddException(e.Name, e.From, e.To, e.Times.Select(t => t.ToWorkingTime()).ToArray()).RepeatYearly = e.RepeatYearly;
             calendars.Add(calendar);
         }
 
@@ -275,6 +279,9 @@ public static class ProjectFile
             project.Options.CriticalSlackLimitMinutes = o.CriticalSlackLimitMinutes;
             project.Options.CalculateMultipleCriticalPaths = o.CalculateMultipleCriticalPaths;
             project.Options.RescheduleUncompletedWorkToStatusDate = o.RescheduleUncompletedWorkToStatusDate;
+            project.Options.DefaultTaskType = o.DefaultTaskType;
+            project.Options.NewTasksEffortDriven = o.NewTasksEffortDriven;
+            project.Options.NewTasksManuallyScheduled = o.NewTasksManuallyScheduled;
         }
 
         foreach (var r in dto.Resources)
@@ -374,7 +381,7 @@ public static class ProjectFile
         Fill(project.Baselines, dto.Baselines);
 
         foreach (var cf in dto.CustomFields ?? new())
-            project.CustomFields.Add(new CustomField(cf.Key, cf.Alias) { ValueList = cf.ValueList });
+            project.CustomFields.Add(new CustomField(cf.Key, cf.Alias) { ValueList = cf.ValueList, Formula = cf.Formula });
         foreach (var t in dto.Tables ?? new())
             project.Tables.Add(new TableDefinition(t.Name, t.Columns.ToArray()));
         foreach (var fl in dto.Filters ?? new())
@@ -447,6 +454,7 @@ public static class ProjectFile
         public string Key { get; set; } = "";
         public string Alias { get; set; } = "";
         public List<string> ValueList { get; set; } = new();
+        public string? Formula { get; set; }
     }
 
     private sealed class TableDto
@@ -488,6 +496,9 @@ public static class ProjectFile
         public long CriticalSlackLimitMinutes { get; set; }
         public bool CalculateMultipleCriticalPaths { get; set; }
         public bool RescheduleUncompletedWorkToStatusDate { get; set; }
+        public TaskType DefaultTaskType { get; set; }
+        public bool NewTasksEffortDriven { get; set; }
+        public bool NewTasksManuallyScheduled { get; set; }
     }
 
     private sealed class CalendarDto
@@ -506,6 +517,7 @@ public static class ProjectFile
         public DateOnly From { get; set; }
         public DateOnly To { get; set; }
         public List<TimeDto> Times { get; set; } = new();
+        public bool RepeatYearly { get; set; }
     }
 
     private sealed class TimeDto

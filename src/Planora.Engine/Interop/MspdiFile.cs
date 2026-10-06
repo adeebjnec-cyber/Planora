@@ -105,7 +105,7 @@ public static class MspdiFile
             E("IsBaseCalendar", isBase),
             E("BaseCalendarUID", c.BaseCalendar is { } b ? uid[b] : -1),
             weekDays,
-            new XElement(Ns + "Exceptions", c.Exceptions.Select(e => new XElement(Ns + "Exception",
+            new XElement(Ns + "Exceptions", ExpandYearly(c.Exceptions).Select(e => new XElement(Ns + "Exception",
                 E("EnteredByOccurrences", false),
                 new XElement(Ns + "TimePeriod",
                     E("FromDate", e.From.ToDateTime(TimeOnly.MinValue)),
@@ -117,6 +117,20 @@ public static class MspdiFile
                 e.IsWorking ? WorkingTimes(e.WorkingTimes) : null))));
     }
 
+    /// <summary>Yearly exceptions are written as one exception per year for 20 years.</summary>
+    private static IEnumerable<CalendarException> ExpandYearly(IEnumerable<CalendarException> exceptions)
+    {
+        foreach (var e in exceptions)
+        {
+            if (!e.RepeatYearly)
+            {
+                yield return e;
+                continue;
+            }
+            for (int years = 0; years < 20; years++)
+                yield return new CalendarException(e.Name, e.From.AddYears(years), e.To.AddYears(years), e.WorkingTimes);
+        }
+    }
     private static XElement WorkingTimes(IEnumerable<WorkingTime> times) =>
         new(Ns + "WorkingTimes", times.Select(t => new XElement(Ns + "WorkingTime",
             E("FromTime", Clock(t.From)),

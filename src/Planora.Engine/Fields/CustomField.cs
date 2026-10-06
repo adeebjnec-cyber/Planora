@@ -46,6 +46,11 @@ public sealed class CustomField
     /// <summary>Allowed values (a pick list). Empty means any value.</summary>
     public List<string> ValueList { get; set; } = new();
 
+    /// <summary>When set, the field is calculated from this formula (see <see cref="Fields.Formula"/>) and cannot be typed into.</summary>
+    public string? Formula { get; set; }
+
+    public bool IsCalculated => !string.IsNullOrWhiteSpace(Formula);
+
     public string DisplayName => string.IsNullOrWhiteSpace(Alias) ? Key : Alias;
 
     /// <summary>All slot keys, e.g. Text1..Text30, Number1..Number20.</summary>

@@ -25,5 +25,24 @@ public sealed class CalendarException
 
     public bool IsWorking => WorkingTimes.Count > 0;
 
-    public bool Covers(DateOnly date) => date >= From && date <= To;
+    /// <summary>Repeats on the same dates every year from <see cref="From"/>'s year onward (e.g. public holidays).</summary>
+    public bool RepeatYearly { get; set; }
+
+    public bool Covers(DateOnly date)
+    {
+        if (!RepeatYearly)
+            return date >= From && date <= To;
+        if (date < From)
+            return false;
+
+        // The occurrence starting this year or last year (a range may cross New Year).
+        int length = To.DayNumber - From.DayNumber;
+        foreach (int year in new[] { date.Year, date.Year - 1 })
+        {
+            var start = new DateOnly(year, From.Month, Math.Min(From.Day, DateTime.DaysInMonth(year, From.Month)));
+            if (date >= start && date.DayNumber <= start.DayNumber + length)
+                return true;
+        }
+        return false;
+    }
 }

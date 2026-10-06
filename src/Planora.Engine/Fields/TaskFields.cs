@@ -26,6 +26,9 @@ public sealed class FieldDefinition
     /// <summary>Custom fields can be edited generically; built-in fields are edited through dedicated UI.</summary>
     public bool IsCustom { get; init; }
 
+    /// <summary>Calculated by a formula, so read-only.</summary>
+    public bool IsCalculated { get; init; }
+
     public string Format(Project project, ProjectTask task) => FieldValue.Format(Get(project, task), Type, project.Options);
 
     public override string ToString() => Name;
@@ -125,6 +128,14 @@ public static class TaskFields
     {
         var definition = project.CustomFields.FirstOrDefault(c => c.Key == key);
         var type = CustomField.TypeOfKey(key)!.Value;
+        if (definition is { IsCalculated: true })
+        {
+            return new FieldDefinition(key, definition.DisplayName, type, (p, t) => Calculate(p, t, definition.Formula!, type))
+            {
+                IsCustom = true,
+                IsCalculated = true,
+            };
+        }
         return new FieldDefinition(key, definition?.DisplayName ?? key, type,
             (_, t) => t.CustomValues.TryGetValue(key, out var v) ? v : null)
         {
@@ -132,13 +143,28 @@ public static class TaskFields
         };
     }
 
+    /// <summary>Formula result for a task; "#ERROR" (text fields) or null when the formula fails.</summary>
+    private static object? Calculate(Project project, ProjectTask task, string formula, FieldType type)
+    {
+        try
+        {
+            return Formula.Convert(Formula.Parse(formula).Evaluate(project, task), type);
+        }
+        catch (FormulaException)
+        {
+            // Checked here rather than in a filter: filters run before inner frames unwind.
+            if (Formula.IsNested)
+                throw;
+            return type == FieldType.Text ? "#ERROR" : null;
+        }
+    }
     /// <summary>Sets a custom field from typed text. Returns false if the text does not fit the field type or pick list.</summary>
     public static bool TrySetCustom(Project project, ProjectTask task, string key, string? text)
     {
         var type = CustomField.TypeOfKey(key) ?? throw new ArgumentException($"'{key}' is not a custom field.");
-        if (!FieldValue.TryParse(text, type, project.Options, out var value))
-            return false;
         var definition = project.CustomFields.FirstOrDefault(c => c.Key == key);
+        if (definition is { IsCalculated: true } || !FieldValue.TryParse(text, type, project.Options, out var value))
+            return false;
         if (value is string s && definition is { ValueList.Count: > 0 } && !definition.ValueList.Contains(s, StringComparer.CurrentCultureIgnoreCase))
             return false;
         if (value is null)

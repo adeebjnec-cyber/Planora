@@ -26,4 +26,10 @@ public sealed class ScheduleOptions
     /// remaining part of in-progress tasks is split off and resumes at it.
     /// </summary>
     public bool RescheduleUncompletedWorkToStatusDate { get; set; }
+
+    // ---- Defaults for new tasks (Microsoft Project's Options > Schedule) ----
+
+    public TaskType DefaultTaskType { get; set; } = TaskType.FixedUnits;
+    public bool NewTasksEffortDriven { get; set; }
+    public bool NewTasksManuallyScheduled { get; set; }
 }
