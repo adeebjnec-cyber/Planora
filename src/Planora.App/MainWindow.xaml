@@ -1,12 +1,228 @@
-﻿<Window x:Class="Planora.App.MainWindow"
+<Window x:Class="Planora.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Planora.App"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        xmlns:controls="clr-namespace:Planora.App.Controls"
+        xmlns:vm="clr-namespace:Planora.App.ViewModels"
+        Title="{Binding WindowTitle}"
+        Height="760" Width="1280" MinHeight="400" MinWidth="700"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource WindowBackground}"
+        FontFamily="Segoe UI" FontSize="12">
 
-    </Grid>
+    <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewCommand}" />
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}" />
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="F12" Command="{Binding SaveAsCommand}" />
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}" />
+        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}" />
+        <KeyBinding Key="Insert" Command="{Binding InsertTaskCommand}" />
+        <KeyBinding Key="Right" Modifiers="Alt+Shift" Command="{Binding IndentCommand}" />
+        <KeyBinding Key="Left" Modifiers="Alt+Shift" Command="{Binding OutdentCommand}" />
+        <KeyBinding Key="F2" Modifiers="Control" Command="{Binding LinkCommand}" />
+        <KeyBinding Key="F2" Modifiers="Control+Shift" Command="{Binding UnlinkCommand}" />
+        <KeyBinding Key="F5" Modifiers="Control+Shift" Command="{Binding ScrollToTaskCommand}" />
+        <KeyBinding Key="OemPlus" Modifiers="Control" Command="{Binding ZoomInCommand}" />
+        <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding ZoomOutCommand}" />
+    </Window.InputBindings>
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Background="{StaticResource ChromeBackground}" Padding="2">
+            <MenuItem Header="_File">
+                <MenuItem Header="_New" InputGestureText="Ctrl+N" Command="{Binding NewCommand}" />
+                <MenuItem Header="_Open..." InputGestureText="Ctrl+O" Command="{Binding OpenCommand}" />
+                <MenuItem Header="Open Sa_mple Project" Command="{Binding OpenSampleCommand}" />
+                <MenuItem Header="_Save" InputGestureText="Ctrl+S" Command="{Binding SaveCommand}" />
+                <MenuItem Header="Save _As..." InputGestureText="F12" Command="{Binding SaveAsCommand}" />
+                <Separator />
+                <MenuItem Header="E_xit" Click="OnExit" />
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" InputGestureText="Ctrl+Z" Command="{Binding UndoCommand}" />
+                <MenuItem Header="_Redo" InputGestureText="Ctrl+Y" Command="{Binding RedoCommand}" />
+            </MenuItem>
+            <MenuItem Header="_Task">
+                <MenuItem Header="_Insert Task" InputGestureText="Ins" Command="{Binding InsertTaskCommand}" />
+                <MenuItem Header="Insert _Milestone" Command="{Binding InsertMilestoneCommand}" />
+                <MenuItem Header="Insert _Summary Task" Command="{Binding InsertSummaryCommand}" />
+                <MenuItem Header="_Delete Task" InputGestureText="Del" Command="{Binding DeleteTaskCommand}" />
+                <Separator />
+                <MenuItem Header="I_ndent" InputGestureText="Alt+Shift+Right" Command="{Binding IndentCommand}" />
+                <MenuItem Header="_Outdent" InputGestureText="Alt+Shift+Left" Command="{Binding OutdentCommand}" />
+                <MenuItem Header="_Link Tasks" InputGestureText="Ctrl+F2" Command="{Binding LinkCommand}" />
+                <MenuItem Header="_Unlink Tasks" InputGestureText="Ctrl+Shift+F2" Command="{Binding UnlinkCommand}" />
+                <Separator />
+                <MenuItem Header="Toggle _Manual / Auto Schedule" Command="{Binding ToggleModeCommand}" />
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="Zoom _In" InputGestureText="Ctrl++" Command="{Binding ZoomInCommand}" />
+                <MenuItem Header="Zoom _Out" InputGestureText="Ctrl+-" Command="{Binding ZoomOutCommand}" />
+                <MenuItem Header="_Scroll to Task" InputGestureText="Ctrl+Shift+F5" Command="{Binding ScrollToTaskCommand}" />
+                <Separator />
+                <MenuItem Header="_Critical Path" IsCheckable="True" IsChecked="{Binding ShowCriticalPath}" />
+                <MenuItem Header="_Baseline" IsCheckable="True" IsChecked="{Binding ShowBaseline}" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Ribbon-style toolbar -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource ChromeBackground}" BorderBrush="{StaticResource ChromeBorder}" BorderThickness="0,0,0,1" Padding="6,4">
+            <WrapPanel>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding NewCommand}" ToolTip="New project (Ctrl+N)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE8A5;" /><TextBlock Text="New" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding OpenCommand}" ToolTip="Open project (Ctrl+O)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE8E5;" /><TextBlock Text="Open" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding SaveCommand}" ToolTip="Save (Ctrl+S)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE74E;" /><TextBlock Text="Save" /></StackPanel>
+                </Button>
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Button Style="{StaticResource ToolButton}" Command="{Binding UndoCommand}" ToolTip="{Binding Document.UndoDescription, StringFormat='Undo {0} (Ctrl+Z)', TargetNullValue='Undo (Ctrl+Z)'}">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE7A7;" /><TextBlock Text="Undo" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding RedoCommand}" ToolTip="{Binding Document.RedoDescription, StringFormat='Redo {0} (Ctrl+Y)', TargetNullValue='Redo (Ctrl+Y)'}">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE7A6;" /><TextBlock Text="Redo" /></StackPanel>
+                </Button>
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Button Style="{StaticResource ToolButton}" Command="{Binding InsertTaskCommand}" ToolTip="Insert task (Ins)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE710;" /><TextBlock Text="Task" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding InsertSummaryCommand}" ToolTip="Insert summary task above the selected tasks">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE8FD;" /><TextBlock Text="Summary" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding InsertMilestoneCommand}" ToolTip="Insert milestone">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE7C1;" /><TextBlock Text="Milestone" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding DeleteTaskCommand}" ToolTip="Delete selected tasks (Del)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE74D;" /><TextBlock Text="Delete" /></StackPanel>
+                </Button>
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Button Style="{StaticResource ToolButton}" Command="{Binding OutdentCommand}" ToolTip="Outdent (Alt+Shift+Left)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE72B;" /><TextBlock Text="Outdent" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding IndentCommand}" ToolTip="Indent (Alt+Shift+Right)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE72A;" /><TextBlock Text="Indent" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding LinkCommand}" ToolTip="Link selected tasks finish-to-start (Ctrl+F2)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE71B;" /><TextBlock Text="Link" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding UnlinkCommand}" ToolTip="Unlink selected tasks (Ctrl+Shift+F2)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE8D8;" /><TextBlock Text="Unlink" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding ToggleModeCommand}" ToolTip="Switch selected tasks between manual and automatic scheduling">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE718;" /><TextBlock Text="Mode" /></StackPanel>
+                </Button>
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Button Style="{StaticResource ToolButton}" Command="{Binding ZoomOutCommand}" ToolTip="Zoom out (Ctrl+-, or Ctrl+wheel)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE71F;" /><TextBlock Text="Zoom out" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding ZoomInCommand}" ToolTip="Zoom in (Ctrl++, or Ctrl+wheel)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE8A3;" /><TextBlock Text="Zoom in" /></StackPanel>
+                </Button>
+                <Button Style="{StaticResource ToolButton}" Command="{Binding ScrollToTaskCommand}" ToolTip="Scroll the chart to the selected task (Ctrl+Shift+F5)">
+                    <StackPanel><TextBlock Style="{StaticResource ToolIcon}" Text="&#xE8B0;" /><TextBlock Text="Go to task" /></StackPanel>
+                </Button>
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <StackPanel VerticalAlignment="Center" Margin="4,0">
+                    <CheckBox Content="Critical path" IsChecked="{Binding ShowCriticalPath}" Margin="0,2" />
+                    <CheckBox Content="Baseline" IsChecked="{Binding ShowBaseline}" Margin="0,2" />
+                </StackPanel>
+            </WrapPanel>
+        </Border>
+
+        <StatusBar DockPanel.Dock="Bottom" Background="{StaticResource ChromeBackground}">
+            <StatusBarItem>
+                <TextBlock Text="{Binding Status}" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="5*" MinWidth="200" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="6*" MinWidth="200" />
+            </Grid.ColumnDefinitions>
+
+            <DataGrid x:Name="TaskSheet" Grid.Column="0"
+                      ItemsSource="{Binding Rows}"
+                      Style="{StaticResource SheetStyle}"
+                      SelectionChanged="OnSheetSelectionChanged"
+                      PreviewKeyDown="OnSheetPreviewKeyDown"
+                      BeginningEdit="OnSheetBeginningEdit">
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource SheetRowStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsSummary}" Value="True">
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding IsInactive}" Value="True">
+                                <Setter Property="Foreground" Value="#999999" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="" Binding="{Binding RowNumber}" IsReadOnly="True" Width="34" CellStyle="{StaticResource RowNumberCell}" />
+                    <DataGridTextColumn Header="ⓘ" Binding="{Binding Indicators}" IsReadOnly="True" Width="40" />
+                    <DataGridTemplateColumn Header="Mode" Width="44" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="vm:TaskRowViewModel">
+                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Segoe MDL2 Assets"
+                                           ToolTip="Auto scheduled">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="&#xE8B1;" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsManual}" Value="True">
+                                                    <Setter Property="Text" Value="&#xE718;" />
+                                                    <Setter Property="Foreground" Value="#3A9AAE" />
+                                                    <Setter Property="ToolTip" Value="Manually scheduled" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsPlaceholder}" Value="True">
+                                                    <Setter Property="Text" Value="" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="Task Name" Width="220">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="vm:TaskRowViewModel">
+                                <TextBlock Text="{Binding Name}" Margin="{Binding IndentWidth, Converter={StaticResource IndentConverter}}"
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                        <DataGridTemplateColumn.CellEditingTemplate>
+                            <DataTemplate DataType="vm:TaskRowViewModel">
+                                <TextBox Text="{Binding Name, UpdateSourceTrigger=LostFocus}" Margin="{Binding IndentWidth, Converter={StaticResource IndentConverter}}"
+                                         Style="{StaticResource CellEditor}" Loaded="OnEditorLoaded" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellEditingTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Duration" Binding="{Binding Duration}" Width="80" EditingElementStyle="{StaticResource CellEditor}" />
+                    <DataGridTextColumn Header="Start" Binding="{Binding Start}" Width="100" EditingElementStyle="{StaticResource CellEditor}" />
+                    <DataGridTextColumn Header="Finish" Binding="{Binding Finish}" Width="100" EditingElementStyle="{StaticResource CellEditor}" />
+                    <DataGridTextColumn Header="Predecessors" Binding="{Binding Predecessors}" Width="90" EditingElementStyle="{StaticResource CellEditor}" />
+                    <DataGridTextColumn Header="Resource Names" Binding="{Binding ResourceNames}" Width="130" EditingElementStyle="{StaticResource CellEditor}" />
+                    <DataGridTextColumn Header="% Complete" Binding="{Binding PercentComplete}" Width="80" EditingElementStyle="{StaticResource CellEditor}" />
+                    <DataGridTextColumn Header="Total Slack" Binding="{Binding TotalSlack}" Width="80" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="90" IsReadOnly="True" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="{StaticResource ChromeBorder}" />
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <controls:GanttChart x:Name="Gantt" RowHeight="24" HeaderHeight="44" />
+                <ScrollBar x:Name="GanttScroll" Grid.Row="1" Orientation="Horizontal" ValueChanged="OnGanttScroll" />
+            </Grid>
+        </Grid>
+    </DockPanel>
 </Window>

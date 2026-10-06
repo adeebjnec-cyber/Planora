@@ -1,9 +1,140 @@
-﻿<Application x:Class="Planora.App.App"
+<Application x:Class="Planora.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:Planora.App"
-             StartupUri="MainWindow.xaml">
+             xmlns:infra="clr-namespace:Planora.App.Infrastructure">
     <Application.Resources>
-         
+        <SolidColorBrush x:Key="WindowBackground" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="ChromeBackground" Color="#F3F3F3" />
+        <SolidColorBrush x:Key="ChromeBorder" Color="#D4D4D4" />
+        <SolidColorBrush x:Key="Accent" Color="#2B579A" />
+        <SolidColorBrush x:Key="AccentLight" Color="#DCE9F7" />
+        <SolidColorBrush x:Key="GridLine" Color="#E1E1E1" />
+
+        <infra:IndentConverter x:Key="IndentConverter" />
+
+        <!-- Toolbar -->
+        <Style x:Key="ToolButton" TargetType="Button">
+            <Setter Property="MinWidth" Value="52" />
+            <Setter Property="Margin" Value="1,0" />
+            <Setter Property="Padding" Value="4,2" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" TextElement.FontSize="11" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E3E3E3" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#CFCFCF" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ToolIcon" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,2,0,3" />
+            <Setter Property="Foreground" Value="{StaticResource Accent}" />
+        </Style>
+        <Style x:Key="ToolSeparator" TargetType="Rectangle">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Margin" Value="6,4" />
+            <Setter Property="Fill" Value="{StaticResource ChromeBorder}" />
+        </Style>
+
+        <!-- Task sheet -->
+        <Style x:Key="SheetStyle" TargetType="DataGrid">
+            <Setter Property="AutoGenerateColumns" Value="False" />
+            <Setter Property="CanUserAddRows" Value="False" />
+            <Setter Property="CanUserDeleteRows" Value="False" />
+            <Setter Property="CanUserSortColumns" Value="False" />
+            <Setter Property="CanUserReorderColumns" Value="True" />
+            <Setter Property="SelectionMode" Value="Extended" />
+            <Setter Property="SelectionUnit" Value="FullRow" />
+            <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="GridLinesVisibility" Value="All" />
+            <Setter Property="HorizontalGridLinesBrush" Value="{StaticResource GridLine}" />
+            <Setter Property="VerticalGridLinesBrush" Value="{StaticResource GridLine}" />
+            <Setter Property="RowHeight" Value="24" />
+            <Setter Property="ColumnHeaderHeight" Value="44" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="EnableRowVirtualization" Value="True" />
+            <Setter Property="VirtualizingPanel.ScrollUnit" Value="Item" />
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True" />
+            <Setter Property="ColumnHeaderStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="{StaticResource ChromeBackground}" />
+                        <Setter Property="BorderBrush" Value="{StaticResource ChromeBorder}" />
+                        <Setter Property="BorderThickness" Value="0,0,1,1" />
+                        <Setter Property="Padding" Value="5,0" />
+                        <Setter Property="VerticalContentAlignment" Value="Bottom" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="CellStyle">
+                <Setter.Value>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="4,0" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="{StaticResource AccentLight}" />
+                                <Setter Property="Foreground" Value="Black" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter Property="Background" Value="White" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SheetRowStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="White" />
+        </Style>
+        <Style x:Key="RowNumberCell" TargetType="DataGridCell">
+            <Setter Property="Background" Value="{StaticResource ChromeBackground}" />
+            <Setter Property="Foreground" Value="#666666" />
+            <Setter Property="HorizontalContentAlignment" Value="Right" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" Padding="4,0">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Right" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="CellEditor" TargetType="TextBox">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
     </Application.Resources>
 </Application>
