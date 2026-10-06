@@ -79,6 +79,15 @@
                     <RibbonButton Label="Split Task" SmallImageSource="{infra:Glyph &#xE8C6;}" Command="{Binding SplitTaskCommand}" />
                     <RibbonToggleButton Label="Split Mode" SmallImageSource="{infra:Glyph &#xE7AD;}" IsChecked="{Binding IsSplitMode}" ToolTipTitle="Click a bar to split it there" />
                 </RibbonGroup>
+                <RibbonGroup Header="Progress">
+                    <RibbonButton Label="0%" SmallImageSource="{infra:Glyph &#xF16B;}" Command="{Binding PercentCompleteCommand}" CommandParameter="0" ToolTipTitle="0% complete" />
+                    <RibbonButton Label="25%" SmallImageSource="{infra:Glyph &#xF16C;}" Command="{Binding PercentCompleteCommand}" CommandParameter="25" ToolTipTitle="25% complete" />
+                    <RibbonButton Label="50%" SmallImageSource="{infra:Glyph &#xF16D;}" Command="{Binding PercentCompleteCommand}" CommandParameter="50" ToolTipTitle="50% complete" />
+                    <RibbonButton Label="75%" SmallImageSource="{infra:Glyph &#xF16E;}" Command="{Binding PercentCompleteCommand}" CommandParameter="75" ToolTipTitle="75% complete" />
+                    <RibbonButton Label="100%" SmallImageSource="{infra:Glyph &#xF16F;}" Command="{Binding PercentCompleteCommand}" CommandParameter="100" ToolTipTitle="100% complete" />
+                    <RibbonButton Label="Mark on Track" SmallImageSource="{infra:Glyph &#xE73E;}" Command="{Binding MarkOnTrackCommand}" ToolTipTitle="Progress as scheduled up to the status date" />
+                    <RibbonButton Label="Update Tasks" SmallImageSource="{infra:Glyph &#xE70F;}" Command="{Binding UpdateTasksCommand}" ToolTipTitle="Enter % complete, actual and remaining duration, actual dates" />
+                </RibbonGroup>
                 <RibbonGroup Header="Tasks">
                     <RibbonButton Label="Manual / Auto" LargeImageSource="{infra:Glyph &#xE718;}" Command="{Binding ToggleModeCommand}" ToolTipTitle="Switch selected tasks between manual and automatic scheduling" />
                     <RibbonButton Label="Go to Task" SmallImageSource="{infra:Glyph &#xE8B0;}" Command="{Binding ScrollToTaskCommand}" ToolTipTitle="Scroll the chart to the selected task (Ctrl+Shift+F5)" />
@@ -146,6 +155,9 @@
                 <RibbonGroup Header="Schedule">
                     <RibbonButton Label="Set Baseline" LargeImageSource="{infra:Glyph &#xE9D9;}" Command="{Binding SetBaselineCommand}" />
                     <RibbonButton Label="Clear Baseline" SmallImageSource="{infra:Glyph &#xE894;}" Command="{Binding ClearBaselineCommand}" />
+                </RibbonGroup>
+                <RibbonGroup Header="Status">
+                    <RibbonButton Label="Update Project" LargeImageSource="{infra:Glyph &#xE895;}" Command="{Binding UpdateProjectCommand}" ToolTipTitle="Mark work complete through a date, or reschedule unfinished work" />
                 </RibbonGroup>
                 <RibbonGroup Header="Subprojects">
                     <RibbonButton Label="Insert Project" LargeImageSource="{infra:Glyph &#xE8F4;}" Command="{Binding InsertProjectCommand}" ToolTipTitle="Insert another project file as a subproject" />

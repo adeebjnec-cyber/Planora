@@ -115,6 +115,21 @@ public sealed class ProjectTask
         set => _percentComplete = value is >= 0 and <= 100 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Percent complete must be 0-100.");
     }
 
+    /// <summary>
+    /// Physical % complete: progress judged by the work's result rather than time spent; used for earned
+    /// value (BCWP) when <see cref="EarnedValueMethod"/> is Physical.
+    /// </summary>
+    public double PhysicalPercentComplete
+    {
+        get => _physicalPercentComplete;
+        set => _physicalPercentComplete = value is >= 0 and <= 100 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Physical % complete must be 0-100.");
+    }
+
+    private double _physicalPercentComplete;
+
+    /// <summary>Which progress figure earned value uses for this task.</summary>
+    public EarnedValueMethod EarnedValueMethod { get; set; }
+
     /// <summary>Start/finish typed in by the user for manually scheduled tasks.</summary>
     public DateTime? ManualStart { get; set; }
     public DateTime? ManualFinish { get; set; }

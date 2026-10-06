@@ -78,6 +78,7 @@ public static class MspdiFile
             E("MoveRemainingPartsBackToStatusDate", o.RescheduleUncompletedWorkToStatusDate),
             E("HonorConstraints", o.HonorConstraints),
             E("Autolink", o.AutolinkInsertedTasks),
+            E("EarnedValueMethod", (int)o.DefaultEarnedValueMethod),
             project.StatusDate is { } status ? E("StatusDate", status) : null,
             E("DurationFormat", 7),
             new XElement(Ns + "Calendars", calendars.Select(c => WriteCalendar(c, calendarUid, project))),
@@ -210,6 +211,8 @@ public static class MspdiFile
             E("LevelingDelayFormat", 8),
             E("HideBar", t.HideBar),
             E("Marked", t.IsMarked),
+            E("PhysicalPercentComplete", (int)Math.Round(t.PhysicalPercentComplete)),
+            E("EarnedValueMethod", (int)t.EarnedValueMethod),
             string.IsNullOrEmpty(t.Hyperlink) ? null : E("Hyperlink", t.Hyperlink),
             string.IsNullOrEmpty(t.HyperlinkAddress) ? null : E("HyperlinkAddress", t.HyperlinkAddress),
             string.IsNullOrEmpty(t.HyperlinkSubAddress) ? null : E("HyperlinkSubAddress", t.HyperlinkSubAddress),
@@ -393,6 +396,7 @@ public static class MspdiFile
         o.RescheduleUncompletedWorkToStatusDate = Text(root, "MoveRemainingPartsBackToStatusDate") == "1";
         o.HonorConstraints = Text(root, "HonorConstraints") != "0";
         o.AutolinkInsertedTasks = Text(root, "Autolink") != "0";
+        o.DefaultEarnedValueMethod = Int(root, "EarnedValueMethod") == 1 ? EarnedValueMethod.PhysicalPercentComplete : EarnedValueMethod.PercentComplete;
 
         // Calendars: base calendars first, so derived (resource) calendars can refer to them.
         var calendarElements = Children(root, "Calendars", "Calendar").ToList();
@@ -507,6 +511,8 @@ public static class MspdiFile
             task.IgnoreResourceCalendar = Text(t, "IgnoreResourceCalendar") == "1";
             task.HideBar = Text(t, "HideBar") == "1";
             task.IsMarked = Text(t, "Marked") == "1";
+            task.PhysicalPercentComplete = Math.Clamp(Double(t, "PhysicalPercentComplete") ?? 0, 0, 100);
+            task.EarnedValueMethod = Int(t, "EarnedValueMethod") == 1 ? EarnedValueMethod.PhysicalPercentComplete : EarnedValueMethod.PercentComplete;
             task.Hyperlink = Text(t, "Hyperlink") ?? "";
             task.HyperlinkAddress = Text(t, "HyperlinkAddress") ?? "";
             task.HyperlinkSubAddress = Text(t, "HyperlinkSubAddress") ?? "";

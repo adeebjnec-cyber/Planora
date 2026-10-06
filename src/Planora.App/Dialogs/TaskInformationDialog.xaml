@@ -127,6 +127,7 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <TextBlock Text="Deadline:" Style="{StaticResource FormLabel}" />
                     <TextBox Grid.Column="1" Text="{Binding Deadline}" Style="{StaticResource FormText}" ToolTip="Leave empty for no deadline" />
@@ -161,6 +162,14 @@
 
                     <CheckBox Grid.Row="7" Grid.Column="1" Content="Marked" IsChecked="{Binding IsMarked}" Style="{StaticResource FormCheck}" />
                     <CheckBox Grid.Row="7" Grid.Column="4" Content="Hide task bar" IsChecked="{Binding HideBar}" Style="{StaticResource FormCheck}" />
+
+                    <TextBlock Grid.Row="8" Text="Earned value method:" Style="{StaticResource FormLabel}" />
+                    <ComboBox Grid.Row="8" Grid.Column="1" SelectedIndex="{Binding EarnedValueMethodIndex}" Style="{StaticResource FormCombo}" IsEnabled="{Binding IsLeaf}">
+                        <ComboBoxItem Content="% Complete" />
+                        <ComboBoxItem Content="Physical % Complete" />
+                    </ComboBox>
+                    <TextBlock Grid.Row="8" Grid.Column="3" Text="Physical % complete:" Style="{StaticResource FormLabel}" />
+                    <TextBox Grid.Row="8" Grid.Column="4" Text="{Binding PhysicalPercentComplete}" Style="{StaticResource FormText}" IsEnabled="{Binding IsLeaf}" />
                 </Grid>
             </TabItem>
 

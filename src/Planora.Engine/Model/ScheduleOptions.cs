@@ -33,6 +33,9 @@ public sealed class ScheduleOptions
     /// </summary>
     public bool HonorConstraints { get; set; } = true;
 
+    /// <summary>Earned value method for new tasks (Options > Advanced > Default task earned value method).</summary>
+    public EarnedValueMethod DefaultEarnedValueMethod { get; set; }
+
     /// <summary>"Autolink inserted or moved tasks": a task inserted inside a finish-to-start chain joins it.</summary>
     public bool AutolinkInsertedTasks { get; set; } = true;
 

@@ -32,6 +32,8 @@ internal static class DialogFactory
             "options" => new OptionsDialog(vm),
             "budgets" => new BudgetDialog(vm),
             "assignment" => new AssignmentInformationDialog(vm, task.Assignments.First()),
+            "updatetasks" => new UpdateTasksDialog(vm),
+            "updateproject" => new UpdateProjectDialog(vm),
             _ => throw new ArgumentException($"Unknown dialog '{name}'."),
         };
     }

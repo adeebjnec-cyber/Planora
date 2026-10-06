@@ -426,7 +426,7 @@ public static class ProjectScheduler
 
             return new EarnedValue(
                 Bcws: b.Cost * plannedFraction,
-                Bcwp: b.Cost * (decimal)task.PercentComplete / 100m,
+                Bcwp: b.Cost * (decimal)(task.EarnedValueMethod == EarnedValueMethod.PhysicalPercentComplete ? task.PhysicalPercentComplete : task.PercentComplete) / 100m,
                 Acwp: task.ActualCost,
                 Bac: b.Cost);
         }

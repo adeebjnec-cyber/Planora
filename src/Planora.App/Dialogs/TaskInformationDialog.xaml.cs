@@ -57,6 +57,8 @@ public partial class TaskInformationDialog : Window
         HyperlinkSubAddress = task.HyperlinkSubAddress;
         IsMarked = task.IsMarked;
         HideBar = task.HideBar;
+        EarnedValueMethodIndex = (int)task.EarnedValueMethod;
+        PhysicalPercentComplete = task.PhysicalPercentComplete.ToString("0.#", CultureInfo.CurrentCulture) + "%";
         FixedCost = task.FixedCost.ToString("0.##", CultureInfo.CurrentCulture);
         FixedCostAccrualIndex = (int)task.FixedCostAccrual;
         Notes = task.Notes;
@@ -116,6 +118,8 @@ public partial class TaskInformationDialog : Window
     public string HyperlinkSubAddress { get; set; } = "";
     public bool IsMarked { get; set; }
     public bool HideBar { get; set; }
+    public int EarnedValueMethodIndex { get; set; }
+    public string PhysicalPercentComplete { get; set; }
     public string FixedCost { get; set; }
     public IReadOnlyList<string> Accruals => ResourceRowViewModel.Accruals;
     public int FixedCostAccrualIndex { get; set; }
@@ -151,6 +155,13 @@ public partial class TaskInformationDialog : Window
             throw new FormatException("Fixed cost must be a positive amount.");
         t.FixedCost = fixedCost;
         t.FixedCostAccrual = (CostAccrual)FixedCostAccrualIndex;
+        if (!t.IsSummary)
+        {
+            if (!double.TryParse(PhysicalPercentComplete.Trim().TrimEnd('%'), NumberStyles.Float, CultureInfo.CurrentCulture, out var physical) || physical is < 0 or > 100)
+                throw new FormatException("Physical % complete must be a number from 0 to 100.");
+            t.PhysicalPercentComplete = physical;
+            t.EarnedValueMethod = (EarnedValueMethod)EarnedValueMethodIndex;
+        }
         t.Calendar = CalendarIndex <= 0 ? null : p.Calendars[CalendarIndex - 1];
         t.IgnoreResourceCalendar = IgnoreResourceCalendar;
         t.Hyperlink = Hyperlink.Trim();

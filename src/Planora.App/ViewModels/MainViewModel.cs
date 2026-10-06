@@ -60,6 +60,7 @@ public sealed partial class MainViewModel : ObservableObject
         InitializeOrganizeCommands();
         InitializeOutputCommands();
         InitializeExtraCommands();
+        InitializeTrackingCommands();
 
         _autosaveTimer = new DispatcherTimer();
         _autosaveTimer.Tick += (_, _) => Autosave();

@@ -84,6 +84,7 @@ public static class ProjectFile
                 RescheduleUncompletedWorkToStatusDate = project.Options.RescheduleUncompletedWorkToStatusDate,
                 HonorConstraints = project.Options.HonorConstraints,
                 AutolinkInsertedTasks = project.Options.AutolinkInsertedTasks,
+                DefaultEarnedValueMethod = project.Options.DefaultEarnedValueMethod,
                 DefaultTaskType = project.Options.DefaultTaskType,
                 NewTasksEffortDriven = project.Options.NewTasksEffortDriven,
                 NewTasksManuallyScheduled = project.Options.NewTasksManuallyScheduled,
@@ -173,6 +174,8 @@ public static class ProjectFile
                 HyperlinkAddress = t.HyperlinkAddress,
                 HyperlinkSubAddress = t.HyperlinkSubAddress,
                 IsMarked = t.IsMarked,
+                PhysicalPercentComplete = t.PhysicalPercentComplete,
+                EarnedValueMethod = t.EarnedValueMethod,
                 HideBar = t.HideBar,
                 FixedCost = t.FixedCost,
                 FixedCostAccrual = t.FixedCostAccrual,
@@ -320,6 +323,7 @@ public static class ProjectFile
             project.Options.RescheduleUncompletedWorkToStatusDate = o.RescheduleUncompletedWorkToStatusDate;
             project.Options.HonorConstraints = o.HonorConstraints;
             project.Options.AutolinkInsertedTasks = o.AutolinkInsertedTasks;
+            project.Options.DefaultEarnedValueMethod = o.DefaultEarnedValueMethod;
             project.Options.DefaultTaskType = o.DefaultTaskType;
             project.Options.NewTasksEffortDriven = o.NewTasksEffortDriven;
             project.Options.NewTasksManuallyScheduled = o.NewTasksManuallyScheduled;
@@ -390,6 +394,8 @@ public static class ProjectFile
             task.HyperlinkAddress = t.HyperlinkAddress;
             task.HyperlinkSubAddress = t.HyperlinkSubAddress;
             task.IsMarked = t.IsMarked;
+            task.PhysicalPercentComplete = t.PhysicalPercentComplete;
+            task.EarnedValueMethod = t.EarnedValueMethod;
             task.HideBar = t.HideBar;
             task.FixedCost = t.FixedCost;
             task.FixedCostAccrual = t.FixedCostAccrual;
@@ -555,6 +561,7 @@ public static class ProjectFile
         public bool RescheduleUncompletedWorkToStatusDate { get; set; }
         public bool HonorConstraints { get; set; } = true;
         public bool AutolinkInsertedTasks { get; set; } = true;
+        public EarnedValueMethod DefaultEarnedValueMethod { get; set; }
         public TaskType DefaultTaskType { get; set; }
         public bool NewTasksEffortDriven { get; set; }
         public bool NewTasksManuallyScheduled { get; set; }
@@ -656,6 +663,8 @@ public static class ProjectFile
         public string HyperlinkAddress { get; set; } = "";
         public string HyperlinkSubAddress { get; set; } = "";
         public bool IsMarked { get; set; }
+        public double PhysicalPercentComplete { get; set; }
+        public EarnedValueMethod EarnedValueMethod { get; set; }
         public bool HideBar { get; set; }
         public decimal FixedCost { get; set; }
         public CostAccrual FixedCostAccrual { get; set; } = CostAccrual.Prorated;

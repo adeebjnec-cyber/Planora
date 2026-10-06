@@ -96,6 +96,7 @@ public sealed class Project
         DurationMinutes = durationMinutes,
         Type = Options.DefaultTaskType,
         IsEffortDriven = Options.NewTasksEffortDriven,
+        EarnedValueMethod = Options.DefaultEarnedValueMethod,
         Mode = Options.NewTasksManuallyScheduled ? TaskMode.ManuallyScheduled : TaskMode.AutoScheduled,
     };
     /// <summary>Appends a top-level task.</summary>

@@ -29,3 +29,10 @@ public sealed record EarnedValue(decimal Bcws, decimal Bcwp, decimal Acwp, decim
     public static EarnedValue operator +(EarnedValue a, EarnedValue b) =>
         new(a.Bcws + b.Bcws, a.Bcwp + b.Bcwp, a.Acwp + b.Acwp, a.Bac + b.Bac);
 }
+
+/// <summary>The progress figure earned value (BCWP) is based on, as in Microsoft Project.</summary>
+public enum EarnedValueMethod
+{
+    PercentComplete,
+    PhysicalPercentComplete,
+}

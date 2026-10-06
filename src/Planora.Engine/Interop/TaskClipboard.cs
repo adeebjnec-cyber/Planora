@@ -185,6 +185,8 @@ public static class TaskClipboard
         to.HyperlinkAddress = from.HyperlinkAddress;
         to.HyperlinkSubAddress = from.HyperlinkSubAddress;
         to.IsMarked = from.IsMarked;
+        to.PhysicalPercentComplete = from.PhysicalPercentComplete;
+        to.EarnedValueMethod = from.EarnedValueMethod;
         to.HideBar = from.HideBar;
         to.FixedCost = from.FixedCost;
         to.FixedCostAccrual = from.FixedCostAccrual;

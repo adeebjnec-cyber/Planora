@@ -52,6 +52,8 @@ public static class TaskFields
         F("Successors", "Successors", FieldType.Text, Successors),
         F("ResourceNames", "Resource Names", FieldType.Text, (_, t) => ResourceNamesText.Format(t)),
         F("PercentComplete", "% Complete", FieldType.Percent, (_, t) => t.PercentComplete),
+        F("PhysicalPercentComplete", "Physical % Complete", FieldType.Percent, (_, t) => t.PhysicalPercentComplete),
+        F("EarnedValueMethod", "Earned Value Method", FieldType.Text, (_, t) => t.EarnedValueMethod == EarnedValueMethod.PhysicalPercentComplete ? "Physical % Complete" : "% Complete"),
         F("Status", "Status", FieldType.Text, Status),
         F("Critical", "Critical", FieldType.Flag, (_, t) => t.IsCritical),
         F("Milestone", "Milestone", FieldType.Flag, (_, t) => t.IsMilestone || !t.IsSummary && t.DurationMinutes == 0),
