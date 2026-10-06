@@ -164,12 +164,37 @@ public sealed partial class MainViewModel
     public ICommand LinkExternalCommand { get; private set; } = null!;
     public ICommand RefreshExternalLinksCommand { get; private set; } = null!;
     public ICommand PoolOverallocationsCommand { get; private set; } = null!;
+    public ICommand CompareProjectsCommand { get; private set; } = null!;
 
     private void InitializeMultiProjectCommands()
     {
         LinkExternalCommand = new RelayCommand(() => ShowDialog(new ExternalLinkDialog(this, SelectedTasks[0])), () => SelectedTasks.Count == 1 && !SelectedTasks[0].IsSummary);
         RefreshExternalLinksCommand = new RelayCommand(RefreshExternalLinks, () => Project.Tasks.Any(t => t.ExternalPredecessors.Count > 0));
         PoolOverallocationsCommand = new RelayCommand(() => ShowDialog(new PoolOverallocationsDialog(this)), () => Project.ResourcePoolPath is not null);
+        CompareProjectsCommand = new RelayCommand(CompareProjects);
+    }
+
+    /// <summary>Report > Compare Projects: differences between this plan and another version of it.</summary>
+    private void CompareProjects()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "Compare Projects: choose the earlier version",
+            Filter = "Project files (*.planora;*.xml;*.mpp)|*.planora;*.xml;*.mpp|All files (*.*)|*.*",
+        };
+        if (dialog.ShowDialog() != true)
+            return;
+        try
+        {
+            var previous = Engine.Interop.ProjectLoader.Load(dialog.FileName);
+            var current = Engine.Persistence.ProjectFile.Deserialize(Engine.Persistence.ProjectFile.Serialize(Project));
+            var report = Engine.Reports.ProjectComparison.Compare(current, previous, System.IO.Path.GetFileName(dialog.FileName));
+            new ComparisonWindow(report) { Owner = Application.Current.MainWindow }.Show();
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or System.IO.InvalidDataException or UnauthorizedAccessException or InvalidOperationException or System.Xml.XmlException)
+        {
+            ShowError($"Could not compare: {ex.Message}");
+        }
     }
 
     /// <summary>Re-reads the dates of predecessor tasks in other project files.</summary>

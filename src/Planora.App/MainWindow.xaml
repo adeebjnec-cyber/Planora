@@ -162,6 +162,9 @@
                     <RibbonButton Label="Who Does What" SmallImageSource="{infra:Glyph &#xE77B;}" Command="{Binding ReportsCommand}" CommandParameter="Who Does What" />
                     <RibbonButton Label="Overallocated" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Overallocated Resources" />
                 </RibbonGroup>
+                <RibbonGroup Header="Project">
+                    <RibbonButton Label="Compare Projects" LargeImageSource="{infra:Glyph &#xE8F1;}" Command="{Binding CompareProjectsCommand}" ToolTipTitle="Compare this plan with an earlier version of it" />
+                </RibbonGroup>
                 <RibbonGroup Header="Custom">
                     <RibbonButton Label="Custom Reports" LargeImageSource="{infra:Glyph &#xE70F;}" Command="{Binding ReportsCommand}" ToolTipTitle="Open the report window to design your own reports (New Report...)" />
                 </RibbonGroup>
