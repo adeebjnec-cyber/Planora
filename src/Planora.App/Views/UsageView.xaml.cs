@@ -75,7 +75,7 @@ public partial class UsageView : UserControl
     {
         if (_viewModel is null)
             return;
-        var rows = _byResource ? ResourceRows(_viewModel.Project) : TaskRows(_viewModel.Project);
+        var rows = WithDetails(_byResource ? ResourceRows(_viewModel.Project) : TaskRows(_viewModel.Project), _viewModel.Project, _viewModel.UsageDetails);
         Sheet.ItemsSource = rows;
         TimeGrid.Rows = rows;
         TimeGrid.InvalidateVisual();
@@ -158,6 +158,64 @@ public partial class UsageView : UserControl
         };
     }
 
+    /// <summary>Adds the chosen detail rows (actual, remaining and baseline work; cost, actual and baseline cost) under each row.</summary>
+    private static List<UsageRow> WithDetails(List<UsageRow> rows, Project project, UsageDetail details)
+    {
+        if (details == UsageDetail.None)
+            return rows;
+        var o = project.Options;
+        var result = new List<UsageRow>();
+        foreach (var row in rows)
+        {
+            result.Add(row);
+            // The assignments behind the row: one assignment, or all of a task's or resource's.
+            var assignments = row.Assignment is { } single ? new List<Assignment> { single }
+                : row.Task is { } task && row.Resource is null ? project.Subtree(task).Where(t => !t.IsSummary).SelectMany(t => t.Assignments).ToList()
+                : row.Resource is { } resource ? ResourceAnalysis.ScheduledAssignments(project, resource).ToList()
+                : new List<Assignment>();
+            // Task rows also carry the fixed costs of the tasks under them.
+            var fixedCostTasks = row.Assignment is null && row.Task is { } t2 && row.Resource is null
+                ? project.Subtree(t2).Where(t => !t.IsSummary && t.FixedCost != 0).ToList()
+                : new List<ProjectTask>();
+
+            UsageRow Detail(string label, string total, Func<DateTime, DateTime, double> between, Func<double, string> format) => new()
+            {
+                Name = "",
+                Level = row.Level,
+                Task = row.Task,
+                Resource = row.Resource,
+                Details = label,
+                TotalWork = total,
+                WorkBetween = between,
+                FormatValue = format,
+            };
+
+            string Hours(double minutes) => DurationText.Format((long)Math.Round(minutes), o, DurationUnit.Hours);
+            if (details.HasFlag(UsageDetail.ActualWork))
+                result.Add(Detail("Act. Work", Hours(assignments.Sum(a => (double)a.ActualWorkMinutes)), (f, t) => assignments.Sum(a => Timephased.ActualWorkBetween(a, f, t)), UsageGrid.FormatHours));
+            if (details.HasFlag(UsageDetail.RemainingWork))
+                result.Add(Detail("Rem. Work", Hours(assignments.Sum(a => (double)a.RemainingWorkMinutes)),
+                    (f, t) => assignments.Sum(a => Timephased.WorkBetween(a, f, t) - Timephased.ActualWorkBetween(a, f, t)), UsageGrid.FormatHours));
+            if (details.HasFlag(UsageDetail.BaselineWork))
+                result.Add(Detail("Base. Work", Hours(assignments.Sum(a => (double)(a.Baselines[0]?.WorkMinutes ?? 0))), (f, t) => assignments.Sum(a => Timephased.BaselineWorkBetween(a, 0, f, t)), UsageGrid.FormatHours));
+            if (details.HasFlag(UsageDetail.Cost))
+            {
+                decimal total = assignments.Sum(a => a.Cost) + fixedCostTasks.Sum(t => t.FixedCost);
+                result.Add(Detail("Cost", total.ToString("C", CultureInfo.CurrentCulture),
+                    (f, t) => (double)(assignments.Sum(a => Timephased.CostBetween(a, f, t)) + fixedCostTasks.Sum(x => Timephased.FixedCostBetween(x, x.Calendar ?? project.Calendar, f, t))), FormatMoney));
+            }
+            if (details.HasFlag(UsageDetail.ActualCost))
+                result.Add(Detail("Act. Cost", assignments.Sum(a => a.ActualCost).ToString("C", CultureInfo.CurrentCulture),
+                    (f, t) => (double)assignments.Sum(a => Timephased.ActualCostBetween(a, f, t)), FormatMoney));
+            if (details.HasFlag(UsageDetail.BaselineCost))
+                result.Add(Detail("Base. Cost", assignments.Sum(a => a.Baselines[0]?.Cost ?? 0).ToString("C", CultureInfo.CurrentCulture),
+                    (f, t) => (double)assignments.Sum(a => Timephased.BaselineCostBetween(a, 0, f, t)), FormatMoney));
+        }
+        return result;
+    }
+
+    private static string FormatMoney(double amount) => Math.Abs(amount) < 0.005 ? "" : amount.ToString(Math.Abs(amount) >= 100 ? "C0" : "C", CultureInfo.CurrentCulture);
+
     private static string FormatQuantity(double quantity) => quantity.ToString("0.#", CultureInfo.CurrentCulture);
 
     // ---- Editing work in a period ----
@@ -166,7 +224,7 @@ public partial class UsageView : UserControl
 
     private void BeginCellEdit(UsageRow row, DateTime from, DateTime to, Rect cell)
     {
-        if (row.Assignment is not { IsWork: true } assignment)
+        if (row.Assignment is not { IsWork: true } assignment || row.Details != "Work")
         {
             if (_viewModel is not null)
                 _viewModel.ShowError("Edit work on an assignment row (the rows under each task or resource).");

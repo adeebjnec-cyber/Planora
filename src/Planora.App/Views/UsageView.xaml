@@ -32,8 +32,8 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Work" Binding="{Binding TotalWork}" Width="80" />
-                <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="60" />
+                <DataGridTextColumn Header="Total" Binding="{Binding TotalWork}" Width="90" />
+                <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="72" />
             </DataGrid.Columns>
         </DataGrid>
 

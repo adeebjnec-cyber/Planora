@@ -83,6 +83,8 @@ public partial class App : Application
                 window.ViewModel.SelectTask(window.ViewModel.Project.Tasks[row - 1]);
             if (options.ContainsKey("--details"))
                 window.ViewModel.ShowTaskForm = true;
+            if (options.TryGetValue("--usagedetails", out var usage) && int.TryParse(usage, out var flags))
+                window.ViewModel.UsageDetails = (ViewModels.UsageDetail)flags;
             window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
             {
                 if (options.TryGetValue("--dialog", out var dialogName))

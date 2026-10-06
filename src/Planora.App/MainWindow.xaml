@@ -241,6 +241,18 @@
                         <CheckBox Content="Progress Lines" IsChecked="{Binding ShowProgressLines}" Margin="0,2" />
                     </StackPanel>
                 </RibbonGroup>
+                <RibbonGroup Header="Usage Details">
+                    <StackPanel Margin="4,2">
+                        <CheckBox Content="Actual Work" IsChecked="{Binding ShowActualWorkDetail}" Margin="0,1" />
+                        <CheckBox Content="Remaining Work" IsChecked="{Binding ShowRemainingWorkDetail}" Margin="0,1" />
+                        <CheckBox Content="Baseline Work" IsChecked="{Binding ShowBaselineWorkDetail}" Margin="0,1" />
+                    </StackPanel>
+                    <StackPanel Margin="4,2">
+                        <CheckBox Content="Cost" IsChecked="{Binding ShowCostDetail}" Margin="0,1" />
+                        <CheckBox Content="Actual Cost" IsChecked="{Binding ShowActualCostDetail}" Margin="0,1" />
+                        <CheckBox Content="Baseline Cost" IsChecked="{Binding ShowBaselineCostDetail}" Margin="0,1" />
+                    </StackPanel>
+                </RibbonGroup>
                 <RibbonGroup Header="Split View">
                     <StackPanel Margin="4,2">
                         <CheckBox Content="Details (Task Form)" IsChecked="{Binding ShowTaskForm}" Margin="0,2" ToolTip="Show the selected task's details under the view" />

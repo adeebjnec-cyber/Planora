@@ -55,6 +55,82 @@ public static class Timephased
     public static decimal CostBetween(Assignment assignment, DateTime from, DateTime to) =>
         assignment.Cost * (decimal)FractionBetween(assignment, from, to);
 
+    /// <summary>
+    /// Actual work done between two moments: the scheduled work up to the task's complete-through point,
+    /// scaled to the assignment's actual work.
+    /// </summary>
+    public static double ActualWorkBetween(Assignment assignment, DateTime from, DateTime to) =>
+        assignment.ActualWorkMinutes * ActualShare(assignment, from, to);
+
+    /// <summary>Actual cost incurred between two moments, spread like the actual work.</summary>
+    public static decimal ActualCostBetween(Assignment assignment, DateTime from, DateTime to) =>
+        assignment.ActualCost * (decimal)ActualShare(assignment, from, to);
+
+    /// <summary>Share (0-1) of the work done so far that falls between two moments.</summary>
+    private static double ActualShare(Assignment assignment, DateTime from, DateTime to)
+    {
+        var task = assignment.Task;
+        if (task.PercentComplete <= 0 || to <= from)
+            return 0;
+        var cut = task.PercentComplete >= 100 ? assignment.Finish : task.CompleteThrough;
+        double done = FractionBetween(assignment, assignment.Start, cut);
+        if (done <= 0)
+            return from <= assignment.Start && assignment.Start < to ? 1 : 0;
+        var end = to < cut ? to : cut;
+        return end <= from ? 0 : FractionBetween(assignment, from, end) / done;
+    }
+
+    /// <summary>Baseline work (index 0 = Baseline) between two moments, spread evenly over the baseline dates' working time.</summary>
+    public static double BaselineWorkBetween(Assignment assignment, int baseline, DateTime from, DateTime to) =>
+        assignment.Baselines[baseline] is { } b ? b.WorkMinutes * BaselineShare(assignment.EffectiveCalendar, b, from, to) : 0;
+
+    /// <summary>Baseline cost between two moments, spread like the baseline work.</summary>
+    public static decimal BaselineCostBetween(Assignment assignment, int baseline, DateTime from, DateTime to) =>
+        assignment.Baselines[baseline] is { } b ? b.Cost * (decimal)BaselineShare(assignment.EffectiveCalendar, b, from, to) : 0;
+
+    /// <summary>Baseline cost of a task between two moments (for tasks with no assignments, e.g. fixed costs only).</summary>
+    public static decimal BaselineCostBetween(ProjectTask task, WorkingCalendar calendar, int baseline, DateTime from, DateTime to) =>
+        task.Baselines[baseline] is { } b ? b.Cost * (decimal)BaselineShare(calendar, b, from, to) : 0;
+
+    private static double BaselineShare(WorkingCalendar? calendar, BaselineValues b, DateTime from, DateTime to)
+    {
+        if (to <= from)
+            return 0;
+        var cal = calendar ?? Elapsed;
+        double total = cal.WorkingTimeBetween(b.Start, b.Finish).TotalMinutes;
+        if (total <= 0)
+            return from <= b.Start && b.Start < to ? 1 : 0;
+        var start = from > b.Start ? from : b.Start;
+        var end = to < b.Finish ? to : b.Finish;
+        return end <= start ? 0 : cal.WorkingTimeBetween(start, end).TotalMinutes / total;
+    }
+
+    /// <summary>
+    /// A task's fixed cost between two moments: all at the start or finish, or prorated over its working
+    /// time, according to its accrual.
+    /// </summary>
+    public static decimal FixedCostBetween(ProjectTask task, WorkingCalendar calendar, DateTime from, DateTime to)
+    {
+        if (task.FixedCost == 0 || to <= from)
+            return 0;
+        switch (task.FixedCostAccrual)
+        {
+            case CostAccrual.Start:
+                return from <= task.Start && task.Start < to ? task.FixedCost : 0;
+            case CostAccrual.End:
+                return from < task.Finish && task.Finish <= to ? task.FixedCost : 0;
+            default:
+                double total = calendar.WorkingTimeBetween(task.Start, task.Finish).TotalMinutes;
+                if (total <= 0)
+                    return from <= task.Start && task.Start < to ? task.FixedCost : 0;
+                var start = from > task.Start ? from : task.Start;
+                var end = to < task.Finish ? to : task.Finish;
+                return end <= start ? 0 : task.FixedCost * (decimal)(calendar.WorkingTimeBetween(start, end).TotalMinutes / total);
+        }
+    }
+
+    private static readonly WorkingCalendar Elapsed = WorkingCalendar.Create24Hours("Elapsed");
+
     public static double FractionBetween(Assignment assignment, DateTime from, DateTime to) =>
         to <= from ? 0 : CumulativeFraction(assignment, to) - CumulativeFraction(assignment, from);
 
