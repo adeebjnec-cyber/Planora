@@ -45,6 +45,12 @@ public sealed class ProjectTask
     /// <summary>Show this task on the Timeline view.</summary>
     public bool ShowOnTimeline { get; set; }
 
+    /// <summary>
+    /// Values of custom fields (Text1, Number2, ...), keyed by slot. A missing key means no value.
+    /// Value types follow <see cref="Fields.FieldValue"/>.
+    /// </summary>
+    public Dictionary<string, object> CustomValues { get; } = new();
+
     /// <summary>Interruptions in the task, ordered by <see cref="TaskSplit.AfterWorkMinutes"/>.</summary>
     public IReadOnlyList<TaskSplit> Splits => _splits;
 

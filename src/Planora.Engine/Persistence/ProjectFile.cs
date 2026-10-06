@@ -1,7 +1,9 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Planora.Engine.Calendars;
+using Planora.Engine.Fields;
 using Planora.Engine.Model;
+using Planora.Engine.Views;
 
 namespace Planora.Engine.Persistence;
 
@@ -153,6 +155,7 @@ public static class ProjectFile
                 LevelingDelayMinutes = t.LevelingDelayMinutes,
                 Baselines = Sparse(t.Baselines),
                 InterimPlans = SparseValues(t.InterimPlans),
+                Custom = t.CustomValues.Count == 0 ? null : t.CustomValues.ToDictionary(kv => kv.Key, kv => FieldValue.ToStorage(kv.Value)!),
                 Assignments = t.Assignments.Select(a => new AssignmentDto
                 {
                     ResourceId = a.Resource.Id,
@@ -164,6 +167,15 @@ public static class ProjectFile
                     DelayMinutes = a.DelayMinutes,
                     Baselines = Sparse(a.Baselines),
                 }).ToList(),
+            }).ToList(),
+            CustomFields = project.CustomFields.Select(cf => new CustomFieldDto { Key = cf.Key, Alias = cf.Alias, ValueList = cf.ValueList.ToList() }).ToList(),
+            Tables = project.Tables.Select(t => new TableDto { Name = t.Name, Columns = t.Columns.ToList() }).ToList(),
+            Filters = project.Filters.Select(fl => new FilterDto { Name = fl.Name, Conditions = fl.Conditions.ToList(), ShowRelatedSummaryRows = fl.ShowRelatedSummaryRows }).ToList(),
+            Groups = project.Groups.Select(g => new GroupDto { Name = g.Name, Levels = g.Levels.ToList(), ShowSummaryTasks = g.ShowSummaryTasks }).ToList(),
+            SavedViews = project.SavedViews.Select(v => new SavedViewDto
+            {
+                Name = v.Name, Screen = v.Screen, Table = v.Table, Filter = v.Filter, Group = v.Group,
+                SortKeys = v.Sort.Keys.ToList(), KeepOutlineStructure = v.Sort.KeepOutlineStructure,
             }).ToList(),
             BudgetCosts = project.BudgetCosts.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
             BudgetWork = project.BudgetWork.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
@@ -326,6 +338,13 @@ public static class ProjectFile
             task.LevelingDelayMinutes = t.LevelingDelayMinutes;
             Fill(task.Baselines, t.Baselines);
             FillValues(task.InterimPlans, t.InterimPlans);
+            foreach (var (key, stored) in t.Custom ?? new())
+            {
+                if (CustomField.TypeOfKey(key) is not { } type)
+                    throw new InvalidDataException($"Task {t.Id} has a value for unknown field '{key}'.");
+                if (FieldValue.FromStorage(stored, type) is { } value)
+                    task.CustomValues[key] = value;
+            }
 
             foreach (var a in t.Assignments)
             {
@@ -353,6 +372,23 @@ public static class ProjectFile
         foreach (var (id, amount) in dto.BudgetWork ?? new())
             project.BudgetWork[RequireResource(project, id)] = amount;
         Fill(project.Baselines, dto.Baselines);
+
+        foreach (var cf in dto.CustomFields ?? new())
+            project.CustomFields.Add(new CustomField(cf.Key, cf.Alias) { ValueList = cf.ValueList });
+        foreach (var t in dto.Tables ?? new())
+            project.Tables.Add(new TableDefinition(t.Name, t.Columns.ToArray()));
+        foreach (var fl in dto.Filters ?? new())
+            project.Filters.Add(new FilterDefinition(fl.Name, fl.Conditions.ToArray()) { ShowRelatedSummaryRows = fl.ShowRelatedSummaryRows });
+        foreach (var g in dto.Groups ?? new())
+            project.Groups.Add(new GroupDefinition(g.Name, g.Levels.ToArray()) { ShowSummaryTasks = g.ShowSummaryTasks });
+        foreach (var v in dto.SavedViews ?? new())
+        {
+            project.SavedViews.Add(new SavedView
+            {
+                Name = v.Name, Screen = v.Screen, Table = v.Table, Filter = v.Filter, Group = v.Group,
+                Sort = new SortDefinition { Keys = v.SortKeys, KeepOutlineStructure = v.KeepOutlineStructure },
+            });
+        }
         return project;
     }
 
@@ -399,6 +435,49 @@ public static class ProjectFile
         public Dictionary<int, decimal>? BudgetCosts { get; set; }
         public Dictionary<int, double>? BudgetWork { get; set; }
         public Dictionary<int, BaselineValues>? Baselines { get; set; }
+        public List<CustomFieldDto>? CustomFields { get; set; }
+        public List<TableDto>? Tables { get; set; }
+        public List<FilterDto>? Filters { get; set; }
+        public List<GroupDto>? Groups { get; set; }
+        public List<SavedViewDto>? SavedViews { get; set; }
+    }
+
+    private sealed class CustomFieldDto
+    {
+        public string Key { get; set; } = "";
+        public string Alias { get; set; } = "";
+        public List<string> ValueList { get; set; } = new();
+    }
+
+    private sealed class TableDto
+    {
+        public string Name { get; set; } = "";
+        public List<TableColumn> Columns { get; set; } = new();
+    }
+
+    private sealed class FilterDto
+    {
+        public string Name { get; set; } = "";
+        public List<FilterCondition> Conditions { get; set; } = new();
+        public bool ShowRelatedSummaryRows { get; set; }
+    }
+
+    private sealed class GroupDto
+    {
+        public string Name { get; set; } = "";
+        public List<GroupLevel> Levels { get; set; } = new();
+        public bool ShowSummaryTasks { get; set; }
+    }
+
+    private sealed class SavedViewDto
+    {
+        public string Name { get; set; } = "";
+        public string Screen { get; set; } = "Gantt";
+        public string Table { get; set; } = "Entry";
+        public string Filter { get; set; } = "All Tasks";
+        public string Group { get; set; } = "No Group";
+        public List<SortKey> SortKeys { get; set; } = new();
+        public bool KeepOutlineStructure { get; set; } = true;
     }
 
     private sealed class OptionsDto
@@ -491,6 +570,7 @@ public static class ProjectFile
         public long LevelingDelayMinutes { get; set; }
         public Dictionary<int, BaselineValues>? Baselines { get; set; }
         public Dictionary<int, InterimPlan>? InterimPlans { get; set; }
+        public Dictionary<string, string>? Custom { get; set; }
         public List<AssignmentDto> Assignments { get; set; } = new();
     }
 

@@ -39,6 +39,15 @@ public sealed class Project
     public WorkingCalendar Calendar { get; set; }
 
     public List<WorkingCalendar> Calendars { get; } = new();
+
+    /// <summary>Custom field definitions (aliases and pick lists) for the Text1/Number1/... slots in use.</summary>
+    public List<Fields.CustomField> CustomFields { get; } = new();
+
+    /// <summary>User-defined tables, filters, groups and views (they override built-ins of the same name).</summary>
+    public List<Views.TableDefinition> Tables { get; } = new();
+    public List<Views.FilterDefinition> Filters { get; } = new();
+    public List<Views.GroupDefinition> Groups { get; } = new();
+    public List<Views.SavedView> SavedViews { get; } = new();
     public ScheduleOptions Options { get; } = new();
 
     /// <summary>Tasks in display (outline) order.</summary>
