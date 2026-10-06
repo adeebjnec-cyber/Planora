@@ -48,6 +48,11 @@ public static class ProjectScheduler
             _project = project;
             _options = project.Options;
             project.RebuildHierarchy();
+            foreach (var a in project.Assignments)
+            {
+                a.EffectiveCalendar = null;
+                a.Segments = Array.Empty<TaskSegment>();
+            }
             _active = project.Tasks.Where(IsEffectivelyActive).ToList();
             _activeSet = _active.ToHashSet();
             foreach (var task in _active)
@@ -96,7 +101,10 @@ public static class ProjectScheduler
             }
 
             foreach (var task in leavesInOrder)
+            {
                 ComputeSegments(task);
+                ComputeAssignments(task);
+            }
 
             // Children come after their parent in outline order, so walking backwards rolls up bottom-up.
             for (int i = _active.Count - 1; i >= 0; i--)
@@ -110,6 +118,9 @@ public static class ProjectScheduler
 
             _project.Start = _active.Min(t => t.Start);
             _project.Finish = _active.Max(t => t.Finish);
+
+            ComputeCostsAndTracking();
+            ResourceAnalysis.UpdateResourceTotals(_project);
         }
 
         private void ForwardPass(List<ProjectTask> order)
@@ -266,6 +277,158 @@ public static class ProjectScheduler
         private static bool IsMovable(ProjectTask task) =>
             task.Mode == TaskMode.AutoScheduled && task.ActualStart is null;
 
+        // ---------------------------------------------------------------- assignments
+
+        private readonly Dictionary<(WorkingCalendar, WorkingCalendar), WorkingCalendar> _intersections = new();
+
+        /// <summary>A work assignment that determines how long the task takes.</summary>
+        private static bool IsDriving(Assignment a) => a.IsWork && a.Units > 0;
+
+        /// <summary>
+        /// Auto-scheduled, unstarted tasks with working resources take their dates from those resources.
+        /// Split tasks keep their duration-based shape.
+        /// </summary>
+        private static bool IsResourceDriven(ProjectTask task) =>
+            IsMovable(task) && task.Splits.Count == 0 && task.Assignments.Any(IsDriving);
+
+        private WorkingCalendar AssignmentCalendar(Assignment a)
+        {
+            var task = a.Task;
+            if (task.IsElapsedDuration)
+                return Elapsed;
+            var resourceCalendar = a.Resource.Calendar ?? _project.Calendar;
+            if (task.Calendar is null)
+                return resourceCalendar;
+            if (task.IgnoreResourceCalendar)
+                return task.Calendar;
+            var key = (task.Calendar, resourceCalendar);
+            if (!_intersections.TryGetValue(key, out var combined))
+                _intersections[key] = combined = WorkingCalendar.Intersect(task.Calendar, resourceCalendar);
+            return combined;
+        }
+
+        private (DateTime Start, DateTime Finish) AssignmentDates(Assignment a, DateTime taskStart)
+        {
+            var cal = AssignmentCalendar(a);
+            var start = cal.NextWorkingMoment(cal.AddWorkingMinutes(taskStart, a.DelayMinutes));
+            return (start, cal.AddWorkingMinutes(start, a.SpanMinutes));
+        }
+
+        private void ComputeAssignments(ProjectTask task)
+        {
+            bool resourceDriven = IsResourceDriven(task);
+            foreach (var a in task.Assignments)
+            {
+                a.EffectiveCalendar = AssignmentCalendar(a);
+                if (resourceDriven && IsDriving(a))
+                {
+                    (a.Start, a.Finish) = AssignmentDates(a, task.Start);
+                    a.Segments = new[] { new TaskSegment(a.Start, a.Finish) };
+                }
+                else
+                {
+                    (a.Start, a.Finish) = (task.Start, task.Finish);
+                    a.Segments = task.Segments;
+                }
+            }
+
+            if (resourceDriven)
+            {
+                var driving = task.Assignments.Where(IsDriving).ToList();
+                task.Start = driving.Min(a => a.Start);
+                task.Finish = driving.Max(a => a.Finish);
+                task.Segments = new[] { new TaskSegment(task.Start, task.Finish) };
+            }
+        }
+
+        // ---------------------------------------------------------------- cost, variance, earned value
+
+        private void ComputeCostsAndTracking()
+        {
+            var statusDate = _project.StatusDate ?? DateTime.Now;
+
+            foreach (var task in _active.Where(IsLeaf))
+            {
+                long work = 0, actualWork = 0;
+                decimal cost = task.FixedCost, actualCost = Costing.Accrue(task.FixedCost, task.FixedCostAccrual, task.PercentComplete);
+                foreach (var a in task.Assignments)
+                {
+                    Costing.Calculate(a);
+                    if (a.IsWork)
+                    {
+                        work += a.WorkMinutes;
+                        actualWork += a.ActualWorkMinutes;
+                    }
+                    cost += a.Cost;
+                    actualCost += a.ActualCost;
+                }
+                task.WorkMinutes = work;
+                task.ActualWorkMinutes = actualWork;
+                task.Cost = cost;
+                task.ActualCost = actualCost;
+                ComputeVariance(task, CalendarFor(task));
+                task.EarnedValue = LeafEarnedValue(task, CalendarFor(task), statusDate);
+            }
+
+            for (int i = _active.Count - 1; i >= 0; i--)
+            {
+                var summary = _active[i];
+                if (IsLeaf(summary))
+                    continue;
+                var children = _activeChildren[summary];
+                summary.WorkMinutes = children.Sum(c => c.WorkMinutes);
+                summary.ActualWorkMinutes = children.Sum(c => c.ActualWorkMinutes);
+                summary.Cost = children.Sum(c => c.Cost) + summary.FixedCost;
+                summary.ActualCost = children.Sum(c => c.ActualCost) + Costing.Accrue(summary.FixedCost, summary.FixedCostAccrual, summary.PercentComplete);
+                summary.EarnedValue = children.Aggregate(EarnedValue.Empty, (sum, c) => sum + c.EarnedValue);
+                ComputeVariance(summary, _project.Calendar);
+            }
+
+            var topLevel = _active.Where(t => t.Parent is null || !_activeSet.Contains(t.Parent)).ToList();
+            _project.WorkMinutes = topLevel.Sum(t => t.WorkMinutes);
+            _project.Cost = topLevel.Sum(t => t.Cost);
+            _project.ActualCost = topLevel.Sum(t => t.ActualCost);
+            _project.EarnedValue = topLevel.Aggregate(EarnedValue.Empty, (sum, t) => sum + t.EarnedValue);
+        }
+
+        private static void ComputeVariance(ProjectTask task, WorkingCalendar cal)
+        {
+            if (task.Baselines[0] is not { } b)
+            {
+                task.StartVarianceMinutes = task.FinishVarianceMinutes = task.DurationVarianceMinutes = task.WorkVarianceMinutes = 0;
+                task.CostVariance = 0;
+                return;
+            }
+            task.StartVarianceMinutes = cal.WorkingMinutesBetween(b.Start, task.Start);
+            task.FinishVarianceMinutes = cal.WorkingMinutesBetween(b.Finish, task.Finish);
+            task.DurationVarianceMinutes = task.DurationMinutes - b.DurationMinutes;
+            task.WorkVarianceMinutes = task.WorkMinutes - b.WorkMinutes;
+            task.CostVariance = task.Cost - b.Cost;
+        }
+
+        private static EarnedValue LeafEarnedValue(ProjectTask task, WorkingCalendar cal, DateTime statusDate)
+        {
+            if (task.Baselines[0] is not { } b)
+                return new EarnedValue(0, 0, task.ActualCost, 0);
+
+            decimal plannedFraction;
+            if (statusDate >= b.Finish)
+                plannedFraction = 1;
+            else if (statusDate <= b.Start)
+                plannedFraction = 0;
+            else
+            {
+                long total = cal.WorkingMinutesBetween(b.Start, b.Finish);
+                plannedFraction = total > 0 ? (decimal)cal.WorkingMinutesBetween(b.Start, statusDate) / total : 0;
+            }
+
+            return new EarnedValue(
+                Bcws: b.Cost * plannedFraction,
+                Bcwp: b.Cost * (decimal)task.PercentComplete / 100m,
+                Acwp: task.ActualCost,
+                Bac: b.Cost);
+        }
+
         // ---------------------------------------------------------------- forward pass
 
         private void ForwardLeaf(ProjectTask task)
@@ -312,6 +475,9 @@ public static class ProjectScheduler
                 if (_options.RescheduleUncompletedWorkToStatusDate && _project.StatusDate is { } statusDate && task.PercentComplete == 0)
                     start = Max(start, statusDate);
 
+                if (task.LevelingDelayMinutes > 0)
+                    start = Elapsed.AddWorkingMinutes(start, task.LevelingDelayMinutes);
+
                 if (task.ConstraintDate is { } date)
                 {
                     switch (task.ConstraintType)
@@ -339,6 +505,20 @@ public static class ProjectScheduler
                 if (span > 0)
                     start = cal.NextWorkingMoment(start);
                 finish = cal.AddWorkingMinutes(start, span);
+
+                if (IsResourceDriven(task))
+                {
+                    // Work drives the dates: each resource works its hours on its own calendar.
+                    var taskStart = start;
+                    (start, finish) = (DateTime.MaxValue, DateTime.MinValue);
+                    foreach (var a in task.Assignments.Where(IsDriving))
+                    {
+                        var (aStart, aFinish) = AssignmentDates(a, taskStart);
+                        start = Min(start, aStart);
+                        finish = Max(finish, aFinish);
+                    }
+                    task.DurationMinutes = Math.Max(0, cal.WorkingMinutesBetween(start, finish));
+                }
             }
 
             task.EarlyStart = task.Start = start;

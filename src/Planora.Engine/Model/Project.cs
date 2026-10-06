@@ -9,7 +9,9 @@ namespace Planora.Engine.Model;
 public sealed class Project
 {
     private readonly List<ProjectTask> _tasks = new();
+    private readonly List<Resource> _resources = new();
     private int _nextId = 1;
+    private int _nextResourceId = 1;
 
     public Project(string name, DateTime startDate)
     {
@@ -47,6 +49,27 @@ public sealed class Project
 
     /// <summary>Latest finish of any task; set by the scheduler.</summary>
     public DateTime Finish { get; internal set; }
+
+    public IReadOnlyList<Resource> Resources => _resources;
+
+    /// <summary>Every assignment in the project, in task order.</summary>
+    public IEnumerable<Assignment> Assignments => _tasks.SelectMany(t => t.Assignments);
+
+    /// <summary>Budget cost per cost-type budget resource (Microsoft Project's "Budget Cost" on the project summary).</summary>
+    public Dictionary<Resource, decimal> BudgetCosts { get; } = new();
+
+    /// <summary>Budget work or quantity per work/material budget resource ("Budget Work").</summary>
+    public Dictionary<Resource, double> BudgetWork { get; } = new();
+
+    /// <summary>Project-level baselines (index 0 = Baseline, 1-10 = Baseline1-10).</summary>
+    public BaselineValues?[] Baselines { get; } = new BaselineValues?[Baseline.Count];
+
+    // ---- Totals computed by the scheduler ----
+
+    public long WorkMinutes { get; internal set; }
+    public decimal Cost { get; internal set; }
+    public decimal ActualCost { get; internal set; }
+    public EarnedValue EarnedValue { get; internal set; } = EarnedValue.Empty;
 
     public ProjectTask? GetTask(int id) => _tasks.FirstOrDefault(t => t.Id == id);
 
@@ -190,6 +213,248 @@ public sealed class Project
 
     public bool Unlink(ProjectTask predecessor, ProjectTask successor) =>
         successor.Predecessors.RemoveAll(l => l.PredecessorId == predecessor.Id) > 0;
+
+    // ------------------------------------------------------------------ resources
+
+    /// <summary>Adds a resource. Work resources get their own calendar based on the project calendar.</summary>
+    public Resource AddResource(string name, ResourceType type = ResourceType.Work)
+    {
+        var calendar = type == ResourceType.Work ? new WorkingCalendar(name, Calendar) : null;
+        var resource = new Resource(_nextResourceId++, name, type, calendar);
+        _resources.Add(resource);
+        return resource;
+    }
+
+    public Resource? GetResource(int id) => _resources.FirstOrDefault(r => r.Id == id);
+
+    /// <summary>Removes a resource and all of its assignments.</summary>
+    public void RemoveResource(Resource resource)
+    {
+        foreach (var task in _tasks)
+            task.AssignmentList.RemoveAll(a => a.Resource == resource);
+        BudgetCosts.Remove(resource);
+        BudgetWork.Remove(resource);
+        _resources.Remove(resource);
+    }
+
+    public IEnumerable<Assignment> AssignmentsOf(Resource resource) =>
+        Assignments.Where(a => a.Resource == resource);
+
+    /// <summary>
+    /// Assigns a resource to a task. For work resources, <paramref name="units"/> is the share of the
+    /// resource's time (1.0 = 100%); for material resources it is the quantity used. On effort-driven
+    /// tasks the existing total work is shared among all resources, shortening the task (or, for Fixed
+    /// Duration tasks, lowering everyone's units).
+    /// </summary>
+    public Assignment Assign(ProjectTask task, Resource resource, double units = 1.0)
+    {
+        RequireIndex(task);
+        if (!_resources.Contains(resource))
+            throw new ArgumentException($"Resource '{resource.Name}' is not in this project.");
+        if (task.IsSummary)
+            throw new InvalidOperationException("Resources are assigned to subtasks, not summary tasks.");
+        if (resource.IsBudget)
+            throw new InvalidOperationException("Budget resources hold project budgets; set them with BudgetCosts or BudgetWork.");
+        if (task.Assignments.Any(a => a.Resource == resource))
+            throw new InvalidOperationException($"'{resource.Name}' is already assigned to '{task.Name}'.");
+
+        var assignment = new Assignment(task, resource, units);
+        if (resource.Type != ResourceType.Work)
+        {
+            task.AssignmentList.Add(assignment);
+            return assignment;
+        }
+
+        var existing = WorkAssignments(task).ToList();
+        task.AssignmentList.Add(assignment);
+
+        if (existing.Count == 0 || !task.IsEffortDriven)
+            assignment.WorkMinutes = WorkFor(assignment, task.DurationMinutes);
+        else
+            RedistributeWork(task, existing.Sum(a => a.WorkMinutes));
+        return assignment;
+    }
+
+    /// <summary>Removes an assignment. On effort-driven tasks the remaining resources take over its work.</summary>
+    public void Unassign(ProjectTask task, Resource resource)
+    {
+        var assignment = task.Assignments.FirstOrDefault(a => a.Resource == resource)
+            ?? throw new InvalidOperationException($"'{resource.Name}' is not assigned to '{task.Name}'.");
+        long totalWork = WorkAssignments(task).Sum(a => a.WorkMinutes);
+        task.AssignmentList.Remove(assignment);
+        if (assignment.IsWork && task.IsEffortDriven && WorkAssignments(task).Any())
+            RedistributeWork(task, totalWork);
+    }
+
+    /// <summary>Changes a task's duration; work or units follow according to the task type.</summary>
+    public void SetDuration(ProjectTask task, long durationMinutes)
+    {
+        if (task.IsSummary)
+            throw new InvalidOperationException("A summary task's duration comes from its subtasks.");
+        task.DurationMinutes = durationMinutes;
+        foreach (var a in WorkAssignments(task))
+        {
+            if (task.Type == TaskType.FixedWork)
+            {
+                if (durationMinutes > 0)
+                    a.Units = a.WorkMinutes / (durationMinutes * WorkContours.AverageFactor(a.Contour));
+            }
+            else
+            {
+                a.WorkMinutes = WorkFor(a, durationMinutes);
+            }
+        }
+    }
+
+    /// <summary>Changes an assignment's units; duration or work follow according to the task type.</summary>
+    public void SetUnits(Assignment assignment, double units)
+    {
+        assignment.Units = units;
+        if (!assignment.IsWork)
+            return;
+        if (assignment.Task.Type == TaskType.FixedDuration)
+            assignment.WorkMinutes = WorkFor(assignment, assignment.Task.DurationMinutes);
+        else
+            UpdateDurationFromAssignments(assignment.Task);
+    }
+
+    /// <summary>Changes an assignment's work; duration or units follow according to the task type.</summary>
+    public void SetWork(Assignment assignment, long workMinutes)
+    {
+        assignment.WorkMinutes = workMinutes;
+        var task = assignment.Task;
+        if (task.Type == TaskType.FixedDuration && task.DurationMinutes > 0)
+            assignment.Units = workMinutes / (task.DurationMinutes * WorkContours.AverageFactor(assignment.Contour));
+        else
+            UpdateDurationFromAssignments(task);
+    }
+
+    private static IEnumerable<Assignment> WorkAssignments(ProjectTask task) =>
+        task.Assignments.Where(a => a.IsWork);
+
+    private static long WorkFor(Assignment assignment, long durationMinutes) =>
+        (long)Math.Round(assignment.Units * durationMinutes * WorkContours.AverageFactor(assignment.Contour));
+
+    private static void RedistributeWork(ProjectTask task, long totalWork)
+    {
+        var assignments = WorkAssignments(task).ToList();
+        double totalUnits = assignments.Sum(a => a.Units * WorkContours.AverageFactor(a.Contour));
+        if (totalUnits <= 0)
+            return;
+
+        if (task.Type == TaskType.FixedDuration)
+        {
+            // Duration stays; each resource's share of the work sets its units.
+            foreach (var a in assignments)
+            {
+                double share = a.Units * WorkContours.AverageFactor(a.Contour) / totalUnits;
+                a.WorkMinutes = (long)Math.Round(totalWork * share);
+                if (task.DurationMinutes > 0)
+                    a.Units = a.WorkMinutes / (task.DurationMinutes * WorkContours.AverageFactor(a.Contour));
+            }
+        }
+        else
+        {
+            task.DurationMinutes = (long)Math.Round(totalWork / totalUnits);
+            foreach (var a in assignments)
+                a.WorkMinutes = WorkFor(a, task.DurationMinutes);
+        }
+    }
+
+    private static void UpdateDurationFromAssignments(ProjectTask task)
+    {
+        var spans = WorkAssignments(task).Where(a => a.Units > 0).Select(a => a.SpanMinutes + a.DelayMinutes).ToList();
+        if (spans.Count > 0)
+            task.DurationMinutes = spans.Max();
+    }
+
+    // ------------------------------------------------------------------ baselines
+
+    /// <summary>
+    /// Saves the current schedule into a baseline (0 = Baseline, 1-10 = Baseline1-10) for the given tasks,
+    /// or all tasks. With <paramref name="rollUpToSummaries"/>, summary tasks above the selected tasks get
+    /// their baseline recalculated from their subtasks. Schedule the project first.
+    /// </summary>
+    public void SaveBaseline(int index = 0, IEnumerable<ProjectTask>? tasks = null, bool rollUpToSummaries = false)
+    {
+        RequireBaselineIndex(index);
+        var savedOn = DateTime.Now;
+        var selected = tasks?.ToList() ?? _tasks.ToList();
+        foreach (var task in selected)
+        {
+            task.Baselines[index] = new BaselineValues(task.Start, task.Finish, task.DurationMinutes, task.WorkMinutes, task.Cost, savedOn);
+            foreach (var a in task.Assignments)
+                a.Baselines[index] = new BaselineValues(a.Start, a.Finish, 0, a.WorkMinutes, a.Cost, savedOn);
+        }
+
+        if (tasks is null)
+        {
+            Baselines[index] = new BaselineValues(Start, Finish, Calendar.WorkingMinutesBetween(Start, Finish), WorkMinutes, Cost, savedOn);
+        }
+        else if (rollUpToSummaries)
+        {
+            var ancestors = selected.SelectMany(Ancestors).Distinct().OrderByDescending(t => t.OutlineLevel);
+            foreach (var summary in ancestors)
+            {
+                var children = summary.Children.Select(c => c.Baselines[index]).OfType<BaselineValues>().ToList();
+                if (children.Count == 0)
+                    continue;
+                var start = children.Min(c => c.Start);
+                var finish = children.Max(c => c.Finish);
+                summary.Baselines[index] = new BaselineValues(
+                    start, finish, Calendar.WorkingMinutesBetween(start, finish),
+                    children.Sum(c => c.WorkMinutes), children.Sum(c => c.Cost) + summary.FixedCost, savedOn);
+            }
+        }
+    }
+
+    public void ClearBaseline(int index = 0, IEnumerable<ProjectTask>? tasks = null)
+    {
+        RequireBaselineIndex(index);
+        foreach (var task in tasks ?? _tasks)
+        {
+            task.Baselines[index] = null;
+            foreach (var a in task.Assignments)
+                a.Baselines[index] = null;
+        }
+        if (tasks is null)
+            Baselines[index] = null;
+    }
+
+    /// <summary>
+    /// Saves current start/finish dates (or those of a baseline) into an interim plan (0-9 = Start1/Finish1 to Start10/Finish10).
+    /// </summary>
+    public void SaveInterimPlan(int index, IEnumerable<ProjectTask>? tasks = null, int? fromBaseline = null)
+    {
+        if (index < 0 || index >= Baseline.InterimPlanCount)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        foreach (var task in tasks ?? _tasks)
+        {
+            if (fromBaseline is { } b)
+            {
+                var values = task.Baselines[b];
+                task.InterimPlans[index] = values is null ? null : new InterimPlan(values.Start, values.Finish);
+            }
+            else
+            {
+                task.InterimPlans[index] = new InterimPlan(task.Start, task.Finish);
+            }
+        }
+    }
+
+    private static IEnumerable<ProjectTask> Ancestors(ProjectTask task)
+    {
+        for (var p = task.Parent; p is not null; p = p.Parent)
+            yield return p;
+    }
+
+    private static void RequireBaselineIndex(int index)
+    {
+        if (index < 0 || index >= Baseline.Count)
+            throw new ArgumentOutOfRangeException(nameof(index), "Baseline index must be 0-10.");
+    }
+
+    // ------------------------------------------------------------------ hierarchy helpers
 
     /// <summary>The task followed by all of its descendants, in outline order.</summary>
     public IEnumerable<ProjectTask> Subtree(ProjectTask task)

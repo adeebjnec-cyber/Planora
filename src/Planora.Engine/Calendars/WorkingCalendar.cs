@@ -82,9 +82,40 @@ public sealed class WorkingCalendar
 
     public CalendarException AddHoliday(string name, DateOnly date) => AddException(name, date, date);
 
+    /// <summary>
+    /// A calendar that is working only when both calendars are working, used when a task with its own
+    /// calendar is assigned a resource with its own calendar.
+    /// </summary>
+    public static WorkingCalendar Intersect(WorkingCalendar first, WorkingCalendar second) =>
+        first == second ? first : new WorkingCalendar($"{first.Name} + {second.Name}") { _intersection = (first, second) };
+
+    private (WorkingCalendar First, WorkingCalendar Second)? _intersection;
+
     /// <summary>The effective working times on a date, after exceptions and inheritance.</summary>
-    public IReadOnlyList<WorkingTime> GetWorkingTimes(DateOnly date) =>
-        FindException(date)?.WorkingTimes ?? GetWorkWeekDay(date.DayOfWeek);
+    public IReadOnlyList<WorkingTime> GetWorkingTimes(DateOnly date)
+    {
+        if (_intersection is var (first, second))
+            return IntersectTimes(first.GetWorkingTimes(date), second.GetWorkingTimes(date));
+        return FindException(date)?.WorkingTimes ?? GetWorkWeekDay(date.DayOfWeek);
+    }
+
+    private static IReadOnlyList<WorkingTime> IntersectTimes(IReadOnlyList<WorkingTime> a, IReadOnlyList<WorkingTime> b)
+    {
+        var result = new List<WorkingTime>();
+        int i = 0, j = 0;
+        while (i < a.Count && j < b.Count)
+        {
+            var from = a[i].From > b[j].From ? a[i].From : b[j].From;
+            var to = a[i].To < b[j].To ? a[i].To : b[j].To;
+            if (from < to)
+                result.Add(new WorkingTime(from, to));
+            if (a[i].To < b[j].To)
+                i++;
+            else
+                j++;
+        }
+        return result;
+    }
 
     public bool IsWorkingDay(DateOnly date) => GetWorkingTimes(date).Count > 0;
 

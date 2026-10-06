@@ -20,6 +20,14 @@ public enum ConstraintType
     FinishNoLaterThan,
 }
 
+/// <summary>Which of duration, units and work stays fixed when one of the others is edited.</summary>
+public enum TaskType
+{
+    FixedUnits,
+    FixedDuration,
+    FixedWork,
+}
+
 public enum TaskMode
 {
     AutoScheduled,

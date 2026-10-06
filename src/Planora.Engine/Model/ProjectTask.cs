@@ -101,6 +101,48 @@ public sealed class ProjectTask
 
     public List<TaskLink> Predecessors { get; } = new();
 
+    // ---- Resources and cost ----
+
+    public TaskType Type { get; set; } = TaskType.FixedUnits;
+
+    /// <summary>Adding or removing resources keeps total work constant. Fixed Work tasks are always effort-driven.</summary>
+    public bool IsEffortDriven
+    {
+        get => _effortDriven || Type == TaskType.FixedWork;
+        set => _effortDriven = value;
+    }
+
+    private bool _effortDriven;
+
+    /// <summary>Use only the resource calendars, ignoring this task's own calendar, for its assignments.</summary>
+    public bool IgnoreResourceCalendar { get; set; }
+
+    /// <summary>Assignments to this task; edit them through <see cref="Project.Assign"/> and related methods.</summary>
+    public IReadOnlyList<Assignment> Assignments => _assignments;
+    internal List<Assignment> AssignmentList => _assignments;
+    private readonly List<Assignment> _assignments = new();
+
+    public decimal FixedCost { get; set; }
+    public CostAccrual FixedCostAccrual { get; set; } = CostAccrual.Prorated;
+
+    /// <summary>Leveling priority 0-1000; 1000 means never delay this task.</summary>
+    public int Priority
+    {
+        get => _priority;
+        set => _priority = value is >= 0 and <= 1000 ? value : throw new ArgumentOutOfRangeException(nameof(value), "Priority must be 0-1000.");
+    }
+
+    private int _priority = 500;
+
+    /// <summary>Delay added by resource leveling, in elapsed minutes.</summary>
+    public long LevelingDelayMinutes { get; set; }
+
+    /// <summary>Saved baselines (index 0 = Baseline, 1-10 = Baseline1-10).</summary>
+    public BaselineValues?[] Baselines { get; } = new BaselineValues?[Baseline.Count];
+
+    /// <summary>Interim plans Start1/Finish1 to Start10/Finish10.</summary>
+    public InterimPlan?[] InterimPlans { get; } = new InterimPlan?[Baseline.InterimPlanCount];
+
     // ---- Hierarchy (maintained by Project.RebuildHierarchy) ----
 
     public ProjectTask? Parent { get; internal set; }
@@ -127,6 +169,24 @@ public sealed class ProjectTask
 
     /// <summary>The moment up to which the task's work is complete (used for progress bars and progress lines).</summary>
     public DateTime CompleteThrough { get; internal set; }
+
+    public long WorkMinutes { get; internal set; }
+    public long ActualWorkMinutes { get; internal set; }
+    public long RemainingWorkMinutes => WorkMinutes - ActualWorkMinutes;
+    public decimal Cost { get; internal set; }
+    public decimal ActualCost { get; internal set; }
+    public decimal RemainingCost => Cost - ActualCost;
+
+    // ---- Variance against the primary baseline (zero when no baseline is saved) ----
+
+    public long StartVarianceMinutes { get; internal set; }
+    public long FinishVarianceMinutes { get; internal set; }
+    public long DurationVarianceMinutes { get; internal set; }
+    public long WorkVarianceMinutes { get; internal set; }
+    public decimal CostVariance { get; internal set; }
+
+    /// <summary>Earned-value figures at the status date (or today if none), against the primary baseline.</summary>
+    public EarnedValue EarnedValue { get; internal set; } = EarnedValue.Empty;
 
     public override string ToString() => $"{Id}: {Name}";
 }
