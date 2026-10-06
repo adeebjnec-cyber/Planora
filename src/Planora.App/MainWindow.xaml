@@ -26,6 +26,7 @@
         <KeyBinding Key="H" Modifiers="Ctrl" Command="{Binding ReplaceCommand}" />
         <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding FillDownCommand}" />
         <KeyBinding Key="F7" Command="{Binding SpellingCommand}" />
+        <KeyBinding Key="F8" Modifiers="Alt" Command="{Binding MacrosCommand}" />
         <KeyBinding Key="Down" Modifiers="Alt+Shift" Command="{Binding MoveTaskDownCommand}" />
         <KeyBinding Key="F2" Modifiers="Control" Command="{Binding LinkCommand}" />
         <KeyBinding Key="F2" Modifiers="Control+Shift" Command="{Binding UnlinkCommand}" />
@@ -274,6 +275,9 @@
                         <CheckBox Content="Timeline" IsChecked="{Binding ShowTimelinePane}" Margin="0,2" ToolTip="Show the Timeline above the view" />
                         <CheckBox Content="Details (Task Form)" IsChecked="{Binding ShowTaskForm}" Margin="0,2" ToolTip="Show the selected task's details under the view" />
                     </StackPanel>
+                </RibbonGroup>
+                <RibbonGroup Header="Macros">
+                    <RibbonButton Label="Macros" LargeImageSource="{infra:Glyph &#xE943;}" Command="{Binding MacrosCommand}" ToolTipTitle="Write and run macros (Alt+F8)" />
                 </RibbonGroup>
                 <RibbonGroup Header="Views">
                     <RibbonButton Label="Save View" LargeImageSource="{infra:Glyph &#xE78C;}" Command="{Binding SaveViewCommand}" />

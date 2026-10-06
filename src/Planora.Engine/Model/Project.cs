@@ -60,6 +60,9 @@ public sealed class Project
 
     /// <summary>Reports designed by the user (Report > New Report).</summary>
     public List<Reports.CustomReport> CustomReports { get; } = new();
+
+    /// <summary>Macro modules (Developer > Macros), saved with the project.</summary>
+    public List<Macros.MacroModule> Macros { get; } = new();
     public ScheduleOptions Options { get; } = new();
 
     /// <summary>Tasks in display (outline) order.</summary>

@@ -26,6 +26,15 @@ public sealed class FormulaException : Exception
 /// ProjDurValue, ProjDurConv with pjMinutes/pjHours/pjDays/pjWeeks/pjMonths).
 /// </para>
 /// </summary>
+/// <summary>Variables visible to an expression (used by macros); formula fields have none.</summary>
+public interface IVariableScope
+{
+    bool TryGet(string name, out object? value);
+
+    /// <summary>Reads a member of a value, e.g. a task's or resource's field ("t.Name", "r.[Max Units]").</summary>
+    object? Member(object? target, string member);
+}
+
 public sealed class Formula
 {
     private const int MaxDepth = 20;
@@ -46,31 +55,41 @@ public sealed class Formula
     internal static bool IsNested => _depth > 0;
 
     /// <summary>Parses (and caches) a formula. Throws <see cref="FormulaException"/> on syntax errors.</summary>
-    public static Formula Parse(string text)
+    public static Formula Parse(string text) => Parse(text, allowVariables: false);
+
+    /// <summary>
+    /// Parses an expression; with <paramref name="allowVariables"/> (macros), names that are not functions are
+    /// variables and "name.member" reads a member of a variable's value.
+    /// </summary>
+    public static Formula Parse(string text, bool allowVariables)
     {
+        var key = allowVariables ? "\u0001" + text : text;
         lock (Cache)
         {
-            if (Cache.TryGetValue(text, out var cached))
+            if (Cache.TryGetValue(key, out var cached))
                 return cached;
         }
-        var parser = new Parser(text);
+        var parser = new Parser(text, allowVariables);
         var root = parser.ParseExpression();
         parser.ExpectEnd();
         var formula = new Formula(text, root);
         lock (Cache)
-            Cache[text] = formula;
+            Cache[key] = formula;
         return formula;
     }
 
     /// <summary>Evaluates for a task. Returns null for missing values; throws <see cref="FormulaException"/> on errors.</summary>
-    public object? Evaluate(Project project, ProjectTask task)
+    public object? Evaluate(Project project, ProjectTask task) => Evaluate(project, task, null);
+
+    /// <summary>Evaluates with an optional current task and variables (macros).</summary>
+    public object? Evaluate(Project project, ProjectTask? task, IVariableScope? scope)
     {
         if (_depth > MaxDepth)
             throw new FormulaException("Formula fields refer to each other in a loop.");
         _depth++;
         try
         {
-            return _root(new Context(project, task));
+            return _root(new Context(project, task, scope));
         }
         finally
         {
@@ -101,7 +120,7 @@ public sealed class Formula
         }
     }
 
-    private sealed record Context(Project Project, ProjectTask Task);
+    private sealed record Context(Project Project, ProjectTask? Task, IVariableScope? Scope = null);
 
     // ------------------------------------------------------------------ value helpers
 
@@ -248,9 +267,14 @@ public sealed class Formula
     private sealed class Parser
     {
         private readonly string _text;
+        private readonly bool _allowVariables;
         private int _pos;
 
-        public Parser(string text) => _text = text;
+        public Parser(string text, bool allowVariables = false)
+        {
+            _text = text;
+            _allowVariables = allowVariables;
+        }
 
         public void ExpectEnd()
         {
@@ -489,7 +513,51 @@ public sealed class Formula
                     return _ => true;
                 if (word.Equals("False", StringComparison.OrdinalIgnoreCase))
                     return _ => false;
+                if (_allowVariables && word.Equals("Nothing", StringComparison.OrdinalIgnoreCase))
+                    return _ => null;
+                if (_allowVariables && _pos < _text.Length && _text[_pos] == '.')
+                {
+                    // name.member or name.[Field Name], possibly chained (t.Parent.Name).
+                    Func<Context, object?> target = c => Variable(c, word);
+                    while (_pos < _text.Length && _text[_pos] == '.')
+                    {
+                        _pos++;
+                        string member;
+                        if (_pos < _text.Length && _text[_pos] == '[')
+                        {
+                            int end = _text.IndexOf(']', _pos);
+                            if (end < 0)
+                                throw Error("A field name is missing its closing ']'.");
+                            member = _text[(_pos + 1)..end].Trim();
+                            _pos = end + 1;
+                        }
+                        else
+                        {
+                            int m = _pos;
+                            while (_pos < _text.Length && (char.IsLetterOrDigit(_text[_pos]) || _text[_pos] == '_'))
+                                _pos++;
+                            member = _text[m.._pos];
+                            if (member.Length == 0)
+                                throw Error("A name is expected after '.'.");
+                        }
+                        var inner = target;
+                        target = c => c.Scope is { } scope ? scope.Member(inner(c), member) : throw new FormulaException($"'.{member}' needs a value.");
+                    }
+                    return target;
+                }
                 var args = new List<Func<Context, object?>>();
+                if (_allowVariables && !(SkipSpaceThen('(')))
+                {
+                    // Without parentheses: a constant function (pjDays) if one exists, otherwise a variable.
+                    try
+                    {
+                        return Function(word, args);
+                    }
+                    catch (FormulaException)
+                    {
+                        return c => Variable(c, word);
+                    }
+                }
                 if (Symbol("("))
                 {
                     if (!Symbol(")"))
@@ -505,12 +573,29 @@ public sealed class Formula
             throw Error($"Unexpected '{ch}'.");
         }
 
+        private bool SkipSpaceThen(char ch)
+        {
+            int p = _pos;
+            while (p < _text.Length && char.IsWhiteSpace(_text[p]))
+                p++;
+            return p < _text.Length && _text[p] == ch;
+        }
+
+        private static object? Variable(Context c, string name)
+        {
+            if (c.Scope is { } scope && scope.TryGet(name, out var value))
+                return value;
+            throw new FormulaException($"'{name}' is not defined.");
+        }
+
         private static object? FieldValue(Context c, string name)
         {
+            if (c.Task is null)
+                throw new FormulaException($"[{name}] needs a current task (use it inside For Each t In Tasks, or write t.[{name}]).");
             var field = TaskFields.All(c.Project).FirstOrDefault(f =>
                 f.Name.Equals(name, StringComparison.OrdinalIgnoreCase) || f.Key.Equals(name, StringComparison.OrdinalIgnoreCase))
                 ?? throw new FormulaException($"There is no field named [{name}].");
-            return field.Get(c.Project, c.Task) switch
+            return field.Get(c.Project, c.Task!) switch
             {
                 decimal m => (double)m,
                 long l => (double)l,

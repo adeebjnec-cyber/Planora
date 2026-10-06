@@ -216,6 +216,7 @@ public static class ProjectFile
             }).ToList(),
             GanttFormat = project.GanttFormat,
             CustomReports = project.CustomReports.Count == 0 ? null : project.CustomReports,
+            Macros = project.Macros.Count == 0 ? null : project.Macros,
             BudgetCosts = project.BudgetCosts.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
             BudgetWork = project.BudgetWork.ToDictionary(kv => kv.Key.Id, kv => kv.Value),
             Baselines = Sparse(project.Baselines),
@@ -471,6 +472,8 @@ public static class ProjectFile
             project.PoolSharers.AddRange(dto.PoolSharers);
         if (dto.CustomReports is { } reports)
             project.CustomReports.AddRange(reports);
+        if (dto.Macros is { } macros)
+            project.Macros.AddRange(macros);
         foreach (var v in dto.SavedViews ?? new())
         {
             project.SavedViews.Add(new SavedView
@@ -534,6 +537,7 @@ public static class ProjectFile
         public List<SavedViewDto>? SavedViews { get; set; }
         public GanttFormat? GanttFormat { get; set; }
         public List<Reports.CustomReport>? CustomReports { get; set; }
+        public List<Macros.MacroModule>? Macros { get; set; }
     }
 
     private sealed class CustomFieldDto

@@ -41,6 +41,7 @@ internal static class DialogFactory
             "timescale" => new TimescaleDialog(vm),
             "gridlines" => new GridlinesDialog(vm),
             "reportdesigner" => new ReportDesignerDialog(vm, null),
+            "macros" => new MacrosDialog(vm),
             "importmap" => new ImportMapDialog(new List<string[]>
             {
                 new[] { "Activity", "Days", "Assigned To", "Department", "Depends On", "Region" },
