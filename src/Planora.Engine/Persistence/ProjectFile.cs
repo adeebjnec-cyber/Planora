@@ -199,7 +199,11 @@ public static class ProjectFile
                     Baselines = Sparse(a.Baselines),
                 }).ToList(),
             }).ToList(),
-            CustomFields = project.CustomFields.Select(cf => new CustomFieldDto { Key = cf.Key, Alias = cf.Alias, ValueList = cf.ValueList.ToList(), Formula = cf.Formula }).ToList(),
+            CustomFields = project.CustomFields.Select(cf => new CustomFieldDto
+            {
+                Key = cf.Key, Alias = cf.Alias, ValueList = cf.ValueList.ToList(), Formula = cf.Formula,
+                Indicators = cf.Indicators.Count == 0 ? null : cf.Indicators.Select(i => i.ToString()).ToList(),
+            }).ToList(),
             Tables = project.Tables.Select(t => new TableDto { Name = t.Name, Columns = t.Columns.ToList() }).ToList(),
             Filters = project.Filters.Select(fl => new FilterDto { Name = fl.Name, Conditions = fl.Conditions.ToList(), ShowRelatedSummaryRows = fl.ShowRelatedSummaryRows }).ToList(),
             Groups = project.Groups.Select(g => new GroupDto { Name = g.Name, Levels = g.Levels.ToList(), ShowSummaryTasks = g.ShowSummaryTasks }).ToList(),
@@ -444,7 +448,12 @@ public static class ProjectFile
         Fill(project.Baselines, dto.Baselines);
 
         foreach (var cf in dto.CustomFields ?? new())
-            project.CustomFields.Add(new CustomField(cf.Key, cf.Alias) { ValueList = cf.ValueList, Formula = cf.Formula });
+            project.CustomFields.Add(new CustomField(cf.Key, cf.Alias)
+            {
+                ValueList = cf.ValueList,
+                Formula = cf.Formula,
+                Indicators = (cf.Indicators ?? new()).Select(IndicatorRule.Parse).ToList(),
+            });
         foreach (var t in dto.Tables ?? new())
             project.Tables.Add(new TableDefinition(t.Name, t.Columns.ToArray()));
         foreach (var fl in dto.Filters ?? new())
@@ -522,6 +531,7 @@ public static class ProjectFile
         public string Alias { get; set; } = "";
         public List<string> ValueList { get; set; } = new();
         public string? Formula { get; set; }
+        public List<string>? Indicators { get; set; }
     }
 
     private sealed class TableDto

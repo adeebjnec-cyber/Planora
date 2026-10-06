@@ -31,6 +31,7 @@ public partial class GanttView : UserControl
     {
         InitializeComponent();
         DataContextChanged += (_, _) => Attach(DataContext as MainViewModel);
+        TaskSheet.PreviewMouseRightButtonUp += OnHeaderRightClick;
         Loaded += OnLoaded;
 
         Gantt.ExtentChanged += (_, _) => UpdateGanttScrollBar();
@@ -244,6 +245,8 @@ public partial class GanttView : UserControl
 
         var project = _viewModel.Project;
         var editorStyle = (Style)FindResource("CellEditor");
+        _columnKeys.Clear();
+        _columnKeys[NameColumn] = "Name";
         foreach (var column in _viewModel.CurrentTable.Columns)
         {
             var field = Engine.Fields.TaskFields.Find(project, column.FieldKey);
@@ -260,15 +263,68 @@ public partial class GanttView : UserControl
 
             bool editable = EditableProperties.TryGetValue(field.Key, out var property) || field.IsCustom && !field.IsCalculated;
             var binding = new System.Windows.Data.Binding(property ?? $"[{field.Key}]");
-            TaskSheet.Columns.Add(new DataGridTextColumn
+            var gridColumn = new DataGridTextColumn
             {
                 Header = header,
                 Binding = binding,
                 Width = column.Width,
                 IsReadOnly = !editable,
                 EditingElementStyle = editorStyle,
-            });
+            };
+            _columnKeys[gridColumn] = field.Key;
+            TaskSheet.Columns.Add(gridColumn);
         }
+    }
+
+    private readonly Dictionary<DataGridColumn, string> _columnKeys = new();
+
+    /// <summary>
+    /// AutoFilter: right-click a column header to show only tasks with chosen values in that column
+    /// (summary tasks above them stay visible).
+    /// </summary>
+    private void OnHeaderRightClick(object sender, MouseButtonEventArgs e)
+    {
+        if (_viewModel is not { } vm)
+            return;
+        DependencyObject? node = e.OriginalSource as DependencyObject;
+        while (node is not null && node is not System.Windows.Controls.Primitives.DataGridColumnHeader)
+            node = System.Windows.Media.VisualTreeHelper.GetParent(node);
+        if (node is not System.Windows.Controls.Primitives.DataGridColumnHeader { Column: { } column } || !_columnKeys.TryGetValue(column, out var key))
+            return;
+        e.Handled = true;
+
+        var project = vm.Project;
+        var values = project.Tasks.Where(t => !t.IsSummary).Select(t => vm.AutoFilterText(t, key)).Distinct()
+            .OrderBy(v => v, StringComparer.CurrentCultureIgnoreCase).ToList();
+        var chosen = vm.AutoFilterValues(key);
+        var menu = new ContextMenu();
+        var all = new MenuItem { Header = "(All)", IsCheckable = true, IsChecked = chosen is null };
+        all.Click += (_, _) => vm.SetAutoFilter(key, null);
+        menu.Items.Add(all);
+        menu.Items.Add(new Separator());
+        foreach (var value in values.Take(50))
+        {
+            var item = new MenuItem { Header = value.Length == 0 ? "(Blank)" : value, IsCheckable = true, IsChecked = chosen?.Contains(value) == true, StaysOpenOnClick = false };
+            item.Click += (_, _) =>
+            {
+                var set = vm.AutoFilterValues(key)?.ToHashSet() ?? new HashSet<string>();
+                if (!set.Add(value))
+                    set.Remove(value);
+                vm.SetAutoFilter(key, set.Count == 0 ? null : set);
+            };
+            menu.Items.Add(item);
+        }
+        if (values.Count > 50)
+            menu.Items.Add(new MenuItem { Header = $"({values.Count - 50} more values; use Filter for these)", IsEnabled = false });
+        if (vm.HasAutoFilter)
+        {
+            menu.Items.Add(new Separator());
+            var clear = new MenuItem { Header = "Clear All AutoFilters" };
+            clear.Click += (_, _) => vm.ClearAutoFilters();
+            menu.Items.Add(clear);
+        }
+        menu.PlacementTarget = (UIElement)node;
+        menu.IsOpen = true;
     }
 
     private void OnEditorLoaded(object sender, RoutedEventArgs e)

@@ -23,7 +23,13 @@ public static class MspdiFile
     public const string Extension = ".xml";
     private static readonly XNamespace Ns = "http://schemas.microsoft.com/project";
 
-    public static void Save(Project project, string path) => Write(project).Save(path);
+    /// <summary>Saves as UTF-8 without a byte-order mark, as Microsoft Project writes it (some readers reject the mark).</summary>
+    public static void Save(Project project, string path)
+    {
+        var settings = new XmlWriterSettings { Encoding = new System.Text.UTF8Encoding(false), Indent = true };
+        using var writer = XmlWriter.Create(path, settings);
+        Write(project).Save(writer);
+    }
 
     public static Project Load(string path)
     {
@@ -81,6 +87,7 @@ public static class MspdiFile
             E("EarnedValueMethod", (int)o.DefaultEarnedValueMethod),
             project.StatusDate is { } status ? E("StatusDate", status) : null,
             E("DurationFormat", 7),
+            MspdiExtendedAttributes.WriteDefinitions(Ns, project),
             new XElement(Ns + "Calendars", calendars.Select(c => WriteCalendar(c, calendarUid, project))),
             new XElement(Ns + "Tasks", project.Tasks.Select(t => WriteTask(project, t, calendarUid))),
             new XElement(Ns + "Resources", project.Resources.Select(r => WriteResource(r, calendarUid))),
@@ -241,6 +248,7 @@ public static class MspdiFile
                 E("LagFormat", percent ? 19 : DurationFormat(link.LagFormat == LagFormat.ElapsedTime, false))));
         }
 
+        task.Add(MspdiExtendedAttributes.WriteValues(Ns, t));
         for (int i = 0; i < Model.Baseline.Count; i++)
         {
             if (t.Baselines[i] is not { } b)
@@ -397,6 +405,7 @@ public static class MspdiFile
         o.HonorConstraints = Text(root, "HonorConstraints") != "0";
         o.AutolinkInsertedTasks = Text(root, "Autolink") != "0";
         o.DefaultEarnedValueMethod = Int(root, "EarnedValueMethod") == 1 ? EarnedValueMethod.PhysicalPercentComplete : EarnedValueMethod.PercentComplete;
+        MspdiExtendedAttributes.ReadDefinitions(root, project);
 
         // Calendars: base calendars first, so derived (resource) calendars can refer to them.
         var calendarElements = Children(root, "Calendars", "Calendar").ToList();
@@ -529,6 +538,7 @@ public static class MspdiFile
                 task.ManualFinish = Date(t, "ManualFinish") ?? Date(t, "Finish");
             }
 
+            MspdiExtendedAttributes.ReadValues(t, task);
             foreach (var b in t.Elements().Where(e => e.Name.LocalName == "Baseline"))
             {
                 int number = Int(b, "Number") ?? 0;

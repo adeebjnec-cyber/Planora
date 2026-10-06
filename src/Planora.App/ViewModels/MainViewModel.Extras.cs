@@ -66,7 +66,7 @@ public sealed partial class MainViewModel
     {
         if (!_highlightFilter)
             return false;
-        var filter = ViewCatalog.Filter(Project, CurrentFilterName);
+        var filter = ActiveFilter();
         return !filter.IsAllTasks && filter.Matches(Project, task);
     }
 

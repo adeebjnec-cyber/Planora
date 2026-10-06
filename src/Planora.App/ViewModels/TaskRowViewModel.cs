@@ -83,6 +83,9 @@ public sealed class TaskRowViewModel : ObservableObject
             }
             if (Task is null || Engine.Fields.TaskFields.Find(Project, key) is not { } field)
                 return "";
+            if (field.IsCustom && Project.CustomFields.FirstOrDefault(c => c.Key == key) is { Indicators.Count: > 0 } custom
+                && custom.IndicatorFor(Project, Task) is { } symbol)
+                return symbol;
             return field.Get(Project, Task) is DateTime date ? DateText.Format(date) : field.Format(Project, Task);
         }
         set

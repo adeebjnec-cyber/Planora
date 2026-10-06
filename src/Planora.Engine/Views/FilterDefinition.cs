@@ -36,6 +36,24 @@ public sealed class FilterDefinition
 
     public bool IsAllTasks => Conditions.Count == 0;
 
+    /// <summary>
+    /// An interactive filter asks for values when applied: a condition value starting with "?" is a
+    /// prompt, e.g. "?Show tasks using resource:". Unanswered prompts never match.
+    /// </summary>
+    public bool IsInteractive => Conditions.Any(c => IsPrompt(c.Value));
+
+    public static bool IsPrompt(string value) => value.StartsWith('?');
+
+    /// <summary>The distinct prompts, in order.</summary>
+    public IReadOnlyList<string> Prompts => Conditions.Where(c => IsPrompt(c.Value)).Select(c => c.Value[1..].Trim()).Distinct().ToList();
+
+    /// <summary>A copy of this filter with each prompt replaced by its answer.</summary>
+    public FilterDefinition WithAnswers(IReadOnlyDictionary<string, string> answers) =>
+        new(Name, Conditions.Select(c => IsPrompt(c.Value) && answers.TryGetValue(c.Value[1..].Trim(), out var answer) ? c with { Value = answer } : c).ToArray())
+        {
+            ShowRelatedSummaryRows = ShowRelatedSummaryRows,
+        };
+
     public static readonly IReadOnlyList<FilterDefinition> Builtin = new[]
     {
         new FilterDefinition("All Tasks"),
@@ -57,6 +75,16 @@ public sealed class FilterDefinition
         new FilterDefinition("Tasks With Fixed Dates", new FilterCondition("ConstraintType", FilterOperator.NotEquals, "As Soon As Possible")),
         new FilterDefinition("Cost Overbudget", new FilterCondition("CostVariance", FilterOperator.GreaterThan, "0")),
         new FilterDefinition("Work Overbudget", new FilterCondition("WorkVariance", FilterOperator.GreaterThan, "0h")),
+        new FilterDefinition("Using Resource...", new FilterCondition("ResourceNames", FilterOperator.Contains, "?Show tasks using resource:")),
+        new FilterDefinition("Date Range...",
+            new FilterCondition("Finish", FilterOperator.GreaterThanOrEqual, "?Show tasks that start or finish after:"),
+            new FilterCondition("Start", FilterOperator.LessThanOrEqual, "?And before:")),
+        new FilterDefinition("Task Range...",
+            new FilterCondition("ID", FilterOperator.GreaterThanOrEqual, "?Show tasks with IDs from:"),
+            new FilterCondition("ID", FilterOperator.LessThanOrEqual, "?To:")),
+        new FilterDefinition("Should Start By...",
+            new FilterCondition("Start", FilterOperator.LessThanOrEqual, "?Show tasks that should have started by:"),
+            new FilterCondition("ActualStart", FilterOperator.Equals, "NA")),
     };
 
     /// <summary>Tests one task. Every condition's value is parsed for its field's type; unparsable values never match.</summary>
