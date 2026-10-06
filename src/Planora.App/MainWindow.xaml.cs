@@ -71,6 +71,10 @@ public partial class MainWindow : Window
 
     private void OnExit(object sender, RoutedEventArgs e) => Close();
 
+    private void OnShowResourceSheet(object sender, RoutedEventArgs e) => ViewModel.CurrentView = ViewKind.ResourceSheet;
+
+    private void OnShowResourceUsage(object sender, RoutedEventArgs e) => ViewModel.CurrentView = ViewKind.ResourceUsage;
+
     /// <summary>Renders the window's content to a PNG (used for documentation and UI checks).</summary>
     public void SaveScreenshot(string path)
     {
