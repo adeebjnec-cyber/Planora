@@ -23,8 +23,8 @@ public enum ViewKind
     RelationshipDiagram,
 }
 
-/// <summary>An entry in the view bar.</summary>
-public sealed record ViewOption(ViewKind Kind, string Title, string Glyph);
+/// <summary>An entry in the sidebar: the view, its name, its line icon and the sidebar section it sits in.</summary>
+public sealed record ViewOption(ViewKind Kind, string Title, string Icon, string Section);
 
 /// <summary>Views and the Resource Sheet.</summary>
 public sealed partial class MainViewModel
@@ -33,19 +33,19 @@ public sealed partial class MainViewModel
 
     public IReadOnlyList<ViewOption> Views { get; } = new[]
     {
-        new ViewOption(ViewKind.Gantt, "Gantt Chart", ""),
-        new ViewOption(ViewKind.TrackingGantt, "Tracking Gantt", ""),
-        new ViewOption(ViewKind.NetworkDiagram, "Network Diagram", ""),
-        new ViewOption(ViewKind.Calendar, "Calendar", ""),
-        new ViewOption(ViewKind.TaskBoard, "Task Board", ""),
-        new ViewOption(ViewKind.Timeline, "Timeline", ""),
-        new ViewOption(ViewKind.TaskUsage, "Task Usage", ""),
-        new ViewOption(ViewKind.ResourceSheet, "Resource Sheet", ""),
-        new ViewOption(ViewKind.ResourceUsage, "Resource Usage", ""),
-        new ViewOption(ViewKind.TaskSheet, "Task Sheet", ""),
-        new ViewOption(ViewKind.ResourceGraph, "Resource Graph", ""),
-        new ViewOption(ViewKind.TeamPlanner, "Team Planner", ""),
-        new ViewOption(ViewKind.RelationshipDiagram, "Relationship Diagram", ""),
+        new ViewOption(ViewKind.Gantt, "Gantt Chart", "gantt", "Schedule"),
+        new ViewOption(ViewKind.TrackingGantt, "Tracking Gantt", "tracking", "Schedule"),
+        new ViewOption(ViewKind.NetworkDiagram, "Network Diagram", "network", "Schedule"),
+        new ViewOption(ViewKind.Calendar, "Calendar", "calendar", "Schedule"),
+        new ViewOption(ViewKind.TaskBoard, "Kanban Board", "kanban", "Schedule"),
+        new ViewOption(ViewKind.Timeline, "Timeline", "timeline", "Schedule"),
+        new ViewOption(ViewKind.TaskUsage, "Task Usage", "taskusage", "Schedule"),
+        new ViewOption(ViewKind.TaskSheet, "Task Sheet", "tasksheet", "Schedule"),
+        new ViewOption(ViewKind.RelationshipDiagram, "Relationship Diagram", "relations", "Schedule"),
+        new ViewOption(ViewKind.ResourceSheet, "Resource Sheet", "resources", "Resources"),
+        new ViewOption(ViewKind.ResourceUsage, "Resource Usage", "resusage", "Resources"),
+        new ViewOption(ViewKind.ResourceGraph, "Resource Graph", "resgraph", "Resources"),
+        new ViewOption(ViewKind.TeamPlanner, "Team Planner", "team", "Resources"),
     };
 
     private bool _showTaskForm;

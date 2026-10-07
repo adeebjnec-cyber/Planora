@@ -481,3 +481,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Built installer (rebuild with setup/build-installer.ps1)
+Installer/

@@ -24,7 +24,7 @@ public sealed partial class MainViewModel : ObservableObject
     private ProjectDocument _document;
     private string _status = "Ready";
     private int _zoomIndex = 4;
-    private bool _showCriticalPath = true;
+    private bool _showCriticalPath;
     private bool _showBaseline;
 
     public MainViewModel()
@@ -64,6 +64,7 @@ public sealed partial class MainViewModel : ObservableObject
         InitializeEditingCommands();
         InitializeFormatCommands();
         InitializeMultiProjectCommands();
+        InitializeShellCommands();
 
         _autosaveTimer = new DispatcherTimer();
         _autosaveTimer.Tick += (_, _) => Autosave();
@@ -103,6 +104,8 @@ public sealed partial class MainViewModel : ObservableObject
             _document.Changed += OnDocumentChanged;
             OnPropertyChanged();
             OnPropertyChanged(nameof(WindowTitle));
+            _collapsed.Clear();
+            _lastSaved = null;
             NotifyDefinitionLists();
             TableChanged?.Invoke(this, EventArgs.Empty);
             SyncRows();
@@ -135,6 +138,7 @@ public sealed partial class MainViewModel : ObservableObject
             if (SetProperty(ref _zoomIndex, Math.Clamp(value, 0, ZoomLevels.Length - 1)))
             {
                 OnPropertyChanged(nameof(PixelsPerDay));
+                OnPropertyChanged(nameof(ZoomLabel));
                 Refreshed?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -515,6 +519,7 @@ public sealed partial class MainViewModel : ObservableObject
             Status = $"Saved {Path.GetFileName(path)}";
             AddRecentFile(path);
             OnPropertyChanged(nameof(WindowTitle));
+            MarkSaved();
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -614,14 +619,14 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void UpdateStatus()
     {
+        NotifyShell();
         if (Document.ScheduleError is { } error)
         {
             Status = error;
             return;
         }
         var p = Project;
-        var finish = p.Tasks.Count == 0 ? "" : $"   Finish: {TaskRowViewModel.FormatDate(p.Finish)}";
-        var selected = SelectedTasks.Count > 0 ? $"   Selected: {SelectedTasks.Count}" : "";
-        Status = $"Tasks: {p.Tasks.Count}{finish}   Cost: {p.Cost:C}{selected}";
+        var selected = SelectedTasks.Count > 0 ? $"   ·   {SelectedTasks.Count} selected" : "";
+        Status = $"Cost {p.Cost:C}{selected}";
     }
 }

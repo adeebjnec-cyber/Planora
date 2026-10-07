@@ -10,6 +10,22 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <AssemblyName>Planora</AssemblyName>
+    <RootNamespace>Planora.App</RootNamespace>
+    <ApplicationIcon>Assets\Planora.ico</ApplicationIcon>
+    <Product>Planora</Product>
+    <AssemblyTitle>Planora Project Management</AssemblyTitle>
+    <Description>Planora: project scheduling and control software. Developed by Adeeb.</Description>
+    <Company>Adeeb</Company>
+    <Authors>Adeeb</Authors>
+    <Copyright>© 2026 Adeeb. Developed by Adeeb.</Copyright>
+    <Version>1.0.0</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Fonts\*.ttf" />
+    <Resource Include="Assets\Planora.ico" />
+    <None Include="Assets\Fonts\Inter-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
 </Project>

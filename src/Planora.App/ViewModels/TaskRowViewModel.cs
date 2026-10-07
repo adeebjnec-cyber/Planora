@@ -52,7 +52,39 @@ public sealed class TaskRowViewModel : ObservableObject
 
     // ---- Display-only ----
 
-    public string RowNumber => Task is null ? "" : (Project.IndexOf(Task) + 1).ToString(CultureInfo.CurrentCulture);
+    public string RowNumber => Task is null ? "" : (Project.IndexOf(Task) + 1).ToString("00", CultureInfo.CurrentCulture);
+
+    /// <summary>The Status column: "done", "progress", "late", "todo", or "" for rows without a task.</summary>
+    public string StatusKind
+    {
+        get
+        {
+            if (Task is null)
+                return "";
+            if (Task.PercentComplete >= 100)
+                return "done";
+            var status = Engine.Fields.TaskFields.Find(Project, "Status")?.Format(Project, Task);
+            return status == "Late" ? "late" : Task.PercentComplete > 0 ? "progress" : "todo";
+        }
+    }
+
+    public double ProgressValue => Task?.PercentComplete ?? 0;
+
+    public string StatusToolTip => StatusKind switch
+    {
+        "done" => "Complete",
+        "late" => $"Behind schedule · {ProgressValue:0}% complete",
+        "progress" => $"In progress · {ProgressValue:0}% complete",
+        "todo" => "Not started",
+        _ => "",
+    };
+
+    public bool IsMilestoneRow => Task is { IsSummary: false } t && (t.IsMilestone || t.DurationMinutes == 0);
+
+    /// <summary>True if this summary row's subtasks are hidden.</summary>
+    public bool IsCollapsed => Task is not null && _owner.IsCollapsed(Task);
+
+    public System.Windows.Input.ICommand ToggleCollapseCommand => _owner.ToggleCollapseCommand;
     public int OutlineLevel => Task?.OutlineLevel ?? 1;
 
     public double IndentWidth => Group is not null ? Group.Level * 16
@@ -116,9 +148,18 @@ public sealed class TaskRowViewModel : ObservableObject
         IsInactive ? System.Windows.Media.Brushes.Gray
         : RowTextStyle?.Color is { Length: > 0 } hex && System.Windows.Media.ColorConverter.ConvertFromString(hex) is System.Windows.Media.Color color
             ? new System.Windows.Media.SolidColorBrush(color)
-            : System.Windows.Media.Brushes.Black;
+            : DefaultForeground;
 
-    public double RowFontSize => RowTextStyle?.Size is { } points ? points * 96 / 72 : 12;
+    private static readonly System.Windows.Media.Brush DefaultForeground = Frozen(0x14, 0x1A, 0x26);
+
+    private static System.Windows.Media.Brush Frozen(byte r, byte g, byte b)
+    {
+        var brush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
+    }
+
+    public double RowFontSize => RowTextStyle?.Size is { } points ? points * 96 / 72 : 13;
     public bool IsCritical => Task?.IsCritical ?? false;
     public bool IsHighlighted => Task is not null && _owner.IsHighlighted(Task);
     public bool IsManual => Task?.Mode == TaskMode.ManuallyScheduled;

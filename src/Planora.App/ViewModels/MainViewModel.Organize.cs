@@ -200,7 +200,10 @@ public sealed partial class MainViewModel
         if (group.IsNoGroup)
         {
             foreach (var task in CurrentSort.Apply(p, tasks))
-                yield return (task, null, -1);
+            {
+                if (!HiddenByOutline(task))
+                    yield return (task, null, -1);
+            }
             yield break;
         }
 

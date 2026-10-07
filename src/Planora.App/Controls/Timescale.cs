@@ -79,7 +79,17 @@ public static class Timescale
                 .ToList();
         }
         var (top, bottom) = For(pixelsPerDay);
+        // Day-level zooms read month, then week, then day.
+        if (pixelsPerDay is >= 9 and < 100)
+            return new[] { new TimescaleTier(TimeUnit.Month, 1, d => Fmt(d, "MMMM yyyy")), top, bottom };
         return new[] { top, bottom };
+    }
+
+    /// <summary>"Week 41", with the week's dates when there is room ("Week 41  5 Oct – 11 Oct").</summary>
+    private static string WeekLabel(DateTime start, double pixelsPerDay)
+    {
+        string week = "Week " + ISOWeek.GetWeekOfYear(start).ToString(CultureInfo.CurrentCulture);
+        return pixelsPerDay * 7 >= 190 ? $"{week}   {Fmt(start, "d MMM")} – {Fmt(start.AddDays(6), "d MMM")}" : week;
     }
 
     private static TimeUnit Map(TimescaleUnit unit) => unit switch
@@ -106,9 +116,9 @@ public static class Timescale
         if (pixelsPerDay >= 9)
         {
             Func<DateTime, string> dayLabel = pixelsPerDay >= 40 ? d => Fmt(d, "ddd d")
-                : pixelsPerDay >= 18 ? d => Fmt(d, "%d")
+                : pixelsPerDay >= 16 ? d => Fmt(d, "%d")
                 : d => Fmt(d, "ddd")[..1];
-            return (new TimescaleTier(TimeUnit.Week, 1, d => Fmt(d, "d MMM ''yy")),
+            return (new TimescaleTier(TimeUnit.Week, 1, d => WeekLabel(d, pixelsPerDay)),
                     new TimescaleTier(TimeUnit.Day, 1, dayLabel));
         }
         if (pixelsPerDay >= 3)

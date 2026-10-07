@@ -21,7 +21,7 @@ public partial class GanttView : UserControl
         set
         {
             ChartArea.Visibility = Splitter.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
-            Layout.ColumnDefinitions[1].Width = new GridLength(value ? 5 : 0);
+            Layout.ColumnDefinitions[1].Width = new GridLength(value ? 4 : 0);
             Layout.ColumnDefinitions[2].Width = value ? new GridLength(6, GridUnitType.Star) : new GridLength(0);
             Layout.ColumnDefinitions[2].MinWidth = value ? 200 : 0;
         }
@@ -240,8 +240,8 @@ public partial class GanttView : UserControl
         if (_viewModel is null)
             return;
         TaskSheet.CommitEdit(DataGridEditingUnit.Row, true);
-        while (TaskSheet.Columns.Count > 3)
-            TaskSheet.Columns.RemoveAt(3);
+        while (TaskSheet.Columns.Count > FixedColumns)
+            TaskSheet.Columns.RemoveAt(FixedColumns);
 
         var project = _viewModel.Project;
         var editorStyle = (Style)FindResource("CellEditor");
@@ -256,7 +256,7 @@ public partial class GanttView : UserControl
             if (field.Key == "Name")
             {
                 NameColumn.Header = header;
-                NameColumn.Width = column.Width;
+                NameColumn.Width = Wider(column.Width);
                 TaskSheet.Columns.Add(NameColumn);
                 continue;
             }
@@ -267,7 +267,7 @@ public partial class GanttView : UserControl
             {
                 Header = header,
                 Binding = binding,
-                Width = column.Width,
+                Width = Wider(column.Width),
                 IsReadOnly = !editable,
                 EditingElementStyle = editorStyle,
             };
@@ -277,6 +277,12 @@ public partial class GanttView : UserControl
     }
 
     private readonly Dictionary<DataGridColumn, string> _columnKeys = new();
+
+    /// <summary>Table widths were set for a smaller font; the sheet's type is a little wider.</summary>
+    private static double Wider(double width) => Math.Round(width * 1.15);
+
+    /// <summary>Row number, status, indicators and mode come before the table's own columns.</summary>
+    private const int FixedColumns = 4;
 
     /// <summary>
     /// AutoFilter: right-click a column header to show only tasks with chosen values in that column

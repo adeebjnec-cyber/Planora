@@ -42,8 +42,8 @@ public sealed class BarStyle
     public string? FlagField { get; set; }
 
     /// <summary>Colours as #RRGGBB.</summary>
-    public string Fill { get; set; } = "#8AB4E6";
-    public string Border { get; set; } = "#3E6FB0";
+    public string Fill { get; set; } = "#8F9AEA";
+    public string Border { get; set; } = "#6E7BE0";
     public BarShape Shape { get; set; } = BarShape.Bar;
 
     /// <summary>Field keys of the texts drawn left of, right of, above and inside the bar (null = none).</summary>
@@ -188,17 +188,17 @@ public sealed class GanttFormat
         Gridlines = Gridlines.Copy(),
     };
 
-    /// <summary>Microsoft Project-like default styles.</summary>
+    /// <summary>Planora's default styles: indigo tasks, muted red critical tasks, navy summaries and milestones.</summary>
     public static List<BarStyle> DefaultBarStyles() => new()
     {
-        new() { Name = "Task", Kind = BarKind.Task, Fill = "#8AB4E6", Border = "#3E6FB0", RightText = "ResourceNames" },
-        new() { Name = "Critical", Kind = BarKind.CriticalTask, Fill = "#F08E82", Border = "#C04030", RightText = "ResourceNames" },
-        new() { Name = "Manual Task", Kind = BarKind.ManualTask, Fill = "#B9E3EA", Border = "#3A9AAE", RightText = "ResourceNames" },
-        new() { Name = "Inactive Task", Kind = BarKind.InactiveTask, Fill = "#FFFFFF", Border = "#9A9A9A" },
-        new() { Name = "Summary", Kind = BarKind.Summary, Fill = "#202020", Border = "#202020", Shape = BarShape.Thin },
-        new() { Name = "Milestone", Kind = BarKind.Milestone, Fill = "#202020", Border = "#202020", RightText = "Start" },
-        new() { Name = "Progress", Kind = BarKind.Progress, Fill = "#1F3A60", Border = "#1F3A60", Shape = BarShape.Thin },
-        new() { Name = "Baseline", Kind = BarKind.Baseline, Fill = "#A6A6A6", Border = "#A6A6A6", Shape = BarShape.Thin },
+        new() { Name = "Task", Kind = BarKind.Task, Fill = "#8F9AEA", Border = "#6E7BE0", RightText = "ResourceNames" },
+        new() { Name = "Critical", Kind = BarKind.CriticalTask, Fill = "#E2A39C", Border = "#BC4B42", RightText = "ResourceNames" },
+        new() { Name = "Manual Task", Kind = BarKind.ManualTask, Fill = "#9FD0D6", Border = "#5FA7B3", RightText = "ResourceNames" },
+        new() { Name = "Inactive Task", Kind = BarKind.InactiveTask, Fill = "#FFFFFF", Border = "#B3BAC6" },
+        new() { Name = "Summary", Kind = BarKind.Summary, Fill = "#2A3242", Border = "#2A3242", Shape = BarShape.Thin },
+        new() { Name = "Milestone", Kind = BarKind.Milestone, Fill = "#1B2333", Border = "#1B2333", RightText = "Start" },
+        new() { Name = "Progress", Kind = BarKind.Progress, Fill = "#4152CC", Border = "#4152CC", Shape = BarShape.Thin },
+        new() { Name = "Baseline", Kind = BarKind.Baseline, Fill = "#C3C8D1", Border = "#C3C8D1", Shape = BarShape.Thin },
     };
 
     public static List<TextStyle> DefaultTextStyles() => new()

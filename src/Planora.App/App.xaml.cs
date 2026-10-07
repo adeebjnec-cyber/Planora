@@ -10,6 +10,13 @@ public partial class App : Application
         base.OnStartup(e);
         DispatcherUnhandledException += OnUnhandledException;
 
+        if (e.Args.Length > 0 && e.Args[0].Equals("--uninstall", StringComparison.OrdinalIgnoreCase))
+        {
+            Infrastructure.Uninstaller.Run(quiet: e.Args.Contains("--quiet", StringComparer.OrdinalIgnoreCase));
+            Shutdown();
+            return;
+        }
+
         var window = new MainWindow();
         MainWindow = window;
 
@@ -113,7 +120,9 @@ public partial class App : Application
             {
                 if (options.TryGetValue("--dialog", out var dialogName))
                 {
-                    var dialog = Dialogs.DialogFactory.ForScreenshot(window.ViewModel, dialogName);
+                    Window dialog = dialogName.Equals("palette", StringComparison.OrdinalIgnoreCase)
+                        ? new Dialogs.CommandPalette(window, window.MainMenu) { KeepOpen = true, SearchText = options.GetValueOrDefault("--search", "") }
+                        : Dialogs.DialogFactory.ForScreenshot(window.ViewModel, dialogName);
                     dialog.Owner = window;
                     dialog.ContentRendered += (_, _) => dialog.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
                     {
@@ -132,10 +141,16 @@ public partial class App : Application
         }
 
         window.Show();
-        if (e.Args.Length > 0)
-            window.ViewModel.OpenFile(e.Args[0]);
+        if (positional.Count > 0)
+            window.ViewModel.OpenFile(positional[0]);
+        else if (options.ContainsKey("--show"))
+            window.ViewModel.LoadSample();
         else
             window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, window.ViewModel.OfferRecovery);
+
+        // Developer aid: "--show palette" or "--show Task" opens the command search or a menu, for screen captures.
+        if (options.TryGetValue("--show", out var show))
+            window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => window.ShowForCapture(show));
     }
 
     /// <summary>Splits "--name value" pairs from positional arguments.</summary>

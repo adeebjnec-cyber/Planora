@@ -172,6 +172,13 @@ public sealed class ProjectDocument : ObservableObject
         RaiseChanged();
     }
 
+    /// <summary>Recalculates the schedule (the Schedule button, F9) without changing anything the user entered.</summary>
+    public void Recalculate()
+    {
+        Reschedule();
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
     private void Reschedule()
     {
         try

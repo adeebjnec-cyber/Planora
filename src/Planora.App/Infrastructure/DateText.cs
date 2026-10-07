@@ -3,16 +3,16 @@ using Planora.Engine.Calendars;
 
 namespace Planora.App.Infrastructure;
 
-/// <summary>Dates as shown and typed in Planora, e.g. "Mon 28-09-26" in the user's date format.</summary>
+/// <summary>Dates as shown and typed in Planora, e.g. "28 Sep 2026".</summary>
 public static class DateText
 {
     /// <summary>The user's short date format with a two-digit year.</summary>
     private static readonly string ShortDatePattern =
         CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern.Replace("yyyy", "yy");
 
-    /// <summary>Formats a date; the time is shown only when it is not a usual start/end of day.</summary>
+    /// <summary>Formats a date ("28 Sep 2026"); the time is shown only when it is not a usual start/end of day.</summary>
     public static string Format(DateTime date) =>
-        date.ToString("ddd ", CultureInfo.CurrentCulture) + date.ToString(ShortDatePattern, CultureInfo.CurrentCulture) +
+        date.ToString("d MMM yyyy", CultureInfo.CurrentCulture) +
         (date.TimeOfDay != TimeSpan.FromHours(8) && date.TimeOfDay != TimeSpan.FromHours(17) ? date.ToString(" t", CultureInfo.CurrentCulture) : "");
 
     public static string Format(DateTime? date) => date is { } d ? Format(d) : "";

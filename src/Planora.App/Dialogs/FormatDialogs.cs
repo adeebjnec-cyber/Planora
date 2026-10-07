@@ -14,10 +14,10 @@ public sealed record ColorChoice(string Name, string Hex)
 {
     public static readonly IReadOnlyList<ColorChoice> Palette = new ColorChoice[]
     {
-        new("Automatic", ""), new("Black", "#202020"), new("Dark Gray", "#606060"), new("Gray", "#A6A6A6"), new("Light Gray", "#D8D8D8"),
-        new("White", "#FFFFFF"), new("Blue", "#8AB4E6"), new("Dark Blue", "#1F3A60"), new("Navy", "#3E6FB0"), new("Red", "#F08E82"),
-        new("Dark Red", "#C04030"), new("Teal", "#B9E3EA"), new("Dark Teal", "#3A9AAE"), new("Green", "#9BD39B"), new("Dark Green", "#2E7D32"),
-        new("Yellow", "#FFE680"), new("Orange", "#F6B26B"), new("Purple", "#B4A7D6"), new("Dark Purple", "#5B3F8F"), new("Pink", "#F4B6C2"),
+        new("Automatic", ""), new("Navy", "#1B2333"), new("Slate", "#2A3242"), new("Gray", "#8A93A2"), new("Light Gray", "#C3C8D1"),
+        new("White", "#FFFFFF"), new("Indigo", "#8F9AEA"), new("Dark Indigo", "#4152CC"), new("Blue", "#7FA6E3"), new("Dark Blue", "#2F5D9E"),
+        new("Red", "#E2A39C"), new("Dark Red", "#BC4B42"), new("Teal", "#9FD0D6"), new("Dark Teal", "#1F7A7A"), new("Green", "#A9D5BC"),
+        new("Dark Green", "#3E8E68"), new("Amber", "#EBC98A"), new("Dark Amber", "#B7832F"), new("Purple", "#C2B5E6"), new("Dark Purple", "#6B4FB0"),
     };
 
     /// <summary>The palette plus a colour that is not in it (so existing values still show).</summary>

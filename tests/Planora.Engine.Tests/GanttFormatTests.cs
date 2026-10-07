@@ -16,7 +16,7 @@ public class GanttFormatTests
         b.IsMarked = true;
         p.GanttFormat.BarStyles.Add(new BarStyle { Name = "Marked", Kind = BarKind.Task, FlagField = "Marked", Fill = "#FFE680" });
 
-        Assert.Equal("#8AB4E6", p.GanttFormat.StyleFor(p, a, BarKind.Task).Fill);
+        Assert.Equal("#8F9AEA", p.GanttFormat.StyleFor(p, a, BarKind.Task).Fill);
         Assert.Equal("#FFE680", p.GanttFormat.StyleFor(p, b, BarKind.Task).Fill);
         Assert.Equal("#FFE680", p.GanttFormat.StyleFor(p, b, BarKind.CriticalTask).Fill);
     }

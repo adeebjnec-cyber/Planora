@@ -22,41 +22,67 @@ public sealed class GanttChart : TimelineElement
 
     private const double EdgeGrip = 5;
 
-    // Microsoft Project-like palette.
+    // Planora palette.
     private static readonly Brush Background = Frozen(Color.FromRgb(0xFF, 0xFF, 0xFF));
-    private static readonly Brush HeaderBackground = Frozen(Color.FromRgb(0xF3, 0xF3, 0xF3));
-    private static readonly Brush NonWorking = Frozen(Color.FromRgb(0xEE, 0xEE, 0xEE));
-    private static readonly Brush SelectedRow = Frozen(Color.FromRgb(0xDC, 0xE9, 0xF7));
-    private static readonly Brush TaskFill = Frozen(Color.FromRgb(0x8A, 0xB4, 0xE6));
-    private static readonly Brush CriticalFill = Frozen(Color.FromRgb(0xF0, 0x8E, 0x82));
-    private static readonly Brush ManualFill = Frozen(Color.FromRgb(0xB9, 0xE3, 0xEA));
-    private static readonly Brush ProgressFill = Frozen(Color.FromRgb(0x1F, 0x3A, 0x60));
-    private static readonly Brush SummaryFill = Frozen(Color.FromRgb(0x20, 0x20, 0x20));
-    private static readonly Brush MilestoneFill = Frozen(Color.FromRgb(0x20, 0x20, 0x20));
-    private static readonly Brush BaselineFill = Frozen(Color.FromRgb(0xA6, 0xA6, 0xA6));
-    private static readonly Brush DeadlineFill = Frozen(Color.FromRgb(0x2E, 0x9E, 0x4F));
-    private static readonly Brush MissedFill = Frozen(Color.FromRgb(0xD0, 0x30, 0x30));
-    private static readonly Brush TextBrush = Frozen(Color.FromRgb(0x30, 0x30, 0x30));
-    private static readonly Brush GhostFill = Frozen(Color.FromArgb(0x60, 0x40, 0x70, 0xC0));
-    private static readonly Pen TaskBorder = FrozenPen(Color.FromRgb(0x3E, 0x6F, 0xB0), 1);
-    private static readonly Pen CriticalBorder = FrozenPen(Color.FromRgb(0xC0, 0x40, 0x30), 1);
-    private static readonly Pen ManualBorder = FrozenPen(Color.FromRgb(0x3A, 0x9A, 0xAE), 1);
-    private static readonly Pen InactiveBorder = FrozenPen(Color.FromRgb(0x9A, 0x9A, 0x9A), 1, dashed: true);
-    private static readonly Pen LinkPen = FrozenPen(Color.FromRgb(0x2F, 0x5F, 0xA8), 1);
-    private static readonly Pen CriticalLinkPen = FrozenPen(Color.FromRgb(0xC0, 0x40, 0x30), 1);
-    private static readonly Pen SplitPen = FrozenPen(Color.FromRgb(0x3E, 0x6F, 0xB0), 1, dashed: true);
-    private static readonly Pen GridPen = FrozenPen(Color.FromRgb(0xD8, 0xD8, 0xD8), 1);
-    private static readonly Pen TodayPen = FrozenPen(Color.FromRgb(0x2E, 0x9E, 0x4F), 1.5);
-    private static readonly Pen StatusPen = FrozenPen(Color.FromRgb(0x80, 0x40, 0xC0), 1.5, dashed: true);
-    private static readonly Pen ProgressLinePen = FrozenPen(Color.FromRgb(0xD0, 0x30, 0x30), 1.5);
-    private static readonly Brush PathPredecessor = Frozen(Color.FromRgb(0xF8, 0xC4, 0x71));
-    private static readonly Brush PathDriving = Frozen(Color.FromRgb(0xE6, 0x7E, 0x22));
-    private static readonly Brush PathSuccessor = Frozen(Color.FromRgb(0xD7, 0xBD, 0xE2));
-    private static readonly Brush PathDriven = Frozen(Color.FromRgb(0x8E, 0x44, 0xAD));
+    private static readonly Brush NonWorking = Frozen(Color.FromArgb(0x08, 0x14, 0x1A, 0x26));
+    private static readonly Brush SelectedRow = Frozen(Color.FromRgb(0xEE, 0xF0, 0xFD));
+    private static readonly Brush HoverRow = Frozen(Color.FromRgb(0xF6, 0xF7, 0xF9));
+    private static readonly Brush TaskFill = Frozen(Color.FromRgb(0x8F, 0x9A, 0xEA));
+    private static readonly Brush CriticalFill = Frozen(Color.FromRgb(0xE2, 0xA3, 0x9C));
+    private static readonly Brush ProgressFill = Frozen(Color.FromRgb(0x41, 0x52, 0xCC));
+    private static readonly Brush CriticalProgressFill = Frozen(Color.FromRgb(0xB5, 0x48, 0x3F));
+    private static readonly Brush SummaryProgress = Frozen(Color.FromRgb(0x8F, 0x9A, 0xEA));
+    private static readonly Brush BaselineFill = Frozen(Color.FromRgb(0xC3, 0xC8, 0xD1));
+    private static readonly Brush DeadlineFill = Frozen(Color.FromRgb(0x3E, 0x8E, 0x68));
+    private static readonly Brush MissedFill = Frozen(Color.FromRgb(0xBC, 0x4B, 0x42));
+    private static readonly Brush TextBrush = Frozen(Color.FromRgb(0x8A, 0x93, 0xA2));
+    private static readonly Brush GhostFill = Frozen(Color.FromArgb(0x55, 0x43, 0x53, 0xD1));
+    private static readonly Brush ShadowFill = Frozen(Color.FromArgb(0x1C, 0x14, 0x1A, 0x26));
+    private static readonly Brush HoverRing = Frozen(Color.FromArgb(0x29, 0x43, 0x53, 0xD1));
+    private static readonly Brush Gloss = GlossBrush();
+    private static readonly Pen TaskBorder = FrozenPen(Color.FromArgb(0x10, 0x14, 0x1A, 0x26), 1);
+    private static readonly Pen CriticalBorder = FrozenPen(Color.FromRgb(0xBC, 0x4B, 0x42), 1);
+    private static readonly Pen InactiveBorder = FrozenPen(Color.FromRgb(0xB3, 0xBA, 0xC6), 1, dashed: true);
+    private static readonly Pen LinkPen = FrozenPen(Color.FromRgb(0xA3, 0xAB, 0xB8), 1.1);
+    private static readonly Pen CriticalLinkPen = FrozenPen(Color.FromRgb(0xD3, 0x95, 0x8E), 1.1);
+    private static readonly Pen SplitPen = FrozenPen(Color.FromRgb(0x8F, 0x9A, 0xEA), 1, dashed: true);
+    private static readonly Pen GridPen = FrozenPen(Color.FromRgb(0xE4, 0xE6, 0xEB), 1);
+    private static readonly Pen RowLinePen = FrozenPen(Color.FromRgb(0xF2, 0xF3, 0xF6), 1);
+    private static readonly Pen WeekLinePen = FrozenPen(Color.FromRgb(0xEE, 0xF0, 0xF3), 1);
+    private static readonly Pen TodayPen = FrozenPen(Color.FromArgb(0x8C, 0x43, 0x53, 0xD1), 1.5);
+    private static readonly Pen StatusPen = FrozenPen(Color.FromRgb(0xB7, 0x83, 0x2F), 1.25, dashed: true);
+    private static readonly Pen ProgressLinePen = FrozenPen(Color.FromRgb(0xBC, 0x4B, 0x42), 1.5);
+    private static readonly Pen SelectionGap = FrozenPen(Color.FromRgb(0xFF, 0xFF, 0xFF), 2);
+    private static readonly Pen SelectionRing = FrozenPen(Color.FromRgb(0x43, 0x53, 0xD1), 1.5);
+    private static readonly Pen MilestoneOutline = FrozenPen(Color.FromRgb(0xFF, 0xFF, 0xFF), 1.5);
+    private static readonly Brush PathPredecessor = Frozen(Color.FromRgb(0xF2, 0xC9, 0x8A));
+    private static readonly Brush PathDriving = Frozen(Color.FromRgb(0xD9, 0x8E, 0x3A));
+    private static readonly Brush PathSuccessor = Frozen(Color.FromRgb(0xCF, 0xC3, 0xE8));
+    private static readonly Brush PathDriven = Frozen(Color.FromRgb(0x7E, 0x5B, 0xC2));
     private Dictionary<ProjectTask, TaskPathKind>? _pathMap;
-    private static readonly Pen ProjectLinePen = FrozenPen(Color.FromRgb(0x40, 0x40, 0x90), 1, dashed: true);
-    private static readonly Pen DragLinkPen = FrozenPen(Color.FromRgb(0x20, 0x20, 0x20), 1.5, dashed: true);
-    private static readonly Typeface Font = new("Segoe UI");
+    private static readonly Pen ProjectLinePen = FrozenPen(Color.FromRgb(0x8A, 0x93, 0xA2), 1, dashed: true);
+    private static readonly Pen DragLinkPen = FrozenPen(Color.FromRgb(0x43, 0x53, 0xD1), 1.5, dashed: true);
+    private static readonly Typeface Font = Infrastructure.UiFont.Regular;
+
+    /// <summary>
+    /// Bar colours of Planora 0.x (Microsoft Project-like) are shown in the current palette, so older plans
+    /// get the new look; colours the user chose themselves are kept.
+    /// </summary>
+    private static readonly Dictionary<string, string> LegacyColours = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["#8AB4E6"] = "#8F9AEA",
+        ["#3E6FB0"] = "#6E7BE0",
+        ["#F08E82"] = "#E2A39C",
+        ["#C04030"] = "#BC4B42",
+        ["#B9E3EA"] = "#9FD0D6",
+        ["#3A9AAE"] = "#5FA7B3",
+        ["#202020"] = "#2A3242",
+        ["#1F3A60"] = "#4152CC",
+        ["#A6A6A6"] = "#C3C8D1",
+        ["#9A9A9A"] = "#B3BAC6",
+    };
+
+    private int _hoverRow = -1;
 
     private MainViewModel? _viewModel;
     private double _verticalOffset;
@@ -155,16 +181,17 @@ public sealed class GanttChart : TimelineElement
 
         dc.PushClip(new RectangleGeometry(new Rect(0, HeaderHeight, ActualWidth, Math.Max(0, ActualHeight - HeaderHeight))));
         var gridlines = Project.GanttFormat.Gridlines;
-        if (Project.GanttFormat.Timescale.ShadeNonWorkingTime)
-            DrawNonWorkingTime(dc, visibleFrom, visibleTo);
-        DrawGridlines(dc, gridlines, visibleFrom, visibleTo, firstRow, lastRow);
-
         var selected = ShowSelection ? _viewModel.SelectedTasks.ToHashSet() : new HashSet<ProjectTask>();
         for (int i = firstRow; i <= lastRow; i++)
         {
             if (rows[i].Task is { } t && selected.Contains(t))
                 dc.DrawRectangle(SelectedRow, null, new Rect(0, RowTop(i), ActualWidth, RowHeight));
+            else if (i == _hoverRow && ShowSelection)
+                dc.DrawRectangle(HoverRow, null, new Rect(0, RowTop(i), ActualWidth, RowHeight));
         }
+        if (Project.GanttFormat.Timescale.ShadeNonWorkingTime)
+            DrawNonWorkingTime(dc, visibleFrom, visibleTo);
+        DrawGridlines(dc, gridlines, visibleFrom, visibleTo, firstRow, lastRow);
 
         if (gridlines.CurrentDate)
             DrawVerticalLine(dc, DateTime.Now, TodayPen);
@@ -195,18 +222,30 @@ public sealed class GanttChart : TimelineElement
     private double RowTop(int row) => HeaderHeight + row * RowHeight - _verticalOffset;
 
     private void DrawHeader(DrawingContext dc, DateTime from, DateTime to) =>
-        Drawing.TimescaleHeader(dc, this, XOf, from, to, PixelsPerDay, ActualWidth, HeaderHeight, Project!.GanttFormat.Timescale);
+        Drawing.TimescaleHeader(dc, this, XOf, from, to, PixelsPerDay, ActualWidth, HeaderHeight, Project!.GanttFormat.Timescale,
+            Project.GanttFormat.Gridlines.CurrentDate ? DateTime.Today : null,
+            day => !Project.Calendar.IsWorkingDay(DateOnly.FromDateTime(day)));
 
     /// <summary>Row lines and timescale column lines, as set in the Gridlines dialog.</summary>
     private void DrawGridlines(DrawingContext dc, GridlineSettings gridlines, DateTime from, DateTime to, int firstRow, int lastRow)
     {
         var pen = PenOf(gridlines.Color, GridPen);
-        if (gridlines.RowLines)
+        // Faint row separators line up with the task sheet; the Gridlines dialog's row lines draw over them.
+        for (int i = firstRow; i <= lastRow; i++)
         {
-            for (int i = firstRow; i <= lastRow; i++)
+            double y = Math.Round(RowTop(i) + RowHeight) - 0.5;
+            dc.DrawLine(gridlines.RowLines ? pen : RowLinePen, new Point(0, y), new Point(ActualWidth, y));
+        }
+        if (PixelsPerDay >= 4)
+        {
+            // A faint line at the start of each week.
+            for (var day = from.Date; day <= to; day = day.AddDays(1))
             {
-                double y = Math.Round(RowTop(i) + RowHeight) - 0.5;
-                dc.DrawLine(pen, new Point(0, y), new Point(ActualWidth, y));
+                if (day.DayOfWeek == Timescale.FirstDayOfWeek)
+                {
+                    double x = Math.Round(XOf(day)) + 0.5;
+                    dc.DrawLine(WeekLinePen, new Point(x, HeaderHeight), new Point(x, ActualHeight));
+                }
             }
         }
         if (!gridlines.TopTierColumns && !gridlines.BottomTierColumns)
@@ -263,6 +302,8 @@ public sealed class GanttChart : TimelineElement
     {
         if (string.IsNullOrEmpty(hex))
             return fallback;
+        if (LegacyColours.TryGetValue(hex, out var modern))
+            hex = modern;
         if (_brushes.TryGetValue(hex, out var brush))
             return brush;
         try
@@ -323,31 +364,35 @@ public sealed class GanttChart : TimelineElement
         var kind = KindOf(task);
         var barStyle = format.StyleFor(project, task, kind);
         var fill = BrushOf(barStyle.Fill, TaskFill);
+        bool pathColoured = false;
         // Task Path highlighting overrides the bar colour (driving/driven in the stronger colours).
         if (_pathMap is not null && _pathMap.TryGetValue(task, out var path))
         {
+            pathColoured = true;
             fill = path.HasFlag(TaskPathKind.DrivingPredecessors) ? PathDriving
                 : path.HasFlag(TaskPathKind.DrivenSuccessors) ? PathDriven
                 : path.HasFlag(TaskPathKind.Predecessors) ? PathPredecessor
                 : PathSuccessor;
         }
+        bool isSelected = ShowSelection && _viewModel.SelectedTasks.Contains(task);
+        bool isHovered = ShowSelection && row == _hoverRow && _drag == DragMode.None;
         double barStart, barEnd;
         if (kind == BarKind.Summary)
         {
             double x1 = XOf(task.Start), x2 = XOf(task.Finish);
-            double barTop = barStyle.Shape == BarShape.Bar ? top + RowHeight * 0.25 : top + RowHeight * 0.3;
-            double barHeight = barStyle.Shape == BarShape.Bar ? RowHeight * 0.4 : 5;
+            double barTop = barStyle.Shape == BarShape.Bar ? top + RowHeight * 0.3 : center - 5;
+            double barHeight = barStyle.Shape == BarShape.Bar ? RowHeight * 0.4 : 6;
             if (barStyle.Shape != BarShape.Hidden)
             {
-                dc.DrawRectangle(fill, null, new Rect(x1, barTop, Math.Max(1, x2 - x1), barHeight));
-                DrawSummaryCap(dc, x1, barTop + barHeight, fill);
-                DrawSummaryCap(dc, x2, barTop + barHeight, fill);
+                dc.DrawRoundedRectangle(fill, null, new Rect(x1, barTop, Math.Max(1, x2 - x1), barHeight), 1, 1);
+                DrawSummaryCap(dc, x1, barTop + barHeight, fill, left: true);
+                DrawSummaryCap(dc, x2, barTop + barHeight, fill, left: false);
                 if (task.PercentComplete > 0)
                 {
                     var progress = format.StyleFor(project, task, BarKind.Progress);
                     double px = XOf(task.CompleteThrough);
-                    if (progress.Shape != BarShape.Hidden)
-                        dc.DrawRectangle(BrushOf(progress.Fill, ProgressFill), null, new Rect(x1, barTop + barHeight / 2 - 1, Math.Max(0, px - x1), 2));
+                    if (progress.Shape != BarShape.Hidden && px > x1)
+                        dc.DrawRectangle(SummaryProgress, null, new Rect(x1, barTop + barHeight / 2 - 1, Math.Max(0, px - x1), 2));
                 }
             }
             (barStart, barEnd) = (x1 - 5, x2 + 5);
@@ -355,22 +400,30 @@ public sealed class GanttChart : TimelineElement
         else if (kind == BarKind.Milestone)
         {
             double x = XOf(task.Start);
-            double size = RowHeight * 0.3;
+            double size = Math.Min(7.5, RowHeight * 0.26);
             if (barStyle.Shape != BarShape.Hidden)
             {
-                var diamondFill = ShowCritical(task) && barStyle.FlagField is null ? BrushOf(format.StyleFor(project, task, BarKind.CriticalTask).Border, CriticalBorder.Brush) : fill;
-                Drawing.Diamond(dc, new Point(x, center), size, diamondFill);
+                var diamondFill = ShowCritical(task) && barStyle.FlagField is null && !pathColoured
+                    ? BrushOf(format.StyleFor(project, task, BarKind.CriticalTask).Border, CriticalBorder.Brush) : fill;
+                if (isSelected)
+                    Drawing.Diamond(dc, new Point(x, center), size + 3.5, null!, SelectionRing);
+                else if (isHovered)
+                    Drawing.Diamond(dc, new Point(x, center), size + 3, HoverRing);
+                Drawing.Diamond(dc, new Point(x + 0.5, center + 1), size, ShadowFill);
+                Drawing.Diamond(dc, new Point(x, center), size, diamondFill, MilestoneOutline);
             }
             (barStart, barEnd) = (x - size, x + size);
         }
         else
         {
-            var border = PenOf(barStyle.Border, TaskBorder, dashed: kind == BarKind.InactiveTask);
+            var border = kind == BarKind.InactiveTask ? PenOf(barStyle.Border, InactiveBorder, dashed: true) : TaskBorder;
             Brush? body = kind == BarKind.InactiveTask && barStyle.Fill.Equals("#FFFFFF", StringComparison.OrdinalIgnoreCase) ? null : fill;
-            double barTop = barStyle.Shape == BarShape.Thin ? center - 3 : top + RowHeight * 0.25;
-            double barHeight = barStyle.Shape == BarShape.Thin ? 6 : RowHeight * 0.5;
+            double barHeight = barStyle.Shape == BarShape.Thin ? 6 : Math.Round(RowHeight * 0.47);
+            double barTop = Math.Round(center - barHeight / 2);
+            double radius = Math.Min(4, barHeight / 2);
             double previousEnd = double.NaN;
             double first = double.NaN;
+            var segments = new List<Rect>();
             foreach (var segment in task.Segments)
             {
                 double x1 = XOf(segment.Start), x2 = XOf(segment.Finish);
@@ -380,20 +433,60 @@ public sealed class GanttChart : TimelineElement
                 {
                     if (!double.IsNaN(previousEnd))
                         dc.DrawLine(PenOf(barStyle.Border, SplitPen, dashed: true), new Point(previousEnd, center), new Point(x1, center));
-                    dc.DrawRectangle(body, border, new Rect(x1, barTop, Math.Max(2, x2 - x1), barHeight));
+                    segments.Add(new Rect(x1, barTop, Math.Max(3, x2 - x1), barHeight));
                 }
                 previousEnd = x2;
             }
 
-            if (task.PercentComplete > 0)
+            if (segments.Count > 0)
             {
-                var progress = format.StyleFor(project, task, BarKind.Progress);
-                if (progress.Shape != BarShape.Hidden)
+                var whole = new Rect(segments[0].TopLeft, segments[^1].BottomRight);
+                if (isSelected)
                 {
-                    double x1 = XOf(task.Start);
-                    double px = XOf(task.CompleteThrough);
-                    double h = progress.Shape == BarShape.Bar ? barHeight : barHeight / 3;
-                    dc.DrawRectangle(BrushOf(progress.Fill, ProgressFill), null, new Rect(x1, center - h / 2, Math.Max(0, px - x1), h));
+                    var ring = whole;
+                    ring.Inflate(2.5, 2.5);
+                    dc.DrawRoundedRectangle(null, SelectionGap, ring, radius + 2, radius + 2);
+                    ring.Inflate(1.5, 1.5);
+                    dc.DrawRoundedRectangle(null, SelectionRing, ring, radius + 3, radius + 3);
+                }
+                else if (isHovered)
+                {
+                    var ring = whole;
+                    ring.Inflate(3, 3);
+                    dc.DrawRoundedRectangle(HoverRing, null, ring, radius + 3, radius + 3);
+                }
+                foreach (var rect in segments)
+                {
+                    if (body is not null)
+                        dc.DrawRoundedRectangle(ShadowFill, null, new Rect(rect.X, rect.Y + 1, rect.Width, rect.Height), radius, radius);
+                    dc.DrawRoundedRectangle(body, border, rect, radius, radius);
+                }
+
+                if (task.PercentComplete > 0)
+                {
+                    var progress = format.StyleFor(project, task, BarKind.Progress);
+                    if (progress.Shape != BarShape.Hidden)
+                    {
+                        double px = XOf(task.CompleteThrough);
+                        var progressFill = ShowCritical(task) && IsDefaultProgress(progress.Fill) && !pathColoured ? CriticalProgressFill : BrushOf(progress.Fill, ProgressFill);
+                        bool fullHeight = progress.Shape == BarShape.Bar || IsDefaultProgress(progress.Fill);
+                        foreach (var rect in segments)
+                        {
+                            if (px <= rect.Left)
+                                break;
+                            var clip = new RectangleGeometry(rect, radius, radius);
+                            clip.Freeze();
+                            dc.PushClip(clip);
+                            double h = fullHeight ? rect.Height : rect.Height / 3;
+                            dc.DrawRectangle(progressFill, null, new Rect(rect.Left, center - h / 2, Math.Min(px, rect.Right) - rect.Left, h));
+                            dc.Pop();
+                        }
+                    }
+                }
+                if (body is not null)
+                {
+                    foreach (var rect in segments)
+                        dc.DrawRoundedRectangle(Gloss, null, rect, radius, radius);
                 }
             }
             (barStart, barEnd) = (first, previousEnd);
@@ -412,8 +505,7 @@ public sealed class GanttChart : TimelineElement
         var textStyle = Format.Text(TextItem.BarText);
         double size = (textStyle.Size ?? 8.5) * 96 / 72;
         var brush = BrushOf(textStyle.Color, TextBrush);
-        var typeface = new Typeface(new FontFamily("Segoe UI"), textStyle.Italic ? FontStyles.Italic : FontStyles.Normal,
-            textStyle.Bold ? FontWeights.SemiBold : FontWeights.Normal, FontStretches.Normal);
+        var typeface = Infrastructure.UiFont.Of(textStyle.Bold, textStyle.Italic);
 
         FormattedText? Make(string? key)
         {
@@ -423,7 +515,7 @@ public sealed class GanttChart : TimelineElement
         }
 
         if (Make(style.RightText) is { } right)
-            dc.DrawText(right, new Point(barEnd + 5, center - right.Height / 2));
+            dc.DrawText(right, new Point(barEnd + 8, center - right.Height / 2));
         if (Make(style.LeftText) is { } left)
             dc.DrawText(left, new Point(barStart - 5 - left.Width, center - left.Height / 2));
         if (Make(style.TopText) is { } above)
@@ -497,16 +589,17 @@ public sealed class GanttChart : TimelineElement
         double barTop = top + RowHeight * 0.3;
         dc.DrawRectangle(Drawing.MutedText, null, new Rect(x1, barTop, Math.Max(1, x2 - x1), 5));
         DrawSummaryCap(dc, x1, barTop + 5, Drawing.MutedText);
-        DrawSummaryCap(dc, x2, barTop + 5, Drawing.MutedText);
+        DrawSummaryCap(dc, x2, barTop + 5, Drawing.MutedText, left: false);
     }
 
-    private static void DrawSummaryCap(DrawingContext dc, double x, double y, Brush fill)
+    /// <summary>The small downward point at each end of a summary bar.</summary>
+    private static void DrawSummaryCap(DrawingContext dc, double x, double y, Brush fill, bool left = true)
     {
         var cap = new StreamGeometry();
         using (var g = cap.Open())
         {
-            g.BeginFigure(new Point(x - 4, y), true, true);
-            g.LineTo(new Point(x + 4, y), true, false);
+            g.BeginFigure(new Point(x, y), true, true);
+            g.LineTo(new Point(left ? x + 5 : x - 5, y), true, false);
             g.LineTo(new Point(x, y + 5), true, false);
         }
         cap.Freeze();
@@ -577,26 +670,25 @@ public sealed class GanttChart : TimelineElement
 
         switch (type)
         {
-            case LinkType.FinishToStart when succStart >= predEnd + 4:
-                // Right from the predecessor, then down (or up) onto the successor's start.
-                double x = succStart + 4;
-                double edgeY = toY + (down ? -RowHeight * 0.25 : RowHeight * 0.25);
+            case LinkType.FinishToStart when succStart >= predEnd + 2 * Stub:
+                // Right from the predecessor, down (or up) beside it, then into the successor's start.
                 points.Add(new Point(predEnd, fromY));
-                points.Add(new Point(x, fromY));
-                tip = new Point(x, edgeY);
-                arrowDirection = new Vector(0, down ? 1 : -1);
+                points.Add(new Point(predEnd + Stub, fromY));
+                points.Add(new Point(predEnd + Stub, toY));
+                tip = new Point(succStart, toY);
+                arrowDirection = new Vector(1, 0);
                 break;
             case LinkType.FinishToStart:
                 points.Add(new Point(predEnd, fromY));
                 points.Add(new Point(predEnd + Stub, fromY));
                 points.Add(new Point(predEnd + Stub, gapY));
-                points.Add(new Point(succStart - Stub, gapY));
-                points.Add(new Point(succStart - Stub, toY));
+                points.Add(new Point(succStart - Stub - 3, gapY));
+                points.Add(new Point(succStart - Stub - 3, toY));
                 tip = new Point(succStart, toY);
                 arrowDirection = new Vector(1, 0);
                 break;
             case LinkType.StartToStart:
-                double left = Math.Min(predStart, succStart) - Stub;
+                double left = Math.Min(predStart, succStart) - Stub - 1;
                 points.Add(new Point(predStart, fromY));
                 points.Add(new Point(left, fromY));
                 points.Add(new Point(left, toY));
@@ -604,7 +696,7 @@ public sealed class GanttChart : TimelineElement
                 arrowDirection = new Vector(1, 0);
                 break;
             case LinkType.FinishToFinish:
-                double right = Math.Max(predEnd, succEnd) + Stub;
+                double right = Math.Max(predEnd, succEnd) + Stub + 1;
                 points.Add(new Point(predEnd, fromY));
                 points.Add(new Point(right, fromY));
                 points.Add(new Point(right, toY));
@@ -621,10 +713,9 @@ public sealed class GanttChart : TimelineElement
                 arrowDirection = new Vector(-1, 0);
                 break;
         }
-        points.Add(tip);
-
-        for (int i = 1; i < points.Count; i++)
-            dc.DrawLine(pen, points[i - 1], points[i]);
+        // The line stops at the arrow head's base so the head stays crisp.
+        points.Add(tip - arrowDirection * 5);
+        dc.DrawGeometry(null, pen, Drawing.RoundedPolyline(points, 4));
         DrawArrowHead(dc, tip, arrowDirection, pen.Brush);
     }
 
@@ -635,8 +726,8 @@ public sealed class GanttChart : TimelineElement
         using (var g = head.Open())
         {
             g.BeginFigure(tip, true, true);
-            g.LineTo(tip - direction * 6 + normal * 3.5, true, false);
-            g.LineTo(tip - direction * 6 - normal * 3.5, true, false);
+            g.LineTo(tip - direction * 6 + normal * 3.2, true, false);
+            g.LineTo(tip - direction * 6 - normal * 3.2, true, false);
         }
         head.Freeze();
         dc.DrawGeometry(brush, null, head);
@@ -648,16 +739,16 @@ public sealed class GanttChart : TimelineElement
             return;
 
         double dx = _dragCurrent.X - _dragOrigin.X;
-        double top = RowTop(row) + RowHeight * 0.25, height = RowHeight * 0.5;
+        double height = Math.Round(RowHeight * 0.47), top = Math.Round(RowTop(row) + RowHeight / 2 - height / 2);
         double x1 = XOf(_dragTask.Start), x2 = XOf(_dragTask.Finish);
         switch (_drag)
         {
             case DragMode.Move:
-                dc.DrawRectangle(GhostFill, TaskBorder, new Rect(x1 + dx, top, Math.Max(2, x2 - x1), height));
+                dc.DrawRoundedRectangle(GhostFill, SelectionRing, new Rect(x1 + dx, top, Math.Max(2, x2 - x1), height), 4, 4);
                 DrawDragLabel(dc, $"Start: {TaskRowViewModel.FormatDate(SnapStart(_dragTask, DateAt(x1 + dx)))}", x1 + dx, top);
                 break;
             case DragMode.Resize:
-                dc.DrawRectangle(GhostFill, TaskBorder, new Rect(x1, top, Math.Max(2, x2 - x1 + dx), height));
+                dc.DrawRoundedRectangle(GhostFill, SelectionRing, new Rect(x1, top, Math.Max(2, x2 - x1 + dx), height), 4, 4);
                 DrawDragLabel(dc, $"Finish: {TaskRowViewModel.FormatDate(SnapFinish(_dragTask, DateAt(x2 + dx)))}", x1, top);
                 break;
             case DragMode.Progress:
@@ -676,10 +767,11 @@ public sealed class GanttChart : TimelineElement
 
     private void DrawDragLabel(DrawingContext dc, string label, double x, double y)
     {
-        var text = Text(label, 11);
-        var box = new Rect(x, y - text.Height - 4, text.Width + 8, text.Height + 2);
-        dc.DrawRectangle(Brushes.LightYellow, GridPen, box);
-        dc.DrawText(text, new Point(box.X + 4, box.Y + 1));
+        var text = new FormattedText(label, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, Infrastructure.UiFont.Medium, 11.5, Brushes.White,
+            VisualTreeHelper.GetDpi(this).PixelsPerDip);
+        var box = new Rect(x, y - text.Height - 8, text.Width + 14, text.Height + 6);
+        dc.DrawRoundedRectangle(Drawing.Navy, null, box, 5, 5);
+        dc.DrawText(text, new Point(box.X + 7, box.Y + 3));
     }
 
     private FormattedText Text(string text, double size) =>
@@ -774,12 +866,32 @@ public sealed class GanttChart : TimelineElement
             DragMode.Move => Cursors.SizeAll,
             _ => null,
         };
-        if (task != _hoverTask)
+        int hoverRow = p.Y < HeaderHeight ? -1 : (int)((p.Y - HeaderHeight + _verticalOffset) / RowHeight);
+        if (hoverRow != _hoverRow)
         {
-            _hoverTask = task;
-            ToolTip = task is null ? null : Describe(task);
+            _hoverRow = hoverRow;
+            InvalidateVisual();
+        }
+        var overBar = task is not null && HitTest(task, p) != DragMode.None || task is { IsSummary: true } && OverSummary(task, p);
+        var tipTask = overBar ? task : null;
+        if (tipTask != _hoverTask)
+        {
+            _hoverTask = tipTask;
+            ToolTip = tipTask is null ? null : Describe(tipTask);
         }
     }
+
+    protected override void OnMouseLeave(MouseEventArgs e)
+    {
+        base.OnMouseLeave(e);
+        if (_hoverRow != -1)
+        {
+            _hoverRow = -1;
+            InvalidateVisual();
+        }
+    }
+
+    private bool OverSummary(ProjectTask task, Point p) => p.X >= XOf(task.Start) - 5 && p.X <= XOf(task.Finish) + 5;
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
@@ -892,23 +1004,67 @@ public sealed class GanttChart : TimelineElement
         return total <= 0 ? 0 : Math.Clamp(100.0 * cal.WorkingMinutesBetween(task.Start, date) / total, 0, 100);
     }
 
-    private string Describe(ProjectTask task)
+    /// <summary>The hover card: name, duration, dates, progress and slack.</summary>
+    private ToolTip Describe(ProjectTask task)
     {
         var options = Project!.Options;
-        var lines = new List<string>
+        var muted = Drawing.MutedText;
+        var grid = new Grid { Margin = new Thickness(0, 8, 0, 0) };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star), MinWidth = 120 });
+        var rows = new List<(string, string)>
         {
-            task.Name,
-            $"Start: {task.Start:g}",
-            $"Finish: {task.Finish:g}",
-            $"Duration: {DurationText.Format(task.DurationMinutes, options, isElapsed: task.IsElapsedDuration)}",
-            $"Complete: {task.PercentComplete:0.#}%",
-            $"Total slack: {DurationText.Format(task.TotalFloatMinutes, options)}",
+            ("Duration", DurationText.Format(task.DurationMinutes, options, isElapsed: task.IsElapsedDuration)),
+            ("Start", task.Start.ToString("d MMM yyyy", CultureInfo.CurrentCulture)),
+            ("Finish", task.Finish.ToString("d MMM yyyy", CultureInfo.CurrentCulture)),
+            ("Progress", $"{task.PercentComplete:0.#}%"),
         };
-        if (task.IsCritical)
-            lines.Add("Critical");
         if (task.Deadline is { } deadline)
-            lines.Add($"Deadline: {deadline:g}{(task.MissesDeadline ? " (missed)" : "")}");
-        return string.Join(Environment.NewLine, lines);
+            rows.Add(("Deadline", deadline.ToString("d MMM yyyy", CultureInfo.CurrentCulture) + (task.MissesDeadline ? " (missed)" : "")));
+        for (int i = 0; i < rows.Count; i++)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            var label = new TextBlock { Text = rows[i].Item1, Foreground = muted, Margin = new Thickness(0, 2, 18, 2) };
+            var value = new TextBlock { Text = rows[i].Item2, FontWeight = FontWeights.Medium, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 2, 0, 2) };
+            Grid.SetRow(label, i);
+            Grid.SetRow(value, i);
+            Grid.SetColumn(value, 1);
+            grid.Children.Add(label);
+            grid.Children.Add(value);
+        }
+        var track = new Border { Height = 3, CornerRadius = new CornerRadius(1.5), Background = Frozen(Color.FromRgb(0xEC, 0xEE, 0xF2)), Margin = new Thickness(0, 10, 0, 0) };
+        var fill = new Border { Height = 3, CornerRadius = new CornerRadius(1.5), Background = Drawing.Accent, HorizontalAlignment = HorizontalAlignment.Left };
+        track.SizeChanged += (_, _) => fill.Width = track.ActualWidth * Math.Clamp(task.PercentComplete / 100, 0, 1);
+        var bar = new Grid { Children = { track, fill } };
+        fill.Margin = track.Margin;
+        string footer = task.IsSummary ? "Summary task"
+            : task.IsCritical ? "On the critical path"
+            : $"Total slack: {DurationText.Format(task.TotalFloatMinutes, options)}";
+        var foot = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 9, 0, 0) };
+        foot.Children.Add(new System.Windows.Shapes.Ellipse
+        {
+            Width = 6,
+            Height = 6,
+            Fill = task.IsCritical && !task.IsSummary ? Drawing.AlertText : Drawing.FaintText,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 6, 0),
+        });
+        foot.Children.Add(new TextBlock { Text = footer, Foreground = muted, FontSize = 11 });
+        var panel = new StackPanel { MinWidth = 220, MaxWidth = 320 };
+        panel.Children.Add(new TextBlock { Text = task.Name, FontWeight = FontWeights.SemiBold, FontSize = 12.5, TextWrapping = TextWrapping.Wrap });
+        panel.Children.Add(grid);
+        panel.Children.Add(bar);
+        panel.Children.Add(foot);
+        return new ToolTip { Content = panel, Style = (Style)Application.Current.Resources["CardToolTip"] };
+    }
+
+    private static bool IsDefaultProgress(string? hex) => hex is null or "" || hex.Equals("#1F3A60", StringComparison.OrdinalIgnoreCase) || hex.Equals("#4152CC", StringComparison.OrdinalIgnoreCase);
+
+    private static Brush GlossBrush()
+    {
+        var brush = new LinearGradientBrush(Color.FromArgb(0x3A, 0xFF, 0xFF, 0xFF), Color.FromArgb(0x00, 0xFF, 0xFF, 0xFF), new Point(0, 0), new Point(0, 0.65));
+        brush.Freeze();
+        return brush;
     }
 
     private static Brush Frozen(Color color)

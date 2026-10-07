@@ -16,12 +16,13 @@ namespace Planora.App.Views;
 /// </summary>
 public sealed class Backstage : UserControl
 {
-    private static readonly Brush NavBackground = new SolidColorBrush(Color.FromRgb(0x21, 0x5A, 0x9E));
-    private static readonly Brush NavSelected = new SolidColorBrush(Color.FromRgb(0x18, 0x45, 0x7A));
-    private static readonly Brush Accent = new SolidColorBrush(Color.FromRgb(0x2B, 0x57, 0x9A));
+    private static readonly Brush NavBackground = new SolidColorBrush(Color.FromRgb(0x1B, 0x23, 0x33));
+    private static readonly Brush NavSelected = new SolidColorBrush(Color.FromRgb(0x2E, 0x38, 0x4D));
+    private static readonly Brush Accent = new SolidColorBrush(Color.FromRgb(0x14, 0x1A, 0x26));
+    private static readonly Brush Muted = new SolidColorBrush(Color.FromRgb(0x8A, 0x93, 0xA2));
 
     private readonly MainViewModel _vm;
-    private readonly StackPanel _nav = new() { Background = NavBackground, Width = 170 };
+    private readonly StackPanel _nav = new() { Background = NavBackground, Width = 200 };
     private readonly ContentControl _page = new() { Margin = new Thickness(40, 30, 40, 20) };
     private readonly List<(Button Button, string Page)> _navButtons = new();
 
@@ -31,8 +32,9 @@ public sealed class Backstage : UserControl
         Background = Brushes.White;
         Focusable = true;
 
-        var back = NavButton("←  Back", Close);
-        back.FontSize = 16;
+        var back = NavButton("←  Back to project", Close);
+        back.FontSize = 13;
+        back.Margin = new Thickness(0, 14, 0, 14);
         _nav.Children.Add(back);
         AddPage("Info", ShowInfo);
         AddPage("New", ShowNew);
@@ -42,10 +44,23 @@ public sealed class Backstage : UserControl
         AddPage("Print", ShowPrint);
         AddPage("Export", ShowExport);
         _nav.Children.Add(NavButton("Options", () => Run(vm.OptionsCommand)));
+        AddPage("About", ShowAbout);
+
+        var credit = new TextBlock
+        {
+            Text = "Planora · Developed by Adeeb",
+            Foreground = new SolidColorBrush(Color.FromRgb(0x8A, 0x93, 0xA2)),
+            FontSize = 11,
+            Margin = new Thickness(24, 0, 12, 18),
+        };
+        var navHost = new DockPanel { Background = NavBackground, Width = 200 };
+        DockPanel.SetDock(credit, Dock.Bottom);
+        navHost.Children.Add(credit);
+        navHost.Children.Add(_nav);
 
         var root = new DockPanel();
-        DockPanel.SetDock(_nav, Dock.Left);
-        root.Children.Add(_nav);
+        DockPanel.SetDock(navHost, Dock.Left);
+        root.Children.Add(navHost);
         root.Children.Add(new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = _page });
         Content = root;
 
@@ -93,12 +108,36 @@ public sealed class Backstage : UserControl
             Background = Brushes.Transparent,
             BorderThickness = new Thickness(0),
             HorizontalContentAlignment = HorizontalAlignment.Left,
-            Padding = new Thickness(24, 10, 10, 10),
-            FontSize = 14,
+            Padding = new Thickness(24, 9, 10, 9),
+            Margin = new Thickness(10, 1, 10, 1),
+            FontSize = 13.5,
             Cursor = Cursors.Hand,
         };
+        button.Style = NavStyle;
         button.Click += (_, _) => action();
         return button;
+    }
+
+    /// <summary>Flat navigation buttons on the dark bar: a soft highlight on hover.</summary>
+    private static readonly Style NavStyle = CreateNavStyle();
+
+    private static Style CreateNavStyle()
+    {
+        var border = new FrameworkElementFactory(typeof(Border), "Bd");
+        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(6));
+        border.SetBinding(Border.BackgroundProperty, new System.Windows.Data.Binding("Background") { RelativeSource = System.Windows.Data.RelativeSource.TemplatedParent });
+        border.SetBinding(Border.PaddingProperty, new System.Windows.Data.Binding("Padding") { RelativeSource = System.Windows.Data.RelativeSource.TemplatedParent });
+        var content = new FrameworkElementFactory(typeof(ContentPresenter));
+        content.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Left);
+        border.AppendChild(content);
+        var template = new ControlTemplate(typeof(Button)) { VisualTree = border };
+        var hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
+        hover.Setters.Add(new Setter(Border.BackgroundProperty, new SolidColorBrush(Color.FromRgb(0x26, 0x30, 0x44)), "Bd"));
+        template.Triggers.Add(hover);
+        var style = new Style(typeof(Button));
+        style.Setters.Add(new Setter(Control.TemplateProperty, template));
+        style.Setters.Add(new Setter(FrameworkElement.FocusVisualStyleProperty, null));
+        return style;
     }
 
     private void AddPage(string name, Action show)
@@ -119,9 +158,9 @@ public sealed class Backstage : UserControl
         }
     }
 
-    private static TextBlock Title(string text) => new() { Text = text, FontSize = 30, FontWeight = FontWeights.Light, Foreground = Accent, Margin = new Thickness(0, 0, 0, 18) };
+    private static TextBlock Title(string text) => new() { Text = text, FontSize = 26, FontWeight = FontWeights.SemiBold, Foreground = Accent, Margin = new Thickness(0, 0, 0, 20) };
 
-    private static TextBlock Section(string text) => new() { Text = text, FontSize = 16, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 18, 0, 8) };
+    private static TextBlock Section(string text) => new() { Text = text, FontSize = 15, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 18, 0, 8) };
 
     private Button Tile(string title, string detail, Action action, double width = 260)
     {
@@ -131,15 +170,15 @@ public sealed class Backstage : UserControl
             Margin = new Thickness(0, 0, 12, 12),
             Padding = new Thickness(14, 10, 14, 10),
             HorizontalContentAlignment = HorizontalAlignment.Left,
-            Background = new SolidColorBrush(Color.FromRgb(0xF3, 0xF6, 0xFA)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(0xD5, 0xDE, 0xEA)),
+            Background = Brushes.White,
+            BorderBrush = new SolidColorBrush(Color.FromRgb(0xE4, 0xE6, 0xEB)),
             Cursor = Cursors.Hand,
             Content = new StackPanel
             {
                 Children =
                 {
-                    new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis },
-                    new TextBlock { Text = detail, Foreground = Brushes.DimGray, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) },
+                    new TextBlock { Text = title, FontSize = 13.5, FontWeight = FontWeights.SemiBold, TextTrimming = TextTrimming.CharacterEllipsis },
+                    new TextBlock { Text = detail, Foreground = Muted, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 3, 0, 0) },
                 },
             },
         };
@@ -175,7 +214,7 @@ public sealed class Backstage : UserControl
         for (int i = 0; i < rows.Length; i++)
         {
             facts.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            var label = new TextBlock { Text = rows[i].Item1, Foreground = Brushes.DimGray, Margin = new Thickness(0, 3, 0, 3) };
+            var label = new TextBlock { Text = rows[i].Item1, Foreground = Muted, Margin = new Thickness(0, 3, 0, 3) };
             var value = new TextBlock { Text = rows[i].Item2, Margin = new Thickness(0, 3, 0, 3), TextWrapping = TextWrapping.Wrap };
             Grid.SetRow(label, i);
             Grid.SetRow(value, i);
@@ -230,7 +269,7 @@ public sealed class Backstage : UserControl
         panel.Children.Add(Section("Recent projects"));
         var recent = _vm.RecentFiles;
         if (recent.Count == 0)
-            panel.Children.Add(new TextBlock { Text = "Projects you open or save appear here.", Foreground = Brushes.DimGray });
+            panel.Children.Add(new TextBlock { Text = "Projects you open or save appear here.", Foreground = Muted });
         foreach (var path in recent)
         {
             bool exists = File.Exists(path);
@@ -308,6 +347,40 @@ public sealed class Backstage : UserControl
             {
                 Title("Print"),
                 new StackPanel { Orientation = Orientation.Horizontal, Children = { tiles, previewPanel } },
+            },
+        };
+    }
+
+    private void ShowAbout()
+    {
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version ?? new Version(1, 0);
+        _page.Content = new StackPanel
+        {
+            MaxWidth = 640,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Children =
+            {
+                Title("About"),
+                new TextBlock { Text = "Planora", FontSize = 20, FontWeight = FontWeights.SemiBold },
+                new TextBlock { Text = "Project scheduling and control software", Foreground = Muted, Margin = new Thickness(0, 4, 0, 0) },
+                new TextBlock { Text = $"Version {version.Major}.{version.Minor}.{version.Build}", Foreground = Muted, Margin = new Thickness(0, 12, 0, 0) },
+                new Border
+                {
+                    Margin = new Thickness(0, 16, 0, 0),
+                    Padding = new Thickness(14, 10, 14, 10),
+                    CornerRadius = new CornerRadius(8),
+                    Background = new SolidColorBrush(Color.FromRgb(0xEE, 0xF0, 0xFC)),
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Child = new TextBlock { Text = "Developed by Adeeb", FontWeight = FontWeights.SemiBold, FontSize = 14 },
+                },
+                new TextBlock
+                {
+                    Text = "© 2026 Adeeb. Planora is free software. It uses MPXJ and MPXJ.Net (LGPL 2.1) to read Microsoft Project files, " +
+                           "IKVM (MIT), and the Inter typeface (SIL Open Font License 1.1).",
+                    Foreground = Muted,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(0, 16, 0, 0),
+                },
             },
         };
     }

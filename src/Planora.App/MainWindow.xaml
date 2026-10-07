@@ -5,10 +5,80 @@
         xmlns:views="clr-namespace:Planora.App.Views"
         xmlns:infra="clr-namespace:Planora.App.Infrastructure"
         Title="{Binding WindowTitle}"
-        Height="760" Width="1280" MinHeight="400" MinWidth="700"
+        Height="900" Width="1440" MinHeight="560" MinWidth="1024"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource WindowBackground}"
-        FontFamily="Segoe UI" FontSize="12">
+        Icon="Assets/Planora.ico"
+        Background="{StaticResource AppBackground}"
+        Foreground="{StaticResource TextPrimary}"
+        FontFamily="{StaticResource UiFontFamily}" FontSize="13"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <CollectionViewSource x:Key="ViewsSource" Source="{Binding Views}">
+            <CollectionViewSource.GroupDescriptions>
+                <PropertyGroupDescription PropertyName="Section" />
+            </CollectionViewSource.GroupDescriptions>
+        </CollectionViewSource>
+        <infra:EqualsConverter x:Key="Equals" />
+
+        <!-- Sub-menu items generated from a list of names, checked when the name is the current one. -->
+        <Style x:Key="TableItem" TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+            <Setter Property="Header" Value="{Binding}" />
+            <Setter Property="Command" Value="{Binding DataContext.SetTableCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="CommandParameter" Value="{Binding}" />
+            <Setter Property="IsChecked">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource Equals}" Mode="OneWay">
+                        <Binding />
+                        <Binding Path="DataContext.CurrentTableName" RelativeSource="{RelativeSource AncestorType=Window}" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="FilterItem" TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+            <Setter Property="Header" Value="{Binding}" />
+            <Setter Property="Command" Value="{Binding DataContext.SetFilterCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="CommandParameter" Value="{Binding}" />
+            <Setter Property="IsChecked">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource Equals}" Mode="OneWay">
+                        <Binding />
+                        <Binding Path="DataContext.CurrentFilterName" RelativeSource="{RelativeSource AncestorType=Window}" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="GroupNameItem" TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+            <Setter Property="Header" Value="{Binding}" />
+            <Setter Property="Command" Value="{Binding DataContext.SetGroupCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="CommandParameter" Value="{Binding}" />
+            <Setter Property="IsChecked">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource Equals}" Mode="OneWay">
+                        <Binding />
+                        <Binding Path="DataContext.CurrentGroupName" RelativeSource="{RelativeSource AncestorType=Window}" />
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SavedViewItem" TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+            <Setter Property="Header" Value="{Binding}" />
+            <Setter Property="Command" Value="{Binding DataContext.ApplySavedViewCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
+            <Setter Property="CommandParameter" Value="{Binding}" />
+        </Style>
+
+        <Style x:Key="BarLabel" TargetType="TextBlock">
+            <Setter Property="Margin" Value="6,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="StatusLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextMuted}" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,18,0" />
+        </Style>
+    </Window.Resources>
 
     <Window.InputBindings>
         <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewCommand}" />
@@ -26,6 +96,7 @@
         <KeyBinding Key="H" Modifiers="Ctrl" Command="{Binding ReplaceCommand}" />
         <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding FillDownCommand}" />
         <KeyBinding Key="F7" Command="{Binding SpellingCommand}" />
+        <KeyBinding Key="F9" Command="{Binding CalculateCommand}" />
         <KeyBinding Key="F8" Modifiers="Alt" Command="{Binding MacrosCommand}" />
         <KeyBinding Key="Down" Modifiers="Alt+Shift" Command="{Binding MoveTaskDownCommand}" />
         <KeyBinding Key="F2" Modifiers="Control" Command="{Binding LinkCommand}" />
@@ -36,337 +107,519 @@
         <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding ZoomOutCommand}" />
     </Window.InputBindings>
 
-    <DockPanel>
-        <Ribbon DockPanel.Dock="Top" x:Name="MainRibbon" Background="{DynamicResource ChromeBackground}">
-            <Ribbon.QuickAccessToolBar>
-                <RibbonQuickAccessToolBar>
-                    <RibbonButton SmallImageSource="{infra:Glyph &#xE74E;}" Command="{Binding SaveCommand}" ToolTipTitle="Save (Ctrl+S)" />
-                    <RibbonButton SmallImageSource="{infra:Glyph &#xE7A7;}" Command="{Binding UndoCommand}" ToolTipTitle="Undo (Ctrl+Z)" />
-                    <RibbonButton SmallImageSource="{infra:Glyph &#xE7A6;}" Command="{Binding RedoCommand}" ToolTipTitle="Redo (Ctrl+Y)" />
-                </RibbonQuickAccessToolBar>
-            </Ribbon.QuickAccessToolBar>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="216" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-            <Ribbon.ApplicationMenu>
-                <RibbonApplicationMenu SmallImageSource="{infra:Glyph &#xE8A5;}" Label="File" DropDownOpened="OnFileMenuOpened">
-                    <RibbonApplicationMenuItem Header="New" ImageSource="{infra:Glyph &#xE8A5;}" Command="{Binding NewCommand}" />
-                    <RibbonApplicationMenuItem Header="New from Template..." ImageSource="{infra:Glyph &#xE8F4;}" Command="{Binding NewFromTemplateCommand}" />
-                    <RibbonApplicationMenuItem Header="Open..." ImageSource="{infra:Glyph &#xE8E5;}" Command="{Binding OpenCommand}" />
-                    <RibbonApplicationMenuItem Header="Open Sample Project" ImageSource="{infra:Glyph &#xE8B7;}" Command="{Binding OpenSampleCommand}" />
-                    <RibbonApplicationMenuItem Header="Save" ImageSource="{infra:Glyph &#xE74E;}" Command="{Binding SaveCommand}" />
-                    <RibbonApplicationMenuItem Header="Save As..." ImageSource="{infra:Glyph &#xE792;}" Command="{Binding SaveAsCommand}" />
-                    <RibbonApplicationMenuItem Header="Save as Template..." ImageSource="{infra:Glyph &#xE8F4;}" Command="{Binding SaveAsTemplateCommand}" />
-                    <RibbonSeparator />
-                    <RibbonApplicationMenuItem Header="Import..." ImageSource="{infra:Glyph &#xE8B5;}" Command="{Binding ImportCommand}" />
-                    <RibbonApplicationMenuItem Header="Export..." ImageSource="{infra:Glyph &#xEDE1;}" Command="{Binding ExportCommand}" />
-                    <RibbonApplicationMenuItem Header="Export as PDF..." ImageSource="{infra:Glyph &#xEA90;}" Command="{Binding ExportPdfCommand}" />
-                    <RibbonApplicationMenuItem Header="Export as Image..." ImageSource="{infra:Glyph &#xEB9F;}" Command="{Binding ExportImageCommand}" />
-                    <RibbonApplicationMenuItem Header="Print..." ImageSource="{infra:Glyph &#xE749;}" Command="{Binding PrintCommand}" />
-                    <RibbonSeparator />
-                    <RibbonApplicationMenuItem Header="Options..." ImageSource="{infra:Glyph &#xE713;}" Command="{Binding OptionsCommand}" />
-                    <RibbonApplicationMenu.FooterPaneContent>
-                        <RibbonButton Label="Exit" HorizontalAlignment="Right" Click="OnExit" />
-                    </RibbonApplicationMenu.FooterPaneContent>
-                </RibbonApplicationMenu>
-            </Ribbon.ApplicationMenu>
-
-            <RibbonTab Header="Task">
-                <RibbonGroup Header="Clipboard">
-                    <RibbonButton Label="Paste" LargeImageSource="{infra:Glyph &#xE77F;}" Command="{Binding PasteCommand}" ToolTipTitle="Paste tasks (Ctrl+V)" />
-                    <RibbonButton Label="Cut" SmallImageSource="{infra:Glyph &#xE8C6;}" Command="{Binding CutCommand}" ToolTipTitle="Cut tasks (Ctrl+X)" />
-                    <RibbonButton Label="Copy" SmallImageSource="{infra:Glyph &#xE8C8;}" Command="{Binding CopyCommand}" ToolTipTitle="Copy tasks (Ctrl+C)" />
-                </RibbonGroup>
-                <RibbonGroup Header="Schedule">
-                    <RibbonButton Label="Outdent" SmallImageSource="{infra:Glyph &#xE72B;}" Command="{Binding OutdentCommand}" ToolTipTitle="Outdent (Alt+Shift+Left)" />
-                    <RibbonButton Label="Indent" SmallImageSource="{infra:Glyph &#xE72A;}" Command="{Binding IndentCommand}" ToolTipTitle="Indent (Alt+Shift+Right)" />
-                    <RibbonButton Label="Move Up" SmallImageSource="{infra:Glyph &#xE74A;}" Command="{Binding MoveTaskUpCommand}" ToolTipTitle="Move task up (Alt+Shift+Up)" />
-                    <RibbonButton Label="Move Down" SmallImageSource="{infra:Glyph &#xE74B;}" Command="{Binding MoveTaskDownCommand}" ToolTipTitle="Move task down (Alt+Shift+Down)" />
-                    <RibbonButton Label="Link" SmallImageSource="{infra:Glyph &#xE71B;}" Command="{Binding LinkCommand}" ToolTipTitle="Link selected tasks (Ctrl+F2)" />
-                    <RibbonButton Label="Unlink" SmallImageSource="{infra:Glyph &#xE8D8;}" Command="{Binding UnlinkCommand}" ToolTipTitle="Unlink tasks (Ctrl+Shift+F2)" />
-                    <RibbonButton Label="Split Task" SmallImageSource="{infra:Glyph &#xE8C6;}" Command="{Binding SplitTaskCommand}" />
-                    <RibbonToggleButton Label="Split Mode" SmallImageSource="{infra:Glyph &#xE7AD;}" IsChecked="{Binding IsSplitMode}" ToolTipTitle="Click a bar to split it there" />
-                </RibbonGroup>
-                <RibbonGroup Header="Progress">
-                    <RibbonButton Label="0%" SmallImageSource="{infra:Glyph &#xF16B;}" Command="{Binding PercentCompleteCommand}" CommandParameter="0" ToolTipTitle="0% complete" />
-                    <RibbonButton Label="25%" SmallImageSource="{infra:Glyph &#xF16C;}" Command="{Binding PercentCompleteCommand}" CommandParameter="25" ToolTipTitle="25% complete" />
-                    <RibbonButton Label="50%" SmallImageSource="{infra:Glyph &#xF16D;}" Command="{Binding PercentCompleteCommand}" CommandParameter="50" ToolTipTitle="50% complete" />
-                    <RibbonButton Label="75%" SmallImageSource="{infra:Glyph &#xF16E;}" Command="{Binding PercentCompleteCommand}" CommandParameter="75" ToolTipTitle="75% complete" />
-                    <RibbonButton Label="100%" SmallImageSource="{infra:Glyph &#xF16F;}" Command="{Binding PercentCompleteCommand}" CommandParameter="100" ToolTipTitle="100% complete" />
-                    <RibbonButton Label="Mark on Track" SmallImageSource="{infra:Glyph &#xE73E;}" Command="{Binding MarkOnTrackCommand}" ToolTipTitle="Progress as scheduled up to the status date" />
-                    <RibbonButton Label="Update Tasks" SmallImageSource="{infra:Glyph &#xE70F;}" Command="{Binding UpdateTasksCommand}" ToolTipTitle="Enter % complete, actual and remaining duration, actual dates" />
-                </RibbonGroup>
-                <RibbonGroup Header="Tasks">
-                    <RibbonButton Label="Manual / Auto" LargeImageSource="{infra:Glyph &#xE718;}" Command="{Binding ToggleModeCommand}" ToolTipTitle="Switch selected tasks between manual and automatic scheduling" />
-                    <RibbonToggleButton Label="Inspect" SmallImageSource="{infra:Glyph &#xE721;}" IsChecked="{Binding ShowInspector}" ToolTipTitle="Task Inspector: what drives the selected task, and its problems" />
-                    <RibbonButton Label="Go to Task" SmallImageSource="{infra:Glyph &#xE8B0;}" Command="{Binding ScrollToTaskCommand}" ToolTipTitle="Scroll the chart to the selected task (Ctrl+Shift+F5)" />
-                    <RibbonButton Label="Add to Timeline" SmallImageSource="{infra:Glyph &#xE823;}" Command="{Binding AddToTimelineCommand}" />
-                </RibbonGroup>
-                <RibbonGroup Header="Insert">
-                    <RibbonButton Label="Task" LargeImageSource="{infra:Glyph &#xE710;}" Command="{Binding InsertTaskCommand}" ToolTipTitle="Insert task (Ins)" />
-                    <RibbonButton Label="Summary" SmallImageSource="{infra:Glyph &#xE8FD;}" Command="{Binding InsertSummaryCommand}" />
-                    <RibbonButton Label="Milestone" SmallImageSource="{infra:Glyph &#xE7C1;}" Command="{Binding InsertMilestoneCommand}" />
-                    <RibbonButton Label="Recurring Task" SmallImageSource="{infra:Glyph &#xE8EE;}" Command="{Binding RecurringTaskCommand}" />
-                </RibbonGroup>
-                <RibbonGroup Header="Editing">
-                    <RibbonButton Label="Find" SmallImageSource="{infra:Glyph &#xE721;}" Command="{Binding FindCommand}" ToolTipTitle="Find (Ctrl+F)" />
-                    <RibbonButton Label="Replace" SmallImageSource="{infra:Glyph &#xE8AB;}" Command="{Binding ReplaceCommand}" ToolTipTitle="Replace (Ctrl+H)" />
-                    <RibbonButton Label="Fill Down" SmallImageSource="{infra:Glyph &#xE74B;}" Command="{Binding FillDownCommand}" ToolTipTitle="Copy the top cell down the selected rows (Ctrl+D)" />
-                    <RibbonButton Label="Spelling" SmallImageSource="{infra:Glyph &#xF87B;}" Command="{Binding SpellingCommand}" ToolTipTitle="Check spelling (F7)" />
-                </RibbonGroup>
-                <RibbonGroup Header="Properties">
-                    <RibbonButton Label="Information" LargeImageSource="{infra:Glyph &#xE946;}" Command="{Binding TaskInformationCommand}" ToolTipTitle="Task Information (Shift+F2)" />
-                    <RibbonButton Label="Delete" SmallImageSource="{infra:Glyph &#xE74D;}" Command="{Binding DeleteTaskCommand}" ToolTipTitle="Delete selected tasks (Del)" />
-                    <RibbonButton Label="Open Hyperlink" SmallImageSource="{infra:Glyph &#xE71B;}" Command="{Binding OpenHyperlinkCommand}" ToolTipTitle="Open the selected task's hyperlink (set it in Task Information > Advanced)" />
-                </RibbonGroup>
-            </RibbonTab>
-
-            <RibbonTab Header="Resource">
-                <RibbonGroup Header="View">
-                    <RibbonButton Label="Resource Sheet" LargeImageSource="{infra:Glyph &#xE716;}" Click="OnShowResourceSheet" />
-                    <RibbonButton Label="Resource Usage" LargeImageSource="{infra:Glyph &#xE9F9;}" Click="OnShowResourceUsage" />
-                </RibbonGroup>
-                <RibbonGroup Header="Properties">
-                    <RibbonButton Label="Information" LargeImageSource="{infra:Glyph &#xE946;}" Command="{Binding ResourceInformationCommand}" ToolTipTitle="Resource Information (select a resource in the Resource Sheet)" />
-                    <RibbonButton Label="Delete Resource" SmallImageSource="{infra:Glyph &#xE74D;}" Command="{Binding DeleteResourceCommand}" />
-                    <RibbonButton Label="Budgets" SmallImageSource="{infra:Glyph &#xE8C7;}" Command="{Binding BudgetsCommand}" />
-                </RibbonGroup>
-                <RibbonGroup Header="Resource Pool">
-                    <RibbonButton Label="Share Resources" LargeImageSource="{infra:Glyph &#xE716;}" Command="{Binding ShareResourcesCommand}" ToolTipTitle="Use the resources of a resource pool file" />
-                    <RibbonButton Label="Refresh from Pool" SmallImageSource="{infra:Glyph &#xE72C;}" Command="{Binding RefreshPoolCommand}" />
-                    <RibbonButton Label="Update Pool" SmallImageSource="{infra:Glyph &#xE74E;}" Command="{Binding UpdatePoolCommand}" />
-                    <RibbonButton Label="Pool Over-allocations" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding PoolOverallocationsCommand}" ToolTipTitle="Check pool resources across every project that shares the pool" />
-                </RibbonGroup>                <RibbonGroup Header="Level">
-                    <RibbonButton Label="Leveling Options" LargeImageSource="{infra:Glyph &#xE9F5;}" Command="{Binding LevelResourcesCommand}" ToolTipTitle="Level resources, or clear leveling" />
-                </RibbonGroup>
-            </RibbonTab>
-
-            <RibbonTab Header="Report">
-                <RibbonGroup Header="Dashboards">
-                    <RibbonButton Label="Project Overview" LargeImageSource="{infra:Glyph &#xE9D2;}" Command="{Binding ReportsCommand}" CommandParameter="Project Overview" />
-                    <RibbonButton Label="Cost Overview" LargeImageSource="{infra:Glyph &#xE8C7;}" Command="{Binding ReportsCommand}" CommandParameter="Cost Overview" />
-                    <RibbonButton Label="Earned Value" LargeImageSource="{infra:Glyph &#xE9D9;}" Command="{Binding ReportsCommand}" CommandParameter="Earned Value" />
-                    <RibbonButton Label="Burndown" SmallImageSource="{infra:Glyph &#xE74B;}" Command="{Binding ReportsCommand}" CommandParameter="Burndown" />
-                    <RibbonButton Label="Cash Flow" SmallImageSource="{infra:Glyph &#xE8C7;}" Command="{Binding ReportsCommand}" CommandParameter="Cash Flow" />
-                    <RibbonButton Label="Work Overview" SmallImageSource="{infra:Glyph &#xE9D2;}" Command="{Binding ReportsCommand}" CommandParameter="Work Overview" />
-                    <RibbonButton Label="Cost Overruns" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Cost Overruns" />
-                </RibbonGroup>
-                <RibbonGroup Header="Tasks">
-                    <RibbonButton Label="Critical Tasks" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Critical Tasks" />
-                    <RibbonButton Label="Task Status" SmallImageSource="{infra:Glyph &#xE73E;}" Command="{Binding ReportsCommand}" CommandParameter="Task Status" />
-                    <RibbonButton Label="Milestones" SmallImageSource="{infra:Glyph &#xE7C1;}" Command="{Binding ReportsCommand}" CommandParameter="Milestones" />
-                    <RibbonButton Label="Late Tasks" SmallImageSource="{infra:Glyph &#xE823;}" Command="{Binding ReportsCommand}" CommandParameter="Late Tasks" />
-                    <RibbonButton Label="Upcoming Tasks" SmallImageSource="{infra:Glyph &#xE787;}" Command="{Binding ReportsCommand}" CommandParameter="Upcoming Tasks" />
-                    <RibbonButton Label="Slipping Tasks" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Slipping Tasks" />
-                </RibbonGroup>
-                <RibbonGroup Header="Resources">
-                    <RibbonButton Label="Resource Overview" SmallImageSource="{infra:Glyph &#xE716;}" Command="{Binding ReportsCommand}" CommandParameter="Resource Overview" />
-                    <RibbonButton Label="Who Does What" SmallImageSource="{infra:Glyph &#xE77B;}" Command="{Binding ReportsCommand}" CommandParameter="Who Does What" />
-                    <RibbonButton Label="Overallocated" SmallImageSource="{infra:Glyph &#xE7BA;}" Command="{Binding ReportsCommand}" CommandParameter="Overallocated Resources" />
-                </RibbonGroup>
-                <RibbonGroup Header="Project">
-                    <RibbonButton Label="Compare Projects" LargeImageSource="{infra:Glyph &#xE8F1;}" Command="{Binding CompareProjectsCommand}" ToolTipTitle="Compare this plan with an earlier version of it" />
-                </RibbonGroup>
-                <RibbonGroup Header="Custom">
-                    <RibbonButton Label="Custom Reports" LargeImageSource="{infra:Glyph &#xE70F;}" Command="{Binding ReportsCommand}" ToolTipTitle="Open the report window to design your own reports (New Report...)" />
-                </RibbonGroup>
-                <RibbonGroup Header="Export">
-                    <RibbonButton Label="PDF" LargeImageSource="{infra:Glyph &#xEA90;}" Command="{Binding ExportPdfCommand}" />
-                    <RibbonButton Label="Print" LargeImageSource="{infra:Glyph &#xE749;}" Command="{Binding PrintCommand}" ToolTipTitle="Print (Ctrl+P)" />
-                    <RibbonButton Label="Page Setup" SmallImageSource="{infra:Glyph &#xE7C3;}" Command="{Binding PageSetupCommand}" ToolTipTitle="Paper, margins, header, footer and legend" />
-                </RibbonGroup>
-            </RibbonTab>
-
-            <RibbonTab Header="Project">
-                <RibbonGroup Header="Properties">
-                    <RibbonButton Label="Project Information" LargeImageSource="{infra:Glyph &#xE946;}" Command="{Binding ProjectInformationCommand}" />
-                    <RibbonButton Label="Custom Fields" SmallImageSource="{infra:Glyph &#xE8EC;}" Command="{Binding CustomFieldsCommand}" />
-                    <RibbonButton Label="Change Working Time" SmallImageSource="{infra:Glyph &#xE787;}" Command="{Binding ChangeWorkingTimeCommand}" />
-                </RibbonGroup>
-                <RibbonGroup Header="Schedule">
-                    <RibbonButton Label="Set Baseline" LargeImageSource="{infra:Glyph &#xE9D9;}" Command="{Binding SetBaselineCommand}" />
-                    <RibbonButton Label="Clear Baseline" SmallImageSource="{infra:Glyph &#xE894;}" Command="{Binding ClearBaselineCommand}" />
-                </RibbonGroup>
-                <RibbonGroup Header="External Links">
-                    <RibbonButton Label="Link to Other Project" SmallImageSource="{infra:Glyph &#xE71B;}" Command="{Binding LinkExternalCommand}" ToolTipTitle="Make a task in another project file a predecessor of the selected task" />
-                    <RibbonButton Label="Refresh Links" SmallImageSource="{infra:Glyph &#xE72C;}" Command="{Binding RefreshExternalLinksCommand}" ToolTipTitle="Re-read the dates of predecessor tasks in other project files" />
-                </RibbonGroup>
-                <RibbonGroup Header="Status">
-                    <RibbonButton Label="Update Project" LargeImageSource="{infra:Glyph &#xE895;}" Command="{Binding UpdateProjectCommand}" ToolTipTitle="Mark work complete through a date, or reschedule unfinished work" />
-                </RibbonGroup>
-                <RibbonGroup Header="Subprojects">
-                    <RibbonButton Label="Insert Project" LargeImageSource="{infra:Glyph &#xE8F4;}" Command="{Binding InsertProjectCommand}" ToolTipTitle="Insert another project file as a subproject" />
-                    <RibbonButton Label="Refresh" SmallImageSource="{infra:Glyph &#xE72C;}" Command="{Binding RefreshSubprojectCommand}" ToolTipTitle="Reload the selected subproject from its file" />
-                    <RibbonButton Label="Save Subproject" SmallImageSource="{infra:Glyph &#xE74E;}" Command="{Binding SaveSubprojectCommand}" ToolTipTitle="Save the selected subproject back to its file" />
-                </RibbonGroup>                <RibbonGroup Header="Data Exchange">
-                    <RibbonButton Label="Import" SmallImageSource="{infra:Glyph &#xE8B5;}" Command="{Binding ImportCommand}" />
-                    <RibbonButton Label="Export" SmallImageSource="{infra:Glyph &#xEDE1;}" Command="{Binding ExportCommand}" />
-                </RibbonGroup>
-            </RibbonTab>
-
-            <RibbonTab Header="Format">
-                <RibbonGroup Header="Format">
-                    <RibbonButton Label="Text Styles" LargeImageSource="{infra:Glyph &#xE8D2;}" Command="{Binding TextStylesCommand}" ToolTipTitle="Fonts for bar text and for summary, critical, milestone and marked rows" />
-                    <RibbonButton Label="Gridlines" SmallImageSource="{infra:Glyph &#xE80A;}" Command="{Binding GridlinesCommand}" ToolTipTitle="Row and column lines, date lines" />
-                    <RibbonButton Label="Timescale" SmallImageSource="{infra:Glyph &#xE823;}" Command="{Binding TimescaleCommand}" ToolTipTitle="One to three timescale tiers with their units and labels" />
-                </RibbonGroup>
-                <RibbonGroup Header="Bar Styles">
-                    <RibbonButton Label="Bar Styles" LargeImageSource="{infra:Glyph &#xE790;}" Command="{Binding BarStylesCommand}" ToolTipTitle="Colours, shapes and texts of the Gantt bars" />
-                    <StackPanel Margin="4,2">
-                        <CheckBox Content="Critical Tasks" IsChecked="{Binding ShowCriticalPath}" Margin="0,2" />
-                        <CheckBox Content="Baseline" IsChecked="{Binding ShowBaseline}" Margin="0,2" />
-                        <CheckBox Content="Progress Lines" IsChecked="{Binding ShowProgressLines}" Margin="0,2" />
-                    </StackPanel>
-                </RibbonGroup>
-                <RibbonGroup Header="Task Path">
-                    <StackPanel Margin="4,2">
-                        <CheckBox Content="Predecessors" IsChecked="{Binding ShowPathPredecessors}" Margin="0,1" ToolTip="Highlight every task the selected task depends on" />
-                        <CheckBox Content="Driving Predecessors" IsChecked="{Binding ShowPathDrivingPredecessors}" Margin="0,1" ToolTip="Highlight the predecessors that set the selected task's dates" />
-                    </StackPanel>
-                    <StackPanel Margin="4,2">
-                        <CheckBox Content="Successors" IsChecked="{Binding ShowPathSuccessors}" Margin="0,1" ToolTip="Highlight every task that depends on the selected task" />
-                        <CheckBox Content="Driven Successors" IsChecked="{Binding ShowPathDrivenSuccessors}" Margin="0,1" ToolTip="Highlight the successors whose dates the selected task sets" />
-                    </StackPanel>
-                </RibbonGroup>
-                <RibbonGroup Header="Columns">
-                    <RibbonButton Label="Edit Table" LargeImageSource="{infra:Glyph &#xE8A1;}" Command="{Binding EditTableCommand}" ToolTipTitle="Insert, remove and arrange columns" />
-                    <RibbonButton Label="Custom Fields" SmallImageSource="{infra:Glyph &#xE8EC;}" Command="{Binding CustomFieldsCommand}" />
-                </RibbonGroup>
-            </RibbonTab>
-
-            <RibbonTab Header="View">
-                <RibbonGroup Header="Data">
-                    <StackPanel Margin="4,2">
-                        <StackPanel Orientation="Horizontal" Margin="0,1">
-                            <TextBlock Text="Table:" Width="44" VerticalAlignment="Center" />
-                            <ComboBox ItemsSource="{Binding TableNames}" SelectedItem="{Binding CurrentTableName}" Width="150" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,1">
-                            <TextBlock Text="Filter:" Width="44" VerticalAlignment="Center" />
-                            <ComboBox ItemsSource="{Binding FilterNames}" SelectedItem="{Binding CurrentFilterName}" Width="150" />
-                            <CheckBox Content="Highlight" IsChecked="{Binding HighlightFilter}" VerticalAlignment="Center" Margin="6,0,0,0" ToolTip="Highlight matching tasks instead of hiding the others" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,1">
-                            <TextBlock Text="Group:" Width="44" VerticalAlignment="Center" />
-                            <ComboBox ItemsSource="{Binding GroupNames}" SelectedItem="{Binding CurrentGroupName}" Width="150" />
+        <!-- ============================================================ sidebar -->
+        <Border Background="{StaticResource SidebarBackground}" BorderBrush="{StaticResource ChromeBorder}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Height="48" BorderBrush="{StaticResource BorderSoft}" BorderThickness="0,0,0,1" Padding="16,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Grid Width="26" Height="26">
+                            <Border Background="{StaticResource Navy}" CornerRadius="6.5" />
+                            <Border Background="White" CornerRadius="1.5" Width="9.5" Height="3.2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="5,6.8,0,0" />
+                            <Border Background="#8F9AEA" CornerRadius="1.5" Width="12.5" Height="3.2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="8.7,11.4,0,0" />
+                            <Border Background="#BFFFFFFF" CornerRadius="1.5" Width="8" Height="3.2" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="13,16,0,0" />
+                        </Grid>
+                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="P L A N O R A" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" />
+                            <TextBlock Text="Project Management" FontSize="11" Foreground="{StaticResource TextMuted}" Margin="0,1,0,0" />
                         </StackPanel>
                     </StackPanel>
-                    <RibbonButton Label="Sort" LargeImageSource="{infra:Glyph &#xE8CB;}" Command="{Binding SortCommand}" />
-                    <RibbonMenuButton Label="Define" LargeImageSource="{infra:Glyph &#xE70F;}">
-                        <RibbonMenuItem Header="Tables..." Command="{Binding EditTableCommand}" />
-                        <RibbonMenuItem Header="Filters..." Command="{Binding EditFilterCommand}" />
-                        <RibbonMenuItem Header="Groups..." Command="{Binding EditGroupCommand}" />
-                        <RibbonMenuItem Header="Custom Fields..." Command="{Binding CustomFieldsCommand}" />
-                        <RibbonMenuItem Header="Sort by ID" Command="{Binding SortByIdCommand}" />
-                        <RibbonMenuItem Header="Organizer..." Command="{Binding OrganizerCommand}" />
-                    </RibbonMenuButton>
-                </RibbonGroup>
-                <RibbonGroup Header="Zoom">
-                    <RibbonButton Label="Zoom In" SmallImageSource="{infra:Glyph &#xE8A3;}" Command="{Binding ZoomInCommand}" ToolTipTitle="Zoom in (Ctrl++, or Ctrl+wheel)" />
-                    <RibbonButton Label="Zoom Out" SmallImageSource="{infra:Glyph &#xE71F;}" Command="{Binding ZoomOutCommand}" ToolTipTitle="Zoom out (Ctrl+-, or Ctrl+wheel)" />
-                </RibbonGroup>
-                <RibbonGroup Header="Show">
-                    <StackPanel Margin="4,2">
-                        <CheckBox Content="Critical Path" IsChecked="{Binding ShowCriticalPath}" Margin="0,2" />
-                        <StackPanel Orientation="Horizontal" Margin="0,2">
-                            <CheckBox Content="Baseline" IsChecked="{Binding ShowBaseline}" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <ComboBox ItemsSource="{x:Static vm:MainViewModel.BaselineNames}" SelectedIndex="{Binding GanttBaselineIndex}" Width="90"
-                                      IsEnabled="{Binding ShowBaseline}" ToolTip="Which baseline to draw under the bars" />
-                        </StackPanel>
-                        <CheckBox Content="Progress Lines" IsChecked="{Binding ShowProgressLines}" Margin="0,2" />
-                    </StackPanel>
-                </RibbonGroup>
-                <RibbonGroup Header="Usage Details">
-                    <StackPanel Margin="4,2">
-                        <CheckBox Content="Actual Work" IsChecked="{Binding ShowActualWorkDetail}" Margin="0,1" />
-                        <CheckBox Content="Remaining Work" IsChecked="{Binding ShowRemainingWorkDetail}" Margin="0,1" />
-                        <CheckBox Content="Baseline Work" IsChecked="{Binding ShowBaselineWorkDetail}" Margin="0,1" />
-                    </StackPanel>
-                    <StackPanel Margin="4,2">
-                        <CheckBox Content="Cost" IsChecked="{Binding ShowCostDetail}" Margin="0,1" />
-                        <CheckBox Content="Actual Cost" IsChecked="{Binding ShowActualCostDetail}" Margin="0,1" />
-                        <CheckBox Content="Baseline Cost" IsChecked="{Binding ShowBaselineCostDetail}" Margin="0,1" />
-                    </StackPanel>
-                </RibbonGroup>
-                <RibbonGroup Header="Split View">
-                    <StackPanel Margin="4,2">
-                        <CheckBox Content="Timeline" IsChecked="{Binding ShowTimelinePane}" Margin="0,2" ToolTip="Show the Timeline above the view" />
-                        <CheckBox Content="Details (Task Form)" IsChecked="{Binding ShowTaskForm}" Margin="0,2" ToolTip="Show the selected task's details under the view" />
-                    </StackPanel>
-                </RibbonGroup>
-                <RibbonGroup Header="Macros">
-                    <RibbonButton Label="Macros" LargeImageSource="{infra:Glyph &#xE943;}" Command="{Binding MacrosCommand}" ToolTipTitle="Write and run macros (Alt+F8)" />
-                </RibbonGroup>
-                <RibbonGroup Header="Views">
-                    <RibbonButton Label="Save View" LargeImageSource="{infra:Glyph &#xE78C;}" Command="{Binding SaveViewCommand}" />
-                    <RibbonMenuButton Label="Saved Views" LargeImageSource="{infra:Glyph &#xE8A9;}" ItemsSource="{Binding SavedViewNames}">
-                        <RibbonMenuButton.ItemContainerStyle>
-                            <Style TargetType="RibbonMenuItem">
-                                <Setter Property="Command" Value="{Binding DataContext.ApplySavedViewCommand, RelativeSource={RelativeSource AncestorType=Window}}" />
-                                <Setter Property="CommandParameter" Value="{Binding}" />
-                                <Setter Property="Header" Value="{Binding}" />
-                            </Style>
-                        </RibbonMenuButton.ItemContainerStyle>
-                    </RibbonMenuButton>
-                </RibbonGroup>
-            </RibbonTab>
-        </Ribbon>
+                </Border>
 
-        <StatusBar DockPanel.Dock="Bottom" Background="{DynamicResource ChromeBackground}">
-            <StatusBarItem>
-                <TextBlock Text="{Binding Status}" />
-            </StatusBarItem>
-        </StatusBar>
+                <!-- Project card, save state, credit -->
+                <Border DockPanel.Dock="Bottom" BorderBrush="{StaticResource BorderSoft}" BorderThickness="0,1,0,0" Padding="14,12,14,10">
+                    <StackPanel>
+                        <DockPanel>
+                            <Border Width="30" Height="30" CornerRadius="7" Background="#ECEEF2" DockPanel.Dock="Left">
+                                <infra:LineIcon Kind="building" Size="16" Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ProjectTitle}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip="{Binding ProjectTitle}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                    <Ellipse x:Name="ProjectDot" Width="6" Height="6" Fill="{StaticResource Success}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                    <TextBlock FontSize="11" Foreground="{StaticResource TextMuted}">
+                                        <Run Text="Project status: " /><Run Text="{Binding ProjectStatusText, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </DockPanel>
+                        <Border Margin="0,10,0,0" Padding="9,6" BorderBrush="{StaticResource BorderSoft}" BorderThickness="1" CornerRadius="7" Background="White">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Right" Text="{Binding LastSavedText}" FontSize="11" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse x:Name="SideSaveDot" Width="6" Height="6" Fill="{StaticResource Success}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                    <TextBlock Text="{Binding SaveStateText}" FontSize="11.5" Foreground="{StaticResource TextSecondary}" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                        <TextBlock Text="Developed by Adeeb" FontSize="10.5" Foreground="{StaticResource TextFaint}" Margin="2,10,0,0" />
+                    </StackPanel>
+                </Border>
 
-        <!-- View bar, as in Microsoft Project -->
-        <Border DockPanel.Dock="Left" Background="{DynamicResource ViewBarBackground}" Width="92">
-            <ListBox ItemsSource="{Binding Views}" SelectedItem="{Binding CurrentViewOption}"
-                     Background="Transparent" BorderThickness="0" Foreground="White"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Padding" Value="4,8" />
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
-                                        <ContentPresenter />
-                                    </Border>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Bd" Property="Background" Value="#3C6AAE" />
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Bd" Property="Background" Value="#1E3F70" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type vm:ViewOption}">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" />
-                            <TextBlock Text="{Binding Title}" FontSize="11" TextWrapping="Wrap" TextAlignment="Center" Margin="0,3,0,0" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
+                <ListBox x:Name="Nav" ItemsSource="{Binding Source={StaticResource ViewsSource}}" SelectedItem="{Binding CurrentViewOption}"
+                         Background="Transparent" BorderThickness="0" Padding="10,6,10,6" FocusVisualStyle="{x:Null}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="Medium" Foreground="{StaticResource TextMuted}" Margin="8,12,0,6" />
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ListBox.GroupStyle>
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                            <Setter Property="Cursor" Value="Hand" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Grid Margin="0,1">
+                                            <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Height="30" Padding="10,0">
+                                                <ContentPresenter VerticalAlignment="Center" />
+                                            </Border>
+                                            <Border x:Name="Mark" Width="2" Height="14" CornerRadius="0,2,2,0" Background="{DynamicResource Accent}"
+                                                    HorizontalAlignment="Left" Margin="-10,0,0,0" Opacity="0" />
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverFill}" />
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                                            </Trigger>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSoft}" />
+                                                <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                                                <Setter Property="FontWeight" Value="Medium" />
+                                                <Setter TargetName="Mark" Property="Opacity" Value="1" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:ViewOption}">
+                            <StackPanel Orientation="Horizontal">
+                                <infra:LineIcon x:Name="Icon" Kind="{Binding Icon}" Size="17" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Title}" Margin="10,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                    <Setter TargetName="Icon" Property="Foreground" Value="{DynamicResource Accent}" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
         </Border>
 
-        <views:InspectorPanel DockPanel.Dock="Right" Width="300" Visibility="{Binding ShowInspector, Converter={StaticResource BoolToVisibility}}" />
-        <Grid>
+        <!-- ============================================================ main area -->
+        <Grid Grid.Column="1">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="48" />
+                <RowDefinition Height="44" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="28" />
             </Grid.RowDefinitions>
-            <Border x:Name="TimelinePane" Height="185" BorderBrush="{DynamicResource ChromeBorder}" BorderThickness="0,0,0,1"
-                    Visibility="{Binding ShowTimelinePane, Converter={StaticResource BoolToVisibility}}" />
-            <ContentControl x:Name="ViewHost" Grid.Row="1" />
-            <views:TaskFormPanel Grid.Row="2" Height="230" Visibility="{Binding ShowTaskDetailsForm, Converter={StaticResource BoolToVisibility}}" />
-            <views:ResourceFormPanel Grid.Row="2" Height="230" Visibility="{Binding ShowResourceForm, Converter={StaticResource BoolToVisibility}}" />
+
+            <!-- Top bar: breadcrumb, search, notifications, settings, account -->
+            <Border Background="White" BorderBrush="{StaticResource BorderSoft}" BorderThickness="0,0,0,1" Padding="16,0,14,0">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="SearchBox" Click="OnOpenPalette" Width="280" Height="30" Padding="10,0,6,0" Cursor="IBeam" Focusable="False"
+                                Background="#FAFAFB" HorizontalContentAlignment="Stretch" ToolTip="Search for any command or task (Ctrl+K)">
+                            <DockPanel>
+                                <Border DockPanel.Dock="Right" BorderBrush="{StaticResource ChromeBorder}" BorderThickness="1" CornerRadius="4" Padding="5,1" Background="White">
+                                    <TextBlock Text="Ctrl K" FontSize="10.5" Foreground="{StaticResource TextMuted}" />
+                                </Border>
+                                <infra:LineIcon Kind="find" Size="15" Foreground="{StaticResource TextMuted}" VerticalAlignment="Center" />
+                                <TextBlock Text="Search commands" Foreground="{StaticResource TextMuted}" FontSize="12.5" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            </DockPanel>
+                        </Button>
+                        <Grid Margin="8,0,0,0">
+                            <ToggleButton x:Name="BellButton" Style="{StaticResource CmdButton}" Width="30" Height="30" ToolTip="Schedule warnings">
+                                <infra:LineIcon Kind="bell" Size="17" />
+                            </ToggleButton>
+                            <Border x:Name="BellBadge" IsHitTestVisible="False" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,3,3,0"
+                                    MinWidth="14" Height="14" CornerRadius="7" Background="{StaticResource Warning}" BorderBrush="White" BorderThickness="1.5" Padding="2,0">
+                                <TextBlock Text="{Binding WarningCount}" FontSize="8.5" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Popup IsOpen="{Binding IsChecked, ElementName=BellButton}" StaysOpen="False" PlacementTarget="{Binding ElementName=BellButton}"
+                                   Placement="Bottom" HorizontalOffset="-300" AllowsTransparency="True" PopupAnimation="Fade">
+                                <ContentControl Template="{StaticResource MenuPopupPanel}">
+                                    <StackPanel Width="330">
+                                        <TextBlock Text="Schedule warnings" FontSize="11" FontWeight="Medium" Foreground="{StaticResource TextMuted}" Margin="10,7,10,5" />
+                                        <ItemsControl ItemsSource="{Binding Warnings}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type vm:ScheduleWarning}">
+                                                    <DockPanel Margin="10,6,10,6">
+                                                        <Ellipse x:Name="Dot" Width="7" Height="7" Fill="{StaticResource Warning}" VerticalAlignment="Top" Margin="0,5,10,0" />
+                                                        <StackPanel>
+                                                            <TextBlock Text="{Binding Title}" FontSize="12.5" TextWrapping="Wrap" />
+                                                            <TextBlock Text="{Binding Detail}" FontSize="11" Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                                        </StackPanel>
+                                                    </DockPanel>
+                                                    <DataTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding Level}" Value="red">
+                                                            <Setter TargetName="Dot" Property="Fill" Value="{StaticResource Critical}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Level}" Value="gray">
+                                                            <Setter TargetName="Dot" Property="Fill" Value="{StaticResource TextFaint}" />
+                                                        </DataTrigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        <TextBlock x:Name="NoWarnings" Text="No warnings. The schedule looks healthy." FontSize="12" Foreground="{StaticResource TextMuted}"
+                                                   Margin="10,8,10,10" Visibility="Collapsed" />
+                                    </StackPanel>
+                                </ContentControl>
+                            </Popup>
+                        </Grid>
+                        <Button Style="{StaticResource CmdButton}" Width="30" Height="30" Margin="2,0,0,0" Command="{Binding OptionsCommand}" ToolTip="Options">
+                            <infra:LineIcon Kind="settings" Size="17" />
+                        </Button>
+                        <Button x:Name="AccountButton" Click="OnAccountMenu" Focusable="False" Margin="6,0,0,0" Padding="0" BorderThickness="0" Background="Transparent"
+                                ToolTip="Planora · Developed by Adeeb">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Border Width="28" Height="28" CornerRadius="14" Background="{StaticResource Navy}">
+                                        <TextBlock Text="A" Foreground="White" FontSize="11.5" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ProjectParent}" FontWeight="Medium" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" />
+                        <TextBlock Text="/" Foreground="{StaticResource TextFaint}" Margin="8,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding ProjectTitle}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="520" />
+                        <Border Margin="10,0,0,0" BorderBrush="{StaticResource ChromeBorder}" BorderThickness="1" CornerRadius="5" Padding="6,1" VerticalAlignment="Center"
+                                Visibility="{Binding HasBaseline, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Baseline" FontSize="11" Foreground="{StaticResource TextSecondary}" />
+                        </Border>
+                        <Border Margin="6,0,0,0" BorderBrush="{StaticResource ChromeBorder}" BorderThickness="1" CornerRadius="5" Padding="6,1" VerticalAlignment="Center"
+                                Visibility="{Binding IsDirty, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Edited" FontSize="11" Foreground="{StaticResource Warning}" />
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Command bar: menus with every command, then the most used commands -->
+            <Border Grid.Row="1" Background="White" BorderBrush="{StaticResource ChromeBorder}" BorderThickness="0,0,0,1" Padding="10,0">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ToggleButton Style="{StaticResource SwitchToggle}" IsChecked="{Binding ShowCriticalPath}" Content="Critical path"
+                                      ToolTip="Show the critical path in red" />
+                        <Border BorderBrush="{StaticResource ChromeBorder}" BorderThickness="1" CornerRadius="7" Height="28" Margin="6,0,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource CmdButton}" Height="26" MinWidth="26" Command="{Binding ZoomOutCommand}" ToolTip="Zoom out (Ctrl+-)">
+                                    <infra:LineIcon Kind="minus" Size="15" />
+                                </Button>
+                                <TextBlock Text="{Binding ZoomLabel}" Width="62" TextAlignment="Center" FontSize="12" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" />
+                                <Button Style="{StaticResource CmdButton}" Height="26" MinWidth="26" Command="{Binding ZoomInCommand}" ToolTip="Zoom in (Ctrl++)">
+                                    <infra:LineIcon Kind="plus" Size="15" />
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel x:Name="CommandStrip" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Menu x:Name="MainMenu" VerticalAlignment="Center">
+                            <MenuItem Header="File" Click="OnFileMenu" />
+                            <MenuItem Header="Task">
+                                <MenuItem Header="Paste" Command="{Binding PasteCommand}" InputGestureText="Ctrl+V" />
+                                <MenuItem Header="Cut" Command="{Binding CutCommand}" InputGestureText="Ctrl+X" />
+                                <MenuItem Header="Copy" Command="{Binding CopyCommand}" InputGestureText="Ctrl+C" />
+                                <Separator />
+                                <MenuItem Header="Insert">
+                                    <MenuItem Header="Task" Command="{Binding InsertTaskCommand}" InputGestureText="Insert" />
+                                    <MenuItem Header="Summary Task" Command="{Binding InsertSummaryCommand}" />
+                                    <MenuItem Header="Milestone" Command="{Binding InsertMilestoneCommand}" />
+                                    <MenuItem Header="Recurring Task..." Command="{Binding RecurringTaskCommand}" />
+                                </MenuItem>
+                                <MenuItem Header="Indent" Command="{Binding IndentCommand}" InputGestureText="Alt+Shift+Right" />
+                                <MenuItem Header="Outdent" Command="{Binding OutdentCommand}" InputGestureText="Alt+Shift+Left" />
+                                <MenuItem Header="Move Up" Command="{Binding MoveTaskUpCommand}" InputGestureText="Alt+Shift+Up" />
+                                <MenuItem Header="Move Down" Command="{Binding MoveTaskDownCommand}" InputGestureText="Alt+Shift+Down" />
+                                <Separator />
+                                <MenuItem Header="Link Tasks" Command="{Binding LinkCommand}" InputGestureText="Ctrl+F2" />
+                                <MenuItem Header="Unlink Tasks" Command="{Binding UnlinkCommand}" InputGestureText="Ctrl+Shift+F2" />
+                                <MenuItem Header="Split Task..." Command="{Binding SplitTaskCommand}" />
+                                <MenuItem Header="Split Mode" IsCheckable="True" IsChecked="{Binding IsSplitMode}" />
+                                <Separator />
+                                <MenuItem Header="Progress">
+                                    <MenuItem Header="0% Complete" Command="{Binding PercentCompleteCommand}" CommandParameter="0" />
+                                    <MenuItem Header="25% Complete" Command="{Binding PercentCompleteCommand}" CommandParameter="25" />
+                                    <MenuItem Header="50% Complete" Command="{Binding PercentCompleteCommand}" CommandParameter="50" />
+                                    <MenuItem Header="75% Complete" Command="{Binding PercentCompleteCommand}" CommandParameter="75" />
+                                    <MenuItem Header="100% Complete" Command="{Binding PercentCompleteCommand}" CommandParameter="100" />
+                                    <Separator />
+                                    <MenuItem Header="Mark on Track" Command="{Binding MarkOnTrackCommand}" />
+                                    <MenuItem Header="Update Tasks..." Command="{Binding UpdateTasksCommand}" />
+                                </MenuItem>
+                                <MenuItem Header="Manually Schedule / Auto Schedule" Command="{Binding ToggleModeCommand}" />
+                                <MenuItem Header="Inspect" IsCheckable="True" IsChecked="{Binding ShowInspector}" />
+                                <MenuItem Header="Go To Selected Task" Command="{Binding ScrollToTaskCommand}" InputGestureText="Ctrl+Shift+F5" />
+                                <MenuItem Header="Add to Timeline" Command="{Binding AddToTimelineCommand}" />
+                                <Separator />
+                                <MenuItem Header="Find..." Command="{Binding FindCommand}" InputGestureText="Ctrl+F" />
+                                <MenuItem Header="Replace..." Command="{Binding ReplaceCommand}" InputGestureText="Ctrl+H" />
+                                <MenuItem Header="Fill Down" Command="{Binding FillDownCommand}" InputGestureText="Ctrl+D" />
+                                <MenuItem Header="Spelling..." Command="{Binding SpellingCommand}" InputGestureText="F7" />
+                                <Separator />
+                                <MenuItem Header="Task Information..." Command="{Binding TaskInformationCommand}" InputGestureText="Shift+F2" />
+                                <MenuItem Header="Open Hyperlink" Command="{Binding OpenHyperlinkCommand}" />
+                                <MenuItem Header="Delete Task" Command="{Binding DeleteTaskCommand}" InputGestureText="Del" />
+                            </MenuItem>
+                            <MenuItem Header="Resource">
+                                <MenuItem Header="Resource Sheet" Click="OnShowResourceSheet" />
+                                <MenuItem Header="Resource Usage" Click="OnShowResourceUsage" />
+                                <MenuItem Header="Team Planner" Click="OnShowTeamPlanner" />
+                                <Separator />
+                                <MenuItem Header="Resource Information..." Command="{Binding ResourceInformationCommand}" />
+                                <MenuItem Header="Delete Resource" Command="{Binding DeleteResourceCommand}" />
+                                <MenuItem Header="Budgets..." Command="{Binding BudgetsCommand}" />
+                                <Separator />
+                                <MenuItem Header="Share Resources..." Command="{Binding ShareResourcesCommand}" />
+                                <MenuItem Header="Refresh from Pool" Command="{Binding RefreshPoolCommand}" />
+                                <MenuItem Header="Update Pool" Command="{Binding UpdatePoolCommand}" />
+                                <MenuItem Header="Pool Overallocations..." Command="{Binding PoolOverallocationsCommand}" />
+                                <Separator />
+                                <MenuItem Header="Level Resources..." Command="{Binding LevelResourcesCommand}" />
+                            </MenuItem>
+                            <MenuItem Header="Report">
+                                <MenuItem Header="Dashboards">
+                                    <MenuItem Header="Project Overview" Command="{Binding ReportsCommand}" CommandParameter="Project Overview" />
+                                    <MenuItem Header="Cost Overview" Command="{Binding ReportsCommand}" CommandParameter="Cost Overview" />
+                                    <MenuItem Header="Earned Value" Command="{Binding ReportsCommand}" CommandParameter="Earned Value" />
+                                    <MenuItem Header="Burndown" Command="{Binding ReportsCommand}" CommandParameter="Burndown" />
+                                    <MenuItem Header="Cash Flow" Command="{Binding ReportsCommand}" CommandParameter="Cash Flow" />
+                                    <MenuItem Header="Work Overview" Command="{Binding ReportsCommand}" CommandParameter="Work Overview" />
+                                    <MenuItem Header="Cost Overruns" Command="{Binding ReportsCommand}" CommandParameter="Cost Overruns" />
+                                </MenuItem>
+                                <MenuItem Header="Tasks">
+                                    <MenuItem Header="Critical Tasks" Command="{Binding ReportsCommand}" CommandParameter="Critical Tasks" />
+                                    <MenuItem Header="Task Status" Command="{Binding ReportsCommand}" CommandParameter="Task Status" />
+                                    <MenuItem Header="Milestones" Command="{Binding ReportsCommand}" CommandParameter="Milestones" />
+                                    <MenuItem Header="Late Tasks" Command="{Binding ReportsCommand}" CommandParameter="Late Tasks" />
+                                    <MenuItem Header="Upcoming Tasks" Command="{Binding ReportsCommand}" CommandParameter="Upcoming Tasks" />
+                                    <MenuItem Header="Slipping Tasks" Command="{Binding ReportsCommand}" CommandParameter="Slipping Tasks" />
+                                </MenuItem>
+                                <MenuItem Header="Resources">
+                                    <MenuItem Header="Resource Overview" Command="{Binding ReportsCommand}" CommandParameter="Resource Overview" />
+                                    <MenuItem Header="Who Does What" Command="{Binding ReportsCommand}" CommandParameter="Who Does What" />
+                                    <MenuItem Header="Overallocated Resources" Command="{Binding ReportsCommand}" CommandParameter="Overallocated Resources" />
+                                </MenuItem>
+                                <MenuItem Header="Custom Reports..." Command="{Binding ReportsCommand}" />
+                                <MenuItem Header="Compare Projects..." Command="{Binding CompareProjectsCommand}" />
+                                <Separator />
+                                <MenuItem Header="Export as PDF..." Command="{Binding ExportPdfCommand}" />
+                                <MenuItem Header="Export as Image..." Command="{Binding ExportImageCommand}" />
+                                <MenuItem Header="Print..." Command="{Binding PrintCommand}" InputGestureText="Ctrl+P" />
+                                <MenuItem Header="Page Setup..." Command="{Binding PageSetupCommand}" />
+                            </MenuItem>
+                            <MenuItem Header="Project">
+                                <MenuItem Header="Project Information..." Command="{Binding ProjectInformationCommand}" />
+                                <MenuItem Header="Custom Fields..." Command="{Binding CustomFieldsCommand}" />
+                                <MenuItem Header="Change Working Time..." Command="{Binding ChangeWorkingTimeCommand}" />
+                                <MenuItem Header="Calculate Project" Command="{Binding CalculateCommand}" InputGestureText="F9" />
+                                <Separator />
+                                <MenuItem Header="Set Baseline..." Command="{Binding SetBaselineCommand}" />
+                                <MenuItem Header="Clear Baseline..." Command="{Binding ClearBaselineCommand}" />
+                                <MenuItem Header="Update Project..." Command="{Binding UpdateProjectCommand}" />
+                                <Separator />
+                                <MenuItem Header="Link to Other Project..." Command="{Binding LinkExternalCommand}" />
+                                <MenuItem Header="Refresh External Links" Command="{Binding RefreshExternalLinksCommand}" />
+                                <MenuItem Header="Insert Subproject..." Command="{Binding InsertProjectCommand}" />
+                                <MenuItem Header="Refresh Subproject" Command="{Binding RefreshSubprojectCommand}" />
+                                <MenuItem Header="Save Subproject" Command="{Binding SaveSubprojectCommand}" />
+                                <Separator />
+                                <MenuItem Header="Import..." Command="{Binding ImportCommand}" />
+                                <MenuItem Header="Export..." Command="{Binding ExportCommand}" />
+                            </MenuItem>
+                            <MenuItem Header="View">
+                                <MenuItem Header="Table" ItemsSource="{Binding TableNames}" ItemContainerStyle="{StaticResource TableItem}" />
+                                <MenuItem Header="Filter" ItemsSource="{Binding FilterNames}" ItemContainerStyle="{StaticResource FilterItem}" />
+                                <MenuItem Header="Group" ItemsSource="{Binding GroupNames}" ItemContainerStyle="{StaticResource GroupNameItem}" />
+                                <MenuItem Header="Highlight Filter Matches" IsCheckable="True" IsChecked="{Binding HighlightFilter}" />
+                                <MenuItem Header="Sort..." Command="{Binding SortCommand}" />
+                                <MenuItem Header="Define">
+                                    <MenuItem Header="Tables..." Command="{Binding EditTableCommand}" />
+                                    <MenuItem Header="Filters..." Command="{Binding EditFilterCommand}" />
+                                    <MenuItem Header="Groups..." Command="{Binding EditGroupCommand}" />
+                                    <MenuItem Header="Custom Fields..." Command="{Binding CustomFieldsCommand}" />
+                                    <MenuItem Header="Sort by ID" Command="{Binding SortByIdCommand}" />
+                                    <MenuItem Header="Organizer..." Command="{Binding OrganizerCommand}" />
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem Header="Expand All" Command="{Binding ExpandAllCommand}" />
+                                <MenuItem Header="Collapse All" Command="{Binding CollapseAllCommand}" />
+                                <MenuItem Header="Zoom In" Command="{Binding ZoomInCommand}" InputGestureText="Ctrl++" />
+                                <MenuItem Header="Zoom Out" Command="{Binding ZoomOutCommand}" InputGestureText="Ctrl+-" />
+                                <Separator />
+                                <MenuItem Header="Critical Path" IsCheckable="True" IsChecked="{Binding ShowCriticalPath}" />
+                                <MenuItem Header="Baseline" IsCheckable="True" IsChecked="{Binding ShowBaseline}" />
+                                <MenuItem x:Name="BaselineMenu" Header="Baseline to Show" />
+                                <MenuItem Header="Progress Lines" IsCheckable="True" IsChecked="{Binding ShowProgressLines}" />
+                                <MenuItem Header="Usage Details">
+                                    <MenuItem Header="Actual Work" IsCheckable="True" IsChecked="{Binding ShowActualWorkDetail}" />
+                                    <MenuItem Header="Remaining Work" IsCheckable="True" IsChecked="{Binding ShowRemainingWorkDetail}" />
+                                    <MenuItem Header="Baseline Work" IsCheckable="True" IsChecked="{Binding ShowBaselineWorkDetail}" />
+                                    <MenuItem Header="Cost" IsCheckable="True" IsChecked="{Binding ShowCostDetail}" />
+                                    <MenuItem Header="Actual Cost" IsCheckable="True" IsChecked="{Binding ShowActualCostDetail}" />
+                                    <MenuItem Header="Baseline Cost" IsCheckable="True" IsChecked="{Binding ShowBaselineCostDetail}" />
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem Header="Timeline Pane" IsCheckable="True" IsChecked="{Binding ShowTimelinePane}" />
+                                <MenuItem Header="Details Pane" IsCheckable="True" IsChecked="{Binding ShowTaskForm}" />
+                                <Separator />
+                                <MenuItem Header="Save View..." Command="{Binding SaveViewCommand}" />
+                                <MenuItem Header="Saved Views" ItemsSource="{Binding SavedViewNames}" ItemContainerStyle="{StaticResource SavedViewItem}" />
+                                <MenuItem Header="Macros..." Command="{Binding MacrosCommand}" InputGestureText="Alt+F8" />
+                            </MenuItem>
+                            <MenuItem Header="Format">
+                                <MenuItem Header="Text Styles..." Command="{Binding TextStylesCommand}" />
+                                <MenuItem Header="Bar Styles..." Command="{Binding BarStylesCommand}" />
+                                <MenuItem Header="Gridlines..." Command="{Binding GridlinesCommand}" />
+                                <MenuItem Header="Timescale..." Command="{Binding TimescaleCommand}" />
+                                <Separator />
+                                <MenuItem Header="Task Path">
+                                    <MenuItem Header="Predecessors" IsCheckable="True" IsChecked="{Binding ShowPathPredecessors}" />
+                                    <MenuItem Header="Driving Predecessors" IsCheckable="True" IsChecked="{Binding ShowPathDrivingPredecessors}" />
+                                    <MenuItem Header="Successors" IsCheckable="True" IsChecked="{Binding ShowPathSuccessors}" />
+                                    <MenuItem Header="Driven Successors" IsCheckable="True" IsChecked="{Binding ShowPathDrivenSuccessors}" />
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem Header="Columns..." Command="{Binding EditTableCommand}" />
+                                <MenuItem Header="Custom Fields..." Command="{Binding CustomFieldsCommand}" />
+                            </MenuItem>
+                            <MenuItem Header="Help">
+                                <MenuItem Header="Search Commands" Click="OnOpenPalette" InputGestureText="Ctrl+K" />
+                                <MenuItem Header="Open Sample Project" Command="{Binding OpenSampleCommand}" />
+                                <Separator />
+                                <MenuItem Header="About Planora" Click="OnAbout" />
+                            </MenuItem>
+                        </Menu>
+
+                        <Rectangle Style="{StaticResource CmdSeparator}" />
+                        <Button Style="{StaticResource CmdButton}" Command="{Binding UndoCommand}" ToolTip="Undo (Ctrl+Z)">
+                            <infra:LineIcon Kind="undo" />
+                        </Button>
+                        <Button Style="{StaticResource CmdButton}" Command="{Binding RedoCommand}" ToolTip="Redo (Ctrl+Y)">
+                            <infra:LineIcon Kind="redo" />
+                        </Button>
+                        <Rectangle Style="{StaticResource CmdSeparator}" />
+                        <Button Style="{StaticResource CmdButton}" Command="{Binding CalculateCommand}" ToolTip="Recalculate the schedule (F9)">
+                            <StackPanel Orientation="Horizontal">
+                                <infra:LineIcon Kind="schedule" />
+                                <TextBlock Text="Schedule" Style="{StaticResource BarLabel}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource CmdButton}" Command="{Binding UpdateTasksCommand}" ToolTip="Update progress on the selected tasks">
+                            <StackPanel Orientation="Horizontal">
+                                <infra:LineIcon Kind="update" />
+                                <TextBlock x:Name="UpdateLabel" Text="Update Tasks" Style="{StaticResource BarLabel}" />
+                            </StackPanel>
+                        </Button>
+                        <ToggleButton Style="{StaticResource CmdButton}" IsChecked="{Binding ShowInspector}" ToolTip="Inspect: what drives the selected task's dates">
+                            <infra:LineIcon Kind="inspect" />
+                        </ToggleButton>
+                        <Rectangle Style="{StaticResource CmdSeparator}" />
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding InsertTaskCommand}" ToolTip="Insert a task above the selection (Insert)">
+                            <StackPanel Orientation="Horizontal">
+                                <infra:LineIcon Kind="plus" />
+                                <TextBlock Text="Add Task" Style="{StaticResource BarLabel}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource CmdButton}" Margin="4,0,0,0" Command="{Binding InsertMilestoneCommand}" ToolTip="Insert a milestone">
+                            <StackPanel Orientation="Horizontal">
+                                <infra:LineIcon Kind="milestone" />
+                                <TextBlock x:Name="MilestoneLabel" Text="Milestone" Style="{StaticResource BarLabel}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource CmdButton}" Command="{Binding RecurringTaskCommand}" ToolTip="Insert a recurring task">
+                            <infra:LineIcon Kind="recurring" />
+                        </Button>
+                        <Rectangle Style="{StaticResource CmdSeparator}" />
+                        <Button Style="{StaticResource CmdButton}" Command="{Binding ScrollToTaskCommand}" ToolTip="Go to the selected task (Ctrl+Shift+F5)">
+                            <infra:LineIcon Kind="goto" />
+                        </Button>
+                        <Button Style="{StaticResource CmdButton}" Command="{Binding FindCommand}" ToolTip="Find (Ctrl+F)">
+                            <infra:LineIcon Kind="find" />
+                        </Button>
+                        <Button x:Name="FilterButton" Style="{StaticResource CmdButton}" Click="OnFilterMenu" ToolTip="Filter the tasks">
+                            <StackPanel Orientation="Horizontal">
+                                <infra:LineIcon Kind="filter" />
+                                <TextBlock x:Name="FilterLabel" Text="{Binding CurrentFilterName}" Style="{StaticResource BarLabel}" MaxWidth="140" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Button>
+                        <Button Style="{StaticResource CmdButton}" Command="{Binding TaskInformationCommand}" ToolTip="Task properties (Shift+F2)">
+                            <infra:LineIcon Kind="props" />
+                        </Button>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Views -->
+            <DockPanel Grid.Row="2" Background="White">
+                <views:InspectorPanel DockPanel.Dock="Right" Width="300" Visibility="{Binding ShowInspector, Converter={StaticResource BoolToVisibility}}" />
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Border x:Name="TimelinePane" Height="185" BorderBrush="{StaticResource ChromeBorder}" BorderThickness="0,0,0,1"
+                            Visibility="{Binding ShowTimelinePane, Converter={StaticResource BoolToVisibility}}" />
+                    <ContentControl x:Name="ViewHost" Grid.Row="1" Focusable="False" />
+                    <views:TaskFormPanel Grid.Row="2" Height="230" Visibility="{Binding ShowTaskDetailsForm, Converter={StaticResource BoolToVisibility}}" />
+                    <views:ResourceFormPanel Grid.Row="2" Height="230" Visibility="{Binding ShowResourceForm, Converter={StaticResource BoolToVisibility}}" />
+                </Grid>
+            </DockPanel>
+
+            <!-- Status bar -->
+            <Border Grid.Row="3" Background="{StaticResource SidebarBackground}" BorderBrush="{StaticResource ChromeBorder}" BorderThickness="0,1,0,0" Padding="14,0">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="SaveDot" Width="6" Height="6" Fill="{StaticResource Success}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBlock Text="{Binding SaveStateText}" FontSize="11.5" Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" Margin="0,0,18,0" />
+                        <TextBlock FontSize="11.5" VerticalAlignment="Center">
+                            <Run Text="Last saved: " Foreground="{StaticResource TextMuted}" /><Run Text="{Binding LastSavedText, Mode=OneWay}" Foreground="{StaticResource TextSecondary}" />
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource StatusLabel}">
+                            <Run Text="Tasks " /><Run Text="{Binding TaskCount, Mode=OneWay}" Foreground="{StaticResource TextPrimary}" FontWeight="Medium" />
+                        </TextBlock>
+                        <Ellipse Width="6" Height="6" Fill="{StaticResource Critical}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                        <TextBlock Style="{StaticResource StatusLabel}">
+                            <Run Text="Critical " /><Run Text="{Binding CriticalCount, Mode=OneWay}" Foreground="{StaticResource TextPrimary}" FontWeight="Medium" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource StatusLabel}">
+                            <Run Text="Project duration " /><Run Text="{Binding ProjectDurationText, Mode=OneWay}" Foreground="{StaticResource TextPrimary}" FontWeight="Medium" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource StatusLabel}">
+                            <Run Text="Finish " /><Run Text="{Binding FinishText, Mode=OneWay}" Foreground="{StaticResource TextPrimary}" FontWeight="Medium" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource StatusLabel}">
+                            <Run Text="Resources " /><Run Text="{Binding ResourceCount, Mode=OneWay}" Foreground="{StaticResource TextPrimary}" FontWeight="Medium" />
+                        </TextBlock>
+                        <TextBlock x:Name="StatusMessage" Text="{Binding Status}" Style="{StaticResource StatusLabel}" TextTrimming="CharacterEllipsis" MaxWidth="420"
+                                   Foreground="{StaticResource TextFaint}" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
         </Grid>
-    </DockPanel>
+    </Grid>
 </Window>
