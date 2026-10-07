@@ -472,9 +472,11 @@ public sealed partial class MainViewModel : ObservableObject
             var source = ChooseRecoveredVersion(path);
             if (!path.EndsWith(ProjectFile.Extension, StringComparison.OrdinalIgnoreCase))
             {
-                Document = new ProjectDocument(LoadAnyProject(path));
+                var notes = new List<string>();
+                Document = new ProjectDocument(LoadAnyProject(path, notes));
                 Status = $"Opened {Path.GetFileName(path)} (save it as a Planora project to keep changes)";
                 AddRecentFile(path);
+                ShowImportNotes(path, notes);
                 return;
             }
             Document = source == path ? ProjectDocument.Open(path) : ProjectDocument.Recover(source, path);

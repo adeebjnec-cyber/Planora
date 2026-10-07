@@ -33,7 +33,10 @@ public static class ForeignFormats
     }
 
     /// <summary>Reads any file MPXJ understands (e.g. .mpp) into a Planora project.</summary>
-    public static Project Load(string path)
+    public static Project Load(string path) => Load(path, null);
+
+    /// <summary>Loads a file through MPXJ; import problems are added to <paramref name="warnings"/>.</summary>
+    public static Project Load(string path, ICollection<string>? warnings)
     {
         Mpxj.ProjectFile? file;
         try
@@ -52,7 +55,7 @@ public static class ForeignFormats
         using var xml = new MemoryStream();
         new Mpxj.MSPDIWriter { MicrosoftProjectCompatibleOutput = true }.Write(file, xml);
         xml.Position = 0;
-        var project = MspdiFile.Read(XDocument.Load(xml));
+        var project = MspdiFile.Read(XDocument.Load(xml), warnings);
         if (string.IsNullOrWhiteSpace(project.Name) || project.Name.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
             project.Name = Path.GetFileNameWithoutExtension(path);
         return project;

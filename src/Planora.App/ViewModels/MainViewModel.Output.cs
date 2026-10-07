@@ -27,7 +27,7 @@ public sealed partial class MainViewModel
         "|Primavera P6 XML (*.xml)|*.xml|Primavera P6 XER (*.xer)|*.xer";
 
     /// <summary>Reads any supported file into a project (used by Open and Import).</summary>
-    internal static Project LoadAnyProject(string path)
+    internal static Project LoadAnyProject(string path, ICollection<string>? warnings = null)
     {
         var name = Path.GetFileNameWithoutExtension(path);
         return Path.GetExtension(path).ToLowerInvariant() switch
@@ -35,22 +35,38 @@ public sealed partial class MainViewModel
             ".planora" => ProjectFile.Load(path),
             ".xlsx" => SpreadsheetFile.Import(SpreadsheetFile.LoadXlsx(path), name),
             ".csv" => SpreadsheetFile.Import(SpreadsheetFile.LoadCsv(path), name),
-            ".xml" => LoadXml(path),
-            _ => ForeignFormats.Load(path),
+            ".xml" => LoadXml(path, warnings),
+            _ => ForeignFormats.Load(path, warnings),
         };
 
         // Microsoft Project XML is read directly; other XML formats (e.g. Primavera P6) go through MPXJ.
-        static Project LoadXml(string path)
+        static Project LoadXml(string path, ICollection<string>? warnings)
         {
             try
             {
-                return MspdiFile.Load(path);
+                return MspdiFile.Load(path, warnings);
             }
             catch (InvalidDataException)
             {
-                return ForeignFormats.Load(path);
+                return ForeignFormats.Load(path, warnings);
             }
         }
+    }
+
+    /// <summary>Tells the user what an import repaired or skipped (shown once, after the file opens).</summary>
+    internal void ShowImportNotes(string path, IReadOnlyCollection<string> notes)
+    {
+        if (notes.Count == 0)
+            return;
+        Status += $"  ·  {notes.Count} import note(s)";
+        if (IsHeadless)
+            return;
+        var shown = notes.Take(20).Select(n => "• " + n).ToList();
+        if (notes.Count > 20)
+            shown.Add($"... and {notes.Count - 20} more.");
+        MessageBox.Show(Application.Current.MainWindow,
+            $"{Path.GetFileName(path)} opened, with these notes:{Environment.NewLine}{Environment.NewLine}{string.Join(Environment.NewLine, shown)}",
+            "Import notes", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     /// <summary>Supplies the element showing the current view (set by the main window), for printing non-Gantt views.</summary>
@@ -102,10 +118,12 @@ public sealed partial class MainViewModel
                 ImportSpreadsheet(path);
                 return;
             }
-            var project = LoadAnyProject(path);
+            var notes = new List<string>();
+            var project = LoadAnyProject(path, notes);
 
             Document = new ProjectDocument(project);
             Status = $"Imported {Path.GetFileName(path)}";
+            ShowImportNotes(path, notes);
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Xml.XmlException or InvalidOperationException)
         {

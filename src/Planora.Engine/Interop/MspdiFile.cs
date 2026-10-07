@@ -31,7 +31,10 @@ public static class MspdiFile
         Write(project).Save(writer);
     }
 
-    public static Project Load(string path)
+    public static Project Load(string path) => Load(path, null);
+
+    /// <summary>Loads a file; problems found in it (dropped links, missing calendars...) are added to <paramref name="warnings"/>.</summary>
+    public static Project Load(string path, ICollection<string>? warnings)
     {
         XDocument doc;
         try
@@ -42,7 +45,7 @@ public static class MspdiFile
         {
             throw new InvalidDataException($"The file is not valid XML: {ex.Message}", ex);
         }
-        return Read(doc);
+        return Read(doc, warnings);
     }
 
     // ------------------------------------------------------------------ writing
@@ -405,8 +408,16 @@ public static class MspdiFile
 
     // ------------------------------------------------------------------ reading
 
-    public static Project Read(XDocument doc)
+    public static Project Read(XDocument doc) => Read(doc, null);
+
+    /// <summary>
+    /// Reads Microsoft Project XML. Anything that cannot be imported as written (a link to a task that
+    /// is not in the file, a missing calendar, inconsistent summary flags...) is repaired or skipped and
+    /// described in <paramref name="warnings"/>.
+    /// </summary>
+    public static Project Read(XDocument doc, ICollection<string>? warnings)
     {
+        var notes = warnings ?? new List<string>();
         var root = doc.Root;
         if (root is null || root.Name.LocalName != "Project")
             throw new InvalidDataException("This is not a Microsoft Project XML file (no <Project> root).");
@@ -456,6 +467,8 @@ public static class MspdiFile
             project.Calendar = pc;
         else if (project.Calendars.Count > 0)
             project.Calendar = project.Calendars[0];
+        if (Int(root, "CalendarUID") is { } wanted && !calendars.ContainsKey(wanted))
+            notes.Add($"The project calendar (UID {wanted}) is not in the file; the {project.Calendar.Name} calendar is used.");
         if (!project.Calendars.Contains(project.Calendar))
             project.Calendars.Insert(0, project.Calendar);
 
@@ -515,14 +528,22 @@ public static class MspdiFile
             }
         }
 
-        // Tasks (skipping the project summary task UID 0 and blank rows).
+        // Tasks (skipping the project summary task, outline level 0, and blank rows).
         var links = new List<(ProjectTask Task, XElement Link)>();
         var summaries = new HashSet<ProjectTask>();
+        int progressWithoutDates = 0, assignmentsWithoutWork = 0;
         foreach (var t in Children(root, "Tasks", "Task").OrderBy(t => Int(t, "ID") ?? 0))
         {
             int uid = Int(t, "UID") ?? 0;
-            if (uid == 0 || Text(t, "IsNull") == "1")
+            // Microsoft Project writes its project summary row as task 0 at outline level 0; other files
+            // may use UID 0 for an ordinary task.
+            if (Int(t, "OutlineLevel") == 0 || uid == 0 && Int(t, "OutlineLevel") is null || Text(t, "IsNull") == "1")
                 continue;
+            if (project.GetTask(uid) is not null)
+            {
+                notes.Add($"Two tasks have the unique ID {uid}; the second ('{Text(t, "Name")}') was skipped.");
+                continue;
+            }
             var task = project.RestoreTask(uid, Text(t, "Name") ?? "", Math.Max(1, Int(t, "OutlineLevel") ?? 1));
             if (Text(t, "Summary") == "1")
                 summaries.Add(task);
@@ -552,6 +573,15 @@ public static class MspdiFile
             task.PercentComplete = Math.Clamp(Double(t, "PercentComplete") ?? 0, 0, 100);
             task.ActualStart = Date(t, "ActualStart");
             task.ActualFinish = Date(t, "ActualFinish");
+            // Progress without actual dates (files written by other tools): as Microsoft Project does, the
+            // task started on its scheduled start and, when complete, finished on its scheduled finish.
+            if (task.PercentComplete > 0 && task.ActualStart is null && Text(t, "Summary") != "1")
+            {
+                task.ActualStart = Date(t, "Start");
+                progressWithoutDates++;
+            }
+            if (task.PercentComplete >= 100 && task.ActualFinish is null && Text(t, "Summary") != "1")
+                task.ActualFinish = Date(t, "Finish");
             task.FixedCost = Cents(t, "FixedCost") ?? 0;
             task.FixedCostAccrual = ReadAccrual(Int(t, "FixedCostAccrual"));
             task.Notes = Text(t, "Notes") ?? "";
@@ -573,7 +603,7 @@ public static class MspdiFile
                 links.Add((task, link));
         }
         project.RebuildHierarchy();
-        foreach (var summary in summaries)
+        foreach (var summary in summaries.Where(s => s.IsSummary))
             summary.DurationMinutes = 0;
 
         foreach (var (task, link) in links)
@@ -584,7 +614,13 @@ public static class MspdiFile
                 continue;
             }
             if (Int(link, "PredecessorUID") is not { } predUid || project.GetTask(predUid) is not { } pred)
+            {
+                int? missing = Int(link, "PredecessorUID");
+                notes.Add(missing == 0 && Children(root, "Tasks", "Task").Any(x => Int(x, "UID") == 0 && Int(x, "OutlineLevel") == 0)
+                    ? $"'{task.Name}' was linked to the project summary task; Microsoft Project does not allow that, so the link was dropped."
+                    : $"'{task.Name}' was linked to task UID {missing?.ToString(CultureInfo.InvariantCulture) ?? "(none)"}, which is not in the file; the link was dropped.");
                 continue;
+            }
             var type = (Int(link, "Type") ?? 1) switch
             {
                 0 => LinkType.FinishToFinish,
@@ -607,9 +643,10 @@ public static class MspdiFile
                     created.LagFormat = LagFormat.ElapsedTime;
                 }
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException ex)
             {
                 // Links Planora does not allow (e.g. between a summary and its own subtask) are skipped.
+                notes.Add($"The link from '{pred.Name}' to '{task.Name}' was dropped: {ex.Message}");
             }
         }
 
@@ -619,11 +656,20 @@ public static class MspdiFile
             if (Int(a, "TaskUID") is not { } taskUid || project.GetTask(taskUid) is not { } task)
                 continue;
             if (Int(a, "ResourceUID") is not { } resourceUid || project.GetResource(resourceUid) is not { } resource)
-                continue; // unassigned placeholder (ResourceUID -65535) or missing resource
+            {
+                // The unassigned placeholder (ResourceUID -65535) is expected; other missing resources are reported.
+                if (Int(a, "ResourceUID") is { } other && other != -65535)
+                    notes.Add($"An assignment on '{task.Name}' refers to resource UID {other}, which is not in the file; it was skipped.");
+                continue;
+            }
             if (task.Assignments.Any(x => x.Resource == resource))
                 continue;
             var assignment = Project.RestoreAssignment(task, resource, Double(a, "Units") ?? 1);
-            assignment.WorkMinutes = Math.Max(0, Minutes(a, "Work") ?? 0);
+            // Without a Work value (files from other tools), work follows the task: duration × units.
+            if (Minutes(a, "Work") is null && resource.Type == ResourceType.Work)
+                assignmentsWithoutWork++;
+            assignment.WorkMinutes = Math.Max(0, Minutes(a, "Work")
+                ?? (resource.Type == ResourceType.Work ? (long)Math.Round(task.DurationMinutes * assignment.Units) : 0));
             assignment.OvertimeWorkMinutes = Math.Max(0, Minutes(a, "OvertimeWork") ?? 0);
             // Code 8 (contoured): the hand-edited pieces are read from the time-phased data afterwards.
             assignment.Contour = Int(a, "WorkContour") is { } contour and >= 0 and <= 7 ? (WorkContour)contour : WorkContour.Flat;
@@ -643,6 +689,13 @@ public static class MspdiFile
 
         // Splits come from the assignments' time-phased work, which needs the schedule's calendars only.
         MspdiSplits.Read(root, project);
+
+        if (progressWithoutDates > 0)
+            notes.Add($"{progressWithoutDates} task(s) had % complete but no actual dates; their scheduled start (and, when complete, finish) were used as actual dates.");
+        if (assignmentsWithoutWork > 0)
+            notes.Add($"{assignmentsWithoutWork} assignment(s) had no work; work was set from the task duration and units.");
+        foreach (var t in summaries.Where(t => !t.IsSummary))
+            notes.Add($"'{t.Name}' is marked as a summary task but has no subtasks; it was imported as an ordinary task.");
         return project;
     }
 
