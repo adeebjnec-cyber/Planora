@@ -297,7 +297,8 @@ public static class MspdiFile
             E("UID", r.Id),
             E("ID", r.Id),
             E("Name", r.Name),
-            E("Type", r.Type switch { ResourceType.Material => 0, ResourceType.Cost => 2, _ => 1 }),
+            E("Type", r.Type switch { ResourceType.Material or ResourceType.Cost => 0, _ => 1 }),
+            E("IsCostResource", r.Type == ResourceType.Cost),
             E("IsNull", false),
             E("Initials", r.Initials),
             E("Group", r.Group),
@@ -478,7 +479,9 @@ public static class MspdiFile
             int uid = Int(r, "UID") ?? 0;
             if (uid == 0 || Text(r, "IsNull") == "1" || string.IsNullOrEmpty(Text(r, "Name")))
                 continue;
-            var type = (Int(r, "Type") ?? 1) switch { 0 => ResourceType.Material, 2 => ResourceType.Cost, _ => ResourceType.Work };
+            // Microsoft Project marks cost resources with IsCostResource (their Type is written as material).
+            var type = Text(r, "IsCostResource") == "1" ? ResourceType.Cost
+                : (Int(r, "Type") ?? 1) switch { 0 => ResourceType.Material, 2 => ResourceType.Cost, _ => ResourceType.Work };
             WorkingCalendar? calendar = null;
             if (type == ResourceType.Work)
             {
@@ -674,6 +677,14 @@ public static class MspdiFile
             // Code 8 (contoured): the hand-edited pieces are read from the time-phased data afterwards.
             assignment.Contour = Int(a, "WorkContour") is { } contour and >= 0 and <= 7 ? (WorkContour)contour : WorkContour.Flat;
             assignment.CostRateTable = Math.Clamp(Int(a, "CostRateTable") ?? 0, 0, Resource.RateTableCount - 1);
+            // A material or cost assignment that Microsoft Project kept longer than its task.
+            if (resource.Type != ResourceType.Work && task.Mode == TaskMode.AutoScheduled
+                && Date(a, "Start") is { } aStart && Date(a, "Finish") is { } aFinish)
+            {
+                long span = (task.Calendar ?? project.Calendar).WorkingMinutesBetween(aStart, aFinish);
+                if (span > task.DurationMinutes + 1)
+                    assignment.StoredSpanMinutes = span;
+            }
             assignment.DelayMinutes = (Long(a, "Delay") ?? 0) / 10;
             assignment.LevelingDelayMinutes = (Long(a, "LevelingDelay") ?? 0) / 10;
             if (resource.Type == ResourceType.Cost)
@@ -689,6 +700,7 @@ public static class MspdiFile
 
         // Splits come from the assignments' time-phased work, which needs the schedule's calendars only.
         MspdiSplits.Read(root, project);
+        ReadStopResume(root, project);
 
         if (progressWithoutDates > 0)
             notes.Add($"{progressWithoutDates} task(s) had % complete but no actual dates; their scheduled start (and, when complete, finish) were used as actual dates.");
@@ -805,6 +817,27 @@ public static class MspdiFile
                 break;
         }
         return new CalendarException(range.Name, range.From, range.From, range.WorkingTimes) { Recurrence = pattern };
+    }
+
+    /// <summary>
+    /// An in-progress task whose remaining work was moved later: Microsoft Project records where the work
+    /// stopped and where it resumes; the gap between them becomes a split (when time-phased data did not
+    /// already give one).
+    /// </summary>
+    private static void ReadStopResume(XElement root, Project project)
+    {
+        foreach (var t in Children(root, "Tasks", "Task"))
+        {
+            if (Int(t, "UID") is not { } uid || project.GetTask(uid) is not { IsSummary: false } task || task.Splits.Count > 0
+                || task.ActualStart is null || task.PercentComplete is <= 0 or >= 100
+                || Date(t, "Stop") is not { } stop || Date(t, "Resume") is not { } resume || resume <= stop)
+                continue;
+            var cal = task.Calendar ?? project.Calendar;
+            long gap = cal.WorkingMinutesBetween(stop, resume);
+            long done = Minutes(t, "ActualDuration") ?? task.ActualDurationMinutes;
+            if (gap > 0 && done > 0 && done < task.DurationMinutes)
+                task.Split(done, gap);
+        }
     }
 
     /// <summary>A cross-project link: CrossProjectName is the other file's path, a backslash and the task's unique ID.</summary>

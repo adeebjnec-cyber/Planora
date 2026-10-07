@@ -136,6 +136,14 @@ public sealed class Assignment
     /// <summary>Extra delay added by resource leveling when it moves this assignment on its own.</summary>
     public long LevelingDelayMinutes { get; set; }
 
+    /// <summary>
+    /// For a material or cost assignment imported from Microsoft Project that runs longer than its task:
+    /// its stored length in working minutes. Microsoft Project keeps such assignment lengths and ends the
+    /// task at its latest assignment, so the task finishes no earlier than this. Cleared when the task's
+    /// duration is changed.
+    /// </summary>
+    public long? StoredSpanMinutes { get; set; }
+
     /// <summary>Baseline work and cost (index 0 = Baseline, 1-10 = Baseline1-10).</summary>
     public BaselineValues?[] Baselines { get; } = new BaselineValues?[Baseline.Count];
 

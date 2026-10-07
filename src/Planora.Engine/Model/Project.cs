@@ -454,6 +454,8 @@ public sealed class Project
         if (task.IsSummary)
             throw new InvalidOperationException("A summary task's duration comes from its subtasks.");
         task.DurationMinutes = durationMinutes;
+        foreach (var a in task.Assignments)
+            a.StoredSpanMinutes = null;
         foreach (var a in WorkAssignments(task))
         {
             a.ClearPieces();

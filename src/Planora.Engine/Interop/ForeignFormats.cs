@@ -53,7 +53,8 @@ public static class ForeignFormats
             throw new InvalidDataException("This file is not a project format Planora can read.");
 
         using var xml = new MemoryStream();
-        new Mpxj.MSPDIWriter { MicrosoftProjectCompatibleOutput = true }.Write(file, xml);
+        // Time-phased data carries split tasks and hand-edited (contoured) work.
+        new Mpxj.MSPDIWriter { MicrosoftProjectCompatibleOutput = true, WriteTimephasedData = true }.Write(file, xml);
         xml.Position = 0;
         var project = MspdiFile.Read(XDocument.Load(xml), warnings);
         if (string.IsNullOrWhiteSpace(project.Name) || project.Name.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))

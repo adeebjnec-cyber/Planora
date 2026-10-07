@@ -196,6 +196,7 @@ public static class ProjectFile
                     CostRateTable = a.CostRateTable,
                     DelayMinutes = a.DelayMinutes,
                     LevelingDelayMinutes = a.LevelingDelayMinutes,
+                    StoredSpanMinutes = a.StoredSpanMinutes,
                     OvertimeWorkMinutes = a.OvertimeWorkMinutes,
                     Pieces = a.IsContoured ? a.Pieces.ToList() : null,
                     Baselines = Sparse(a.Baselines),
@@ -434,6 +435,7 @@ public static class ProjectFile
                 assignment.CostRateTable = a.CostRateTable;
                 assignment.DelayMinutes = a.DelayMinutes;
                 assignment.LevelingDelayMinutes = a.LevelingDelayMinutes;
+                assignment.StoredSpanMinutes = a.StoredSpanMinutes;
                 assignment.OvertimeWorkMinutes = a.OvertimeWorkMinutes;
                 if (a.Pieces is { Count: > 0 })
                     assignment.SetPieces(a.Pieces);
@@ -729,6 +731,7 @@ public static class ProjectFile
         public int CostRateTable { get; set; }
         public long DelayMinutes { get; set; }
         public long LevelingDelayMinutes { get; set; }
+        public long? StoredSpanMinutes { get; set; }
         public long OvertimeWorkMinutes { get; set; }
         public List<WorkPiece>? Pieces { get; set; }
         public Dictionary<int, BaselineValues>? Baselines { get; set; }

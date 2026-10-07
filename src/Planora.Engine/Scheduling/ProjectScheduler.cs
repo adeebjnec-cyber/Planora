@@ -288,10 +288,11 @@ public static class ProjectScheduler
 
         /// <summary>
         /// Auto-scheduled, unstarted tasks with working resources take their dates from those resources.
-        /// Split tasks keep their duration-based shape.
+        /// Split tasks keep their duration-based shape, and so do Fixed Duration tasks (as in Microsoft
+        /// Project, their duration stays put whatever the assignments' work).
         /// </summary>
         private static bool IsResourceDriven(ProjectTask task) =>
-            IsMovable(task) && task.Splits.Count == 0 && task.Assignments.Any(IsDriving);
+            IsMovable(task) && task.Splits.Count == 0 && task.Type != TaskType.FixedDuration && task.Assignments.Any(IsDriving);
 
         private WorkingCalendar AssignmentCalendar(Assignment a)
         {
@@ -312,7 +313,9 @@ public static class ProjectScheduler
         private (DateTime Start, DateTime Finish) AssignmentDates(Assignment a, DateTime taskStart)
         {
             var cal = AssignmentCalendar(a);
-            var start = cal.NextWorkingMoment(cal.AddWorkingMinutes(taskStart, a.DelayMinutes + a.LevelingDelayMinutes));
+            var delayed = cal.AddWorkingMinutes(taskStart, a.DelayMinutes + a.LevelingDelayMinutes);
+            // Zero-work assignments (e.g. resources on a milestone) stay where the task is.
+            var start = a.SpanMinutes > 0 ? cal.NextWorkingMoment(delayed) : delayed;
             return (start, cal.AddWorkingMinutes(start, a.SpanMinutes));
         }
 
@@ -337,8 +340,16 @@ public static class ProjectScheduler
             if (resourceDriven)
             {
                 var driving = task.Assignments.Where(IsDriving).ToList();
-                task.Start = driving.Min(a => a.Start);
+                if (!driving.Any(a => a.DelayMinutes + a.LevelingDelayMinutes > 0))
+                    task.Start = driving.Min(a => a.Start);
                 task.Finish = driving.Max(a => a.Finish);
+                // A material or cost assignment that kept a longer length from Microsoft Project ends the task later.
+                var cal = CalendarFor(task);
+                foreach (var a in task.Assignments.Where(a => !a.IsWork && a.StoredSpanMinutes is not null))
+                {
+                    (a.Start, a.Finish) = (task.Start, cal.AddWorkingMinutes(task.Start, a.StoredSpanMinutes!.Value));
+                    task.Finish = Max(task.Finish, a.Finish);
+                }
                 task.Segments = new[] { new TaskSegment(task.Start, task.Finish) };
             }
         }
@@ -555,7 +566,25 @@ public static class ProjectScheduler
                         start = Min(start, aStart);
                         finish = Max(finish, aFinish);
                     }
-                    task.DurationMinutes = Math.Max(0, cal.WorkingMinutesBetween(start, finish));
+                    if (task.Assignments.Any(a => IsDriving(a) && a.DelayMinutes + a.LevelingDelayMinutes > 0))
+                    {
+                        // As in Microsoft Project, a delayed assignment moves the finish, not the task's start,
+                        // and the duration is the longest assignment's own working time.
+                        start = taskStart;
+                        task.DurationMinutes = task.Assignments.Where(IsDriving)
+                            .Max(a => Math.Max(0, cal.WorkingMinutesBetween(AssignmentDates(a, taskStart).Start, AssignmentDates(a, taskStart).Finish)));
+                    }
+                    else
+                    {
+                        task.DurationMinutes = Math.Max(0, cal.WorkingMinutesBetween(start, finish));
+                    }
+                }
+
+                // Material and cost assignments that kept a longer length from Microsoft Project end the task later.
+                foreach (var a in task.Assignments)
+                {
+                    if (!a.IsWork && a.StoredSpanMinutes is { } stored)
+                        finish = Max(finish, cal.AddWorkingMinutes(start, stored));
                 }
             }
 
