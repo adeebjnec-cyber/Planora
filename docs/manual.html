@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Planora User Manual</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================ cover -->
+<section class="cover">
+  <div class="band">
+    <div class="logo"><i></i><i></i><i></i></div>
+    <div class="brand">PLANORA</div>
+    <h1>User Manual</h1>
+    <div class="sub">Project scheduling and control: every feature explained, with a step-by-step tutorial for building, tracking and reporting a schedule.</div>
+    <div class="meta">
+      <div><b>Version</b>1.0.0</div>
+      <div><b>Platform</b>Windows 10 / 11 (64-bit)</div>
+      <div><b>Edition</b>October 2026</div>
+    </div>
+  </div>
+  <div class="shot"><img src="img/m_gantt.jpg" alt=""></div>
+  <div class="credit"><span>Planora · Project Management</span><b>Developed by Adeeb</b></div>
+</section>
+
+<!-- ============================================================ contents -->
+<section>
+  <h1 class="part">Contents</h1>
+  <h2>What is in this manual</h2>
+  <div class="toc">
+    <div class="grp"><b>Part 1 · Getting started</b>
+      <div>1. Installing Planora</div><div>2. The Planora window</div><div>3. Command search (Ctrl+K)</div><div>4. Keyboard shortcuts</div></div>
+    <div class="grp"><b>Part 2 · Tutorial</b>
+      <div>5. Build your first schedule in 12 steps</div></div>
+    <div class="grp"><b>Part 3 · Views</b>
+      <div>6. Gantt Chart and Tracking Gantt</div><div>7. Network, Calendar, Kanban, Timeline</div><div>8. Usage views and the Task Sheet</div><div>9. Resource views and Team Planner</div><div>10. Panes: Timeline, Details, Inspector</div></div>
+    <div class="grp"><b>Part 4 · Scheduling</b>
+      <div>11. Tasks</div><div>12. Dependencies</div><div>13. Calendars and working time</div><div>14. Constraints, deadlines, splits, recurring tasks</div></div>
+    <div class="grp"><b>Part 5 · Resources and costs</b>
+      <div>15. Resources and assignments</div><div>16. Costs and budgets</div><div>17. Resource leveling</div></div>
+    <div class="grp"><b>Part 6 · Tracking</b>
+      <div>18. Baselines</div><div>19. Recording progress</div><div>20. Earned value, progress lines, task path</div></div>
+    <div class="grp"><b>Part 7 · Customising</b>
+      <div>21. Tables, filters, groups and sorting</div><div>22. Custom fields and formulas</div><div>23. Formatting the Gantt chart</div><div>24. Saved views and the Organizer</div></div>
+    <div class="grp"><b>Part 8 · Output and files</b>
+      <div>25. Reports and Compare Projects</div><div>26. Printing, PDF and images</div><div>27. Opening, importing and exporting</div><div>28. Multiple projects and resource pools</div><div>29. Macros</div><div>30. Options, autosave and recovery</div></div>
+    <div class="grp"><b>Appendix</b>
+      <div>A. Typing durations, dates and links</div><div>B. Troubleshooting</div><div>C. About Planora</div></div>
+  </div>
+</section>
+
+<!-- ============================================================ part 1 -->
+<section class="chapter">
+  <h1 class="part">Part 1 · Getting started</h1>
+  <h2>1. Installing Planora</h2>
+  <p class="lead">Planora installs with a single Setup file and needs nothing else on the PC.</p>
+  <h3>System requirements</h3>
+  <table>
+    <tr><th style="width:32%">Item</th><th>Requirement</th></tr>
+    <tr><td>Operating system</td><td>Windows 10 or Windows 11, 64-bit</td></tr>
+    <tr><td>Disk space</td><td>About 300 MB</td></tr>
+    <tr><td>Other software</td><td>None. Planora carries everything it needs, including its own copy of .NET.</td></tr>
+    <tr><td>Administrator rights</td><td>Not needed. Planora installs for the current Windows user.</td></tr>
+    <tr><td>Internet</td><td>Not needed, for installing or for using Planora.</td></tr>
+  </table>
+  <h3>Install</h3>
+  <ol class="steps">
+    <li>Copy <b>Planora-Setup-1.0.0.exe</b> to the PC and double-click it.</li>
+    <li>If Windows shows <i>“Windows protected your PC”</i>, click <b>More info</b> and then <b>Run anyway</b>. The Setup file is not digitally signed, so Windows does not recognise its publisher yet.</li>
+    <li>Check the install folder (normally <code>%LOCALAPPDATA%\Programs\Planora</code>) and the three options: <i>Create a desktop shortcut</i>, <i>Open .planora files with Planora</i>, and <i>Start Planora when Setup finishes</i>.</li>
+    <li>Click <b>Install</b>, wait for the files to copy, then click <b>Finish</b>.</li>
+  </ol>
+  <h3>Update or uninstall</h3>
+  <p>To install a newer version, run its Setup file: it replaces the old program and keeps your project files. To remove Planora, open <span class="path">Settings › Apps › Installed apps</span>, find <b>Planora</b> (publisher: Adeeb) and choose <b>Uninstall</b>. Your project files are never deleted.</p>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 1 · Getting started</h1>
+  <h2>2. The Planora window</h2>
+  <p class="lead">The schedule is the centre of the screen. Everything else sits around it.</p>
+  <figure><img src="img/m_gantt.jpg" alt=""><figcaption>The Gantt Chart view with the sample project open and task 3 selected.</figcaption></figure>
+  <table>
+    <tr><th style="width:24%">Area</th><th>What it does</th></tr>
+    <tr><td>Sidebar (left)</td><td>Switches between views, grouped into <b>Schedule</b> and <b>Resources</b>. The selected view is tinted with an accent mark. At the bottom: the project name and status (Not started, Active or Complete), whether your changes are saved, and when you last saved.</td></tr>
+    <tr><td>Top bar</td><td>The breadcrumb shows the folder and project name; a <b>Baseline</b> chip appears once a baseline is saved and an <b>Edited</b> chip while there are unsaved changes. On the right: <b>Search commands</b> (Ctrl+K), the <b>bell</b> with schedule warnings, <b>Options</b>, and the account menu (accent colour, About).</td></tr>
+    <tr><td>Command bar</td><td>The menus <b>File, Task, Resource, Report, Project, View, Format, Help</b> hold every command. Next to them are the everyday commands: Undo, Redo, Schedule, Update Tasks, Inspect, <b>Add Task</b>, Milestone, Recurring Task, Go To Task, Find, Filter and Task Properties. On the right: the <b>Critical path</b> switch and zoom.</td></tr>
+    <tr><td>Task table</td><td>One row per task: row number, status, indicators, scheduling mode, name and the columns of the current table. Phases (summary tasks) are bold and can be collapsed with their arrow.</td></tr>
+    <tr><td>Gantt chart</td><td>Bars on a timescale of months, weeks and days, with today marked. Hover a bar for a details card; drag it to change the schedule.</td></tr>
+    <tr><td>Status bar</td><td>Number of tasks, critical tasks, project duration, finish date, resources, the latest message, and the save state.</td></tr>
+  </table>
+  <h3>The status marks</h3>
+  <table>
+    <tr><th style="width:24%">Mark</th><th>Meaning</th></tr>
+    <tr><td>Green tick</td><td>Complete (100%).</td></tr>
+    <tr><td>Indigo ring</td><td>In progress; the ring fills with the percentage complete.</td></tr>
+    <tr><td>Amber ring</td><td>Behind schedule at the status date (or today).</td></tr>
+    <tr><td>Dashed ring</td><td>Not started.</td></tr>
+  </table>
+  <p>In the <b>Mode</b> column a lightning icon means <i>auto scheduled</i> (Planora calculates the dates) and a pin means <i>manually scheduled</i> (you fix the dates).</p>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 1 · Getting started</h1>
+  <h2>3. Command search (Ctrl+K)</h2>
+  <p class="lead">You never need to remember where a command lives. Press <kbd>Ctrl</kbd>+<kbd>K</kbd> or click <b>Search commands</b> and type a few letters.</p>
+  <figure class="half"><img src="img/pal.jpg" alt=""><figcaption>Typing “base” finds every baseline command.</figcaption></figure>
+  <p>The search covers every menu command, every view, every table, filter and group, and every task in the project. Use <kbd>↑</kbd> <kbd>↓</kbd> to move and <kbd>Enter</kbd> to run; choosing a task selects it and scrolls the chart to it. <kbd>Esc</kbd> closes the search.</p>
+  <h3>The menus</h3>
+  <figure class="half"><img src="img/menu_task.jpg" alt=""><figcaption>The Task menu, with keyboard shortcuts on the right.</figcaption></figure>
+  <table>
+    <tr><th style="width:18%">Menu</th><th>Contains</th></tr>
+    <tr><td>File</td><td>Opens the File page: Info, New, Open (with recent projects), Save, Save As, Print (with preview), Export, Options and About.</td></tr>
+    <tr><td>Task</td><td>Clipboard, Insert (task, summary, milestone, recurring task), indent and outdent, move up and down, link and unlink, split, progress (0–100%, Mark on Track, Update Tasks), scheduling mode, Inspect, Go To, Add to Timeline, Find, Replace, Fill Down, Spelling, Task Information, hyperlinks and Delete.</td></tr>
+    <tr><td>Resource</td><td>Resource views, Resource Information, Delete Resource, Budgets, resource pool commands and Level Resources.</td></tr>
+    <tr><td>Report</td><td>Dashboards, task and resource reports, the report designer, Compare Projects, PDF, image, Print and Page Setup.</td></tr>
+    <tr><td>Project</td><td>Project Information, Custom Fields, Change Working Time, Calculate Project, baselines, Update Project, links to other projects, subprojects, Import and Export.</td></tr>
+    <tr><td>View</td><td>Table, Filter, Group, Sort, Define (tables, filters, groups, fields, Organizer), Expand/Collapse All, zoom, critical path, baselines, progress lines, usage details, Timeline and Details panes, saved views and Macros.</td></tr>
+    <tr><td>Format</td><td>Text Styles, Bar Styles, Gridlines, Timescale, Task Path, Columns and Custom Fields.</td></tr>
+    <tr><td>Help</td><td>Search Commands, Open Sample Project and About Planora.</td></tr>
+  </table>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 1 · Getting started</h1>
+  <h2>4. Keyboard shortcuts</h2>
+  <div class="cols2">
+  <table>
+    <tr><th>Keys</th><th>Command</th></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>K</kbd></td><td>Search commands and tasks</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>N</kbd></td><td>New project</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>Open</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Save</td></tr>
+    <tr><td><kbd>F12</kbd></td><td>Save As</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>P</kbd></td><td>Print</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd></td><td>Undo</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>Redo</td></tr>
+    <tr><td><kbd>Insert</kbd></td><td>Insert task</td></tr>
+    <tr><td><kbd>Delete</kbd></td><td>Delete selected tasks</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>X</kbd> / <kbd>V</kbd></td><td>Copy, cut, paste tasks</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>Fill down</td></tr>
+  </table>
+  <table>
+    <tr><th>Keys</th><th>Command</th></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd> / <kbd>←</kbd></td><td>Indent / outdent</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd></td><td>Move task up / down</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>F2</kbd></td><td>Link selected tasks</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F2</kbd></td><td>Unlink tasks</td></tr>
+    <tr><td><kbd>Shift</kbd>+<kbd>F2</kbd></td><td>Task Information</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F5</kbd></td><td>Scroll to the selected task</td></tr>
+    <tr><td><kbd>F9</kbd></td><td>Recalculate the schedule</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd> / <kbd>Ctrl</kbd>+<kbd>H</kbd></td><td>Find / Replace</td></tr>
+    <tr><td><kbd>F7</kbd></td><td>Spelling</td></tr>
+    <tr><td><kbd>Alt</kbd>+<kbd>F8</kbd></td><td>Macros</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>Ctrl</kbd>+<kbd>−</kbd></td><td>Zoom in / out</td></tr>
+    <tr><td><kbd>Ctrl</kbd>+mouse wheel</td><td>Zoom around the mouse</td></tr>
+    <tr><td><kbd>Shift</kbd>+mouse wheel</td><td>Scroll the chart sideways</td></tr>
+  </table>
+  </div>
+  <h3>Mouse actions in the Gantt chart</h3>
+  <table>
+    <tr><th style="width:36%">Action</th><th>Result</th></tr>
+    <tr><td>Drag the middle of a bar sideways</td><td>Moves the task. An auto-scheduled task gets a <i>Start No Earlier Than</i> constraint on the new date; a manual task simply moves.</td></tr>
+    <tr><td>Drag the right edge of a bar</td><td>Changes the duration.</td></tr>
+    <tr><td>Drag the left edge of a bar</td><td>Sets the percentage complete.</td></tr>
+    <tr><td>Drag a bar up or down onto another task</td><td>Links the two tasks (finish-to-start).</td></tr>
+    <tr><td>Double-click a bar</td><td>Opens Task Information.</td></tr>
+    <tr><td>Hover a bar</td><td>Shows duration, start, finish, progress, deadline and slack.</td></tr>
+    <tr><td>Right-click a column header</td><td>AutoFilter: show only rows with chosen values in that column.</td></tr>
+  </table>
+  <p>Every change, whether typed, dragged or made in a dialog, can be undone with <kbd>Ctrl</kbd>+<kbd>Z</kbd>.</p>
+</section>
+
+<!-- ============================================================ part 2 tutorial -->
+<section class="chapter">
+  <h1 class="part">Part 2 · Tutorial</h1>
+  <h2>5. Build your first schedule in 12 steps</h2>
+  <p class="lead">This tutorial builds a small construction schedule from scratch, then tracks and reports it. Allow about 20 minutes.</p>
+
+  <h3>Step 1 · Create the project</h3>
+  <ol class="steps">
+    <li>Open <span class="path">File › New</span> and choose <b>Blank project</b>. (To practise on a finished plan instead, choose <b>Sample project</b>.)</li>
+    <li>Open <span class="path">Project › Project Information</span>. Enter the project name, set the <b>Start date</b> (for example Monday 4 January 2027) and leave <i>Schedule from</i> as <b>Project start date</b>. Click OK.</li>
+  </ol>
+  <figure class="half"><img src="img/d_project.jpg" alt=""><figcaption>Project Information: start or finish date, status date, calendar and scheduling options.</figcaption></figure>
+
+  <h3>Step 2 · Set the working time</h3>
+  <ol class="steps">
+    <li>Open <span class="path">Project › Change Working Time</span>.</li>
+    <li>On the <b>Exceptions</b> tab add public holidays and site shutdowns. On the <b>Work Weeks</b> tab change the working days and hours (for example a six-day site week) for all or part of the project.</li>
+  </ol>
+  <figure class="half"><img src="img/d_calendar.jpg" alt=""><figcaption>Change Working Time: calendars, exceptions and work weeks.</figcaption></figure>
+
+  <h3>Step 3 · Enter the tasks</h3>
+  <ol class="steps">
+    <li>Click the empty row at the bottom of the task table, type a task name and press <kbd>Enter</kbd>. Repeat for each task. Or click <b>Add Task</b> (or press <kbd>Insert</kbd>) to insert above the selected row.</li>
+    <li>Type durations in the <b>Duration</b> column: <code>5d</code> for five working days, <code>2w</code> for two weeks, <code>4h</code> for four hours. Add <code>?</code> for an estimate (<code>3d?</code>).</li>
+  </ol>
+  <div class="tip"><b>Tip.</b> New tasks are auto-scheduled: Planora calculates their dates from links and the calendar. To make new tasks manually scheduled instead, use <span class="path">File › Options</span>.</div>
+
+  <h3>Step 4 · Organise phases</h3>
+  <ol class="steps">
+    <li>Insert a task named after the phase (e.g. <i>Foundation</i>) above its tasks.</li>
+    <li>Select the tasks under it and press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd> (<span class="path">Task › Indent</span>). The phase becomes a bold summary task whose dates and progress roll up from its tasks.</li>
+    <li>Click the arrow next to a phase to collapse or expand it, or use <span class="path">View › Collapse All / Expand All</span>.</li>
+  </ol>
+
+  <h3>Step 5 · Add milestones</h3>
+  <p>Select the row where the milestone belongs and click <b>Milestone</b> in the command bar. A milestone has zero duration and shows as a diamond. Any task can also be shown as a milestone from Task Information.</p>
+
+  <h3>Step 6 · Link the tasks</h3>
+  <ol class="steps">
+    <li>Select two or more tasks in order (hold <kbd>Ctrl</kbd> to pick several) and press <kbd>Ctrl</kbd>+<kbd>F2</kbd>. Each is linked finish-to-start to the next.</li>
+    <li>For other link types, type in the <b>Predecessors</b> column: <code>3</code> (finish-to-start after row 3), <code>3SS+2d</code> (start two days after row 3 starts), <code>5FF</code>, <code>7FS-1d</code> (one day of lead), <code>4FS+50%</code>.</li>
+    <li>Or drag a bar up or down onto the task it should come before.</li>
+  </ol>
+  <figure><img src="img/m_critical.jpg" alt=""><figcaption>A linked schedule with the Critical path switch on: critical tasks and their links turn red.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 2 · Tutorial</h1>
+  <h3 style="margin-top:0">Step 7 · Add resources</h3>
+  <ol class="steps">
+    <li>Click <b>Resource Sheet</b> in the sidebar.</li>
+    <li>Type one resource per row. Set the <b>Type</b>: <i>Work</i> for people and equipment paid by time, <i>Material</i> for consumables (with a <b>Material Label</b> such as m³ or crates), <i>Cost</i> for fixed charges such as permits.</li>
+    <li>Fill in <b>Max. Units</b> (100% is one full-time person; 300% is a crew of three), <b>Std. Rate</b>, <b>Ovt. Rate</b> and <b>Cost/Use</b>.</li>
+  </ol>
+  <figure><img src="img/m_ressheet.jpg" alt=""><figcaption>The Resource Sheet.</figcaption></figure>
+
+  <h3>Step 8 · Assign resources to tasks</h3>
+  <ol class="steps">
+    <li>Return to the Gantt Chart. In the <b>Resource Names</b> column type names separated by commas, optionally with units: <code>Movers[200%], Crates[40]</code>.</li>
+    <li>Or open <b>Task Information</b> (<kbd>Shift</kbd>+<kbd>F2</kbd>) and use its <b>Resources</b> tab, where you can also set units and work per assignment.</li>
+  </ol>
+  <figure class="half"><img src="img/d_task.jpg" alt=""><figcaption>Task Information: General, Predecessors, Resources, Advanced and Notes tabs.</figcaption></figure>
+
+  <h3>Step 9 · Check the schedule</h3>
+  <ul>
+    <li>Turn on <b>Critical path</b> in the command bar to see the chain of tasks that sets the finish date.</li>
+    <li>Click the <b>bell</b> for warnings: late tasks, missed deadlines and overallocated resources.</li>
+    <li>Select a task and click <b>Inspect</b> to see exactly what drives its start (a predecessor, a constraint, the calendar).</li>
+    <li>If a resource is overallocated, open <span class="path">Resource › Level Resources</span> (chapter 17).</li>
+  </ul>
+
+  <h3>Step 10 · Save a baseline</h3>
+  <p>When the plan is approved, open <span class="path">Project › Set Baseline</span>, choose <b>Baseline</b> and <b>Entire project</b>, and click OK. Planora stores the planned dates, durations, work and costs so you can compare progress against them later. The top bar now shows a <b>Baseline</b> chip.</p>
+
+  <h3>Step 11 · Track progress</h3>
+  <ol class="steps">
+    <li>Set the status date in <span class="path">Project › Project Information</span> (or leave it empty to use today).</li>
+    <li>Select tasks and use <span class="path">Task › Progress</span> (0, 25, 50, 75, 100%), drag the left edge of a bar, or open <b>Update Tasks</b> to enter actual start, actual finish, actual and remaining duration.</li>
+    <li>Switch to <b>Tracking Gantt</b> to see current bars over the grey baseline bars, or turn on <span class="path">View › Progress Lines</span>.</li>
+  </ol>
+
+  <h3>Step 12 · Report and share</h3>
+  <ol class="steps">
+    <li>Open a report from the <b>Report</b> menu (for example <i>Project Overview</i> or <i>Critical Tasks</i>).</li>
+    <li>Save the current view or a report as PDF from <span class="path">Report › Export as PDF</span>, or print it with <kbd>Ctrl</kbd>+<kbd>P</kbd>.</li>
+    <li>Save the project with <kbd>Ctrl</kbd>+<kbd>S</kbd> (.planora). To send it to a Microsoft Project user, use <span class="path">Project › Export</span> and choose <b>Microsoft Project XML</b>.</li>
+  </ol>
+  <div class="note"><b>Done.</b> You have built, linked, resourced, baselined, tracked and reported a schedule. The rest of this manual describes each feature in detail.</div>
+</section>
+
+<!-- ============================================================ part 3 views -->
+<section class="chapter">
+  <h1 class="part">Part 3 · Views</h1>
+  <h2>6. Gantt Chart and Tracking Gantt</h2>
+  <p class="lead">The main working view: the task table on the left and the timeline on the right, scrolled together.</p>
+  <h3>Gantt bars</h3>
+  <table>
+    <tr><th style="width:28%">Bar</th><th>Meaning</th></tr>
+    <tr><td>Indigo bar</td><td>An auto-scheduled task. The darker part inside is the work completed.</td></tr>
+    <tr><td>Red bar</td><td>A critical task (only while the Critical path switch is on).</td></tr>
+    <tr><td>Teal bar</td><td>A manually scheduled task.</td></tr>
+    <tr><td>Dashed outline</td><td>An inactive task (kept for reference; it no longer affects the schedule).</td></tr>
+    <tr><td>Thin navy bar with end points</td><td>A summary task (phase).</td></tr>
+    <tr><td>Diamond</td><td>A milestone.</td></tr>
+    <tr><td>Dotted gap between bar pieces</td><td>A split task (work interrupted and resumed).</td></tr>
+    <tr><td>Green/red down arrow</td><td>A deadline: green when met, red when missed.</td></tr>
+    <tr><td>Grey bar underneath</td><td>The baseline (Tracking Gantt, or <span class="path">View › Baseline</span>).</td></tr>
+  </table>
+  <p>Text beside bars (resource names by default) and every colour and shape can be changed in <span class="path">Format › Bar Styles</span>. The timescale shows month, week and day at day zoom; zoom out for weeks, months, quarters and years, or in for hours.</p>
+  <h3>Tracking Gantt</h3>
+  <figure><img src="img/m_tracking.jpg" alt=""><figcaption>Tracking Gantt: current bars with the baseline drawn underneath.</figcaption></figure>
+  <p>Choose which of the 11 baselines to show in <span class="path">View › Baseline to Show</span>.</p>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 3 · Views</h1>
+  <h2>7. Network, Calendar, Kanban and Timeline</h2>
+  <h3>Network Diagram</h3>
+  <p>Each task is a box with its dates, duration, ID and resources; arrows show the links. Completed tasks are shaded green, in-progress tasks crossed, critical tasks outlined in red when the critical path is on.</p>
+  <figure><img src="img/m_network.jpg" alt=""><figcaption>Network Diagram.</figcaption></figure>
+  <h3>Calendar</h3>
+  <p>A month calendar with task bars across the days they run, for a quick “what happens this month” view.</p>
+  <figure><img src="img/m_calendar.jpg" alt=""><figcaption>Calendar view.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 3 · Views</h1>
+  <h3 style="margin-top:0">Kanban Board</h3>
+  <p>Tasks as cards in <b>Not Started</b>, <b>In Progress</b> and <b>Complete</b> columns, with dates, resources and a progress bar. Drag a card to another column to update its progress.</p>
+  <figure><img src="img/m_kanban.jpg" alt=""><figcaption>Kanban Board.</figcaption></figure>
+  <h3>Timeline</h3>
+  <p>A one-page summary of key tasks and milestones for presentations. Add tasks with <span class="path">Task › Add to Timeline</span>. The Timeline can also be shown above any view (<span class="path">View › Timeline Pane</span>).</p>
+  <figure><img src="img/m_timeline.jpg" alt=""><figcaption>Timeline view.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 3 · Views</h1>
+  <h2>8. Usage views, Task Sheet and Relationship Diagram</h2>
+  <h3>Task Usage</h3>
+  <p>Each task with its assignments underneath, and work spread across the timescale. Choose the detail rows (work, actual work, remaining work, baseline work, cost, actual cost, baseline cost) in <span class="path">View › Usage Details</span>.</p>
+  <figure><img src="img/m_taskusage.jpg" alt=""><figcaption>Task Usage.</figcaption></figure>
+  <h3>Task Sheet</h3>
+  <p>The task table on its own, full width, for data entry and long tables.</p>
+  <h3>Relationship Diagram</h3>
+  <p>The selected task in the middle with its direct predecessors on the left and successors on the right: a quick way to check one task's links.</p>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 3 · Views</h1>
+  <h2>9. Resource views and Team Planner</h2>
+  <h3>Resource Usage</h3>
+  <p>Each resource with the tasks assigned to it and work per period. Overallocated resources and periods are shown in red.</p>
+  <figure><img src="img/m_resusage.jpg" alt=""><figcaption>Resource Usage.</figcaption></figure>
+  <h3>Resource Graph</h3>
+  <p>A histogram of the selected resource's allocation against its maximum units, period by period; bars above the line are overallocation.</p>
+  <figure><img src="img/m_resgraph.jpg" alt=""><figcaption>Resource Graph.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 3 · Views</h1>
+  <h3 style="margin-top:0">Team Planner</h3>
+  <p>One row per resource with its tasks as blocks over time, plus a row of <b>unassigned tasks</b>. Drag a block to another resource's row to reassign it, or along the row to reschedule it.</p>
+  <figure><img src="img/m_team.jpg" alt=""><figcaption>Team Planner.</figcaption></figure>
+
+  <h2 style="margin-top:22px">10. Panes: Timeline, Details and Task Inspector</h2>
+  <ul>
+    <li><b>Timeline pane</b> (<span class="path">View › Timeline Pane</span>): the Timeline above the current view.</li>
+    <li><b>Details pane</b> (<span class="path">View › Details Pane</span>): the Task Form under task views (name, dates, duration, % complete, assignments, predecessors) or the Resource Form under resource views.</li>
+    <li><b>Task Inspector</b> (<b>Inspect</b> button): explains the selected task's start — the predecessor, constraint, calendar or actual date that sets it — and lists problems such as overallocation, with fixes.</li>
+  </ul>
+  <figure><img src="img/m_inspector.jpg" alt=""><figcaption>Task Inspector: “Sign lease” starts on 8 Oct because its predecessor “Select new site” finishes on 7 Oct.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 3 · Views</h1>
+  <figure><img src="img/m_details.jpg" alt=""><figcaption>The Details pane (Task Form) under the Gantt Chart.</figcaption></figure>
+  <figure><img src="img/m_tlpane.jpg" alt=""><figcaption>The Timeline pane above the Gantt Chart.</figcaption></figure>
+</section>
+
+<!-- ============================================================ part 4 scheduling -->
+<section class="chapter">
+  <h1 class="part">Part 4 · Scheduling</h1>
+  <h2>11. Tasks</h2>
+  <p class="lead">Planora schedules with the critical path method: from the project start, through the links, on the working calendars, honouring constraints, actual dates and resource availability.</p>
+  <h3>Task properties (Task Information)</h3>
+  <table>
+    <tr><th style="width:26%">Property</th><th>Use</th></tr>
+    <tr><td>Name, duration</td><td>Duration in minutes, hours, days, weeks or months; <i>elapsed</i> durations (<code>3ed</code>) run through nights and weekends; <code>?</code> marks an estimate.</td></tr>
+    <tr><td>Schedule mode</td><td><b>Auto</b>: Planora calculates dates. <b>Manual</b>: you set start and finish; links are shown but do not move the task.</td></tr>
+    <tr><td>Task type</td><td><b>Fixed Units</b>, <b>Fixed Duration</b> or <b>Fixed Work</b>: which of duration, units and work stays fixed when another changes. <b>Effort driven</b>: adding a resource shortens the task.</td></tr>
+    <tr><td>Constraint</td><td>As Soon As Possible, As Late As Possible, Must Start On, Must Finish On, Start/Finish No Earlier Than, Start/Finish No Later Than.</td></tr>
+    <tr><td>Deadline</td><td>A target date that does not move the task but warns when missed.</td></tr>
+    <tr><td>Calendar</td><td>A task calendar replaces the project calendar for that task (e.g. a 24/7 curing task).</td></tr>
+    <tr><td>Priority</td><td>0–1000; leveling delays lower-priority tasks first. 1000 is never delayed.</td></tr>
+    <tr><td>Inactive</td><td>Keeps the task but removes it from the schedule and costs (what-if planning).</td></tr>
+    <tr><td>Display as milestone, Mark</td><td>Show any task as a diamond; flag tasks for a filter.</td></tr>
+    <tr><td>Earned value method</td><td>% Complete or Physical % Complete.</td></tr>
+    <tr><td>Notes, hyperlink</td><td>Free text and a link to a web page or file (<span class="path">Task › Open Hyperlink</span>).</td></tr>
+    <tr><td>WBS code</td><td>Calculated from the outline (1, 1.1, 1.2…).</td></tr>
+  </table>
+  <h3>Editing tasks in the table</h3>
+  <ul>
+    <li>Type directly into cells; a typed start or finish date on an auto-scheduled task sets a <i>No Earlier Than</i> constraint.</li>
+    <li>Cut, copy and paste whole tasks with <kbd>Ctrl</kbd>+<kbd>X</kbd>/<kbd>C</kbd>/<kbd>V</kbd>; <b>Fill Down</b> copies a value to the rows below.</li>
+    <li><b>Find</b> and <b>Replace</b> search any field; <b>Spelling</b> checks names and notes.</li>
+    <li>Insert a <b>summary task</b> around the selection with <span class="path">Task › Insert › Summary Task</span>.</li>
+  </ul>
+  <figure class="half"><img src="img/d_update.jpg" alt=""><figcaption>Update Tasks: percentage, actual and remaining duration, actual dates.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 4 · Scheduling</h1>
+  <h2>12. Dependencies</h2>
+  <table>
+    <tr><th style="width:24%">Type</th><th>Meaning</th><th style="width:22%">Typed as</th></tr>
+    <tr><td>Finish-to-start (FS)</td><td>B starts after A finishes. The most common link.</td><td><code>3</code> or <code>3FS</code></td></tr>
+    <tr><td>Start-to-start (SS)</td><td>B starts when A starts.</td><td><code>3SS</code></td></tr>
+    <tr><td>Finish-to-finish (FF)</td><td>B finishes when A finishes.</td><td><code>3FF</code></td></tr>
+    <tr><td>Start-to-finish (SF)</td><td>B finishes when A starts.</td><td><code>3SF</code></td></tr>
+  </table>
+  <p><b>Lag</b> delays the successor (<code>3FS+2d</code>); <b>lead</b> overlaps it (<code>3FS-1d</code>); lag can be a percentage of the predecessor's duration (<code>3SS+50%</code>) or elapsed (<code>3FS+2ed</code>). Several predecessors are separated by commas.</p>
+  <p>With <i>Autolink inserted or deleted tasks</i> (Project › Project Information) a task inserted into a chain is linked in automatically, and deleting one rejoins the chain. Links to tasks in <b>other project files</b> are described in chapter 28.</p>
+
+  <h2 style="margin-top:22px">13. Calendars and working time</h2>
+  <ul>
+    <li><b>Base calendars</b>: Standard (Mon–Fri, 8:00–17:00), 24 Hours and Night Shift are provided; create your own in Change Working Time.</li>
+    <li><b>Exceptions</b>: holidays or special working days, one-off or recurring (daily, weekly, monthly, yearly).</li>
+    <li><b>Work weeks</b>: different working days and hours for a date range (e.g. summer hours).</li>
+    <li>Calendars apply to the <b>project</b>, to individual <b>tasks</b> and to <b>resources</b>; a resource's calendar decides when its assignments can be worked.</li>
+    <li>Hours per day, per week and days per month (for converting durations) are set in Project Information.</li>
+  </ul>
+
+  <h2 style="margin-top:22px">14. Constraints, deadlines, splits and recurring tasks</h2>
+  <ul>
+    <li><b>Constraints</b> fix a task to a date (see the list in chapter 11). Turn off <i>Honor constraints</i> in Project Information to let links win over constraints.</li>
+    <li><b>Deadlines</b> show as arrows and raise a warning when the task finishes late.</li>
+    <li><b>Split a task</b> with <span class="path">Task › Split Task</span>, or switch on <b>Split Mode</b> and click a bar where the interruption should start.</li>
+    <li><b>Recurring tasks</b> (weekly meetings, monthly inspections) are created with <b>Recurring Task</b>: a summary with one occurrence per repetition.</li>
+  </ul>
+  <div class="cols2">
+    <figure><img src="img/d_recurring.jpg" alt=""><figcaption>Recurring Task.</figcaption></figure>
+    <figure><img src="img/d_split.jpg" alt=""><figcaption>Split Task.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============================================================ part 5 resources -->
+<section class="chapter">
+  <h1 class="part">Part 5 · Resources and costs</h1>
+  <h2>15. Resources and assignments</h2>
+  <figure class="half"><img src="img/d_resource.jpg" alt=""><figcaption>Resource Information.</figcaption></figure>
+  <table>
+    <tr><th style="width:26%">Property</th><th>Use</th></tr>
+    <tr><td>Type</td><td>Work, Material (with a label such as m³) or Cost.</td></tr>
+    <tr><td>Max units, availability</td><td>The resource's capacity, which can change over time (availability table).</td></tr>
+    <tr><td>Rates</td><td>Standard and overtime rates, cost per use, and up to five cost rate tables (A–E) with dated rate changes.</td></tr>
+    <tr><td>Accrue at</td><td>Start, Prorated or End: when the cost is counted.</td></tr>
+    <tr><td>Calendar</td><td>The resource's own working time and holidays.</td></tr>
+    <tr><td>Generic, booking type, can level</td><td>Placeholder roles, proposed or committed bookings, and whether leveling may move this resource's work.</td></tr>
+    <tr><td>Group, code, initials, e-mail</td><td>Information for filters, groups and reports.</td></tr>
+  </table>
+  <h3>Assignments</h3>
+  <p>An assignment links a resource to a task with units, work and a <b>work contour</b> (flat, back loaded, front loaded, double peak, early peak, late peak, bell, turtle, or contoured period by period). Double-click an assignment in a usage view for Assignment Information: units, work, delay, cost rate table and contour.</p>
+
+  <h2 style="margin-top:22px">16. Costs and budgets</h2>
+  <ul>
+    <li>Task cost = resource costs (work × rates, per-use costs, material quantities) + <b>fixed cost</b> (Cost table).</li>
+    <li>Actual and remaining cost follow progress; baseline cost and cost variance follow the baseline.</li>
+    <li><b>Budgets</b> (<span class="path">Resource › Budgets</span>): budget cost and work for budget resources at project level, to compare against the plan.</li>
+    <li>Costs show in your Windows currency format.</li>
+  </ul>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 5 · Resources and costs</h1>
+  <h2>17. Resource leveling</h2>
+  <p>When a resource is asked to work more than its maximum units, Planora marks it as overallocated (red in resource views and a warning in the bell). <b>Leveling</b> resolves this by delaying or splitting lower-priority work.</p>
+  <figure class="half"><img src="img/d_level.jpg" alt=""><figcaption>Resource Leveling.</figcaption></figure>
+  <ul>
+    <li><b>Look for overallocations</b> minute by minute, or by hour, day, week or month.</li>
+    <li><b>Leveling range</b>: the entire project or a date range.</li>
+    <li><b>Leveling order</b>: ID only, Standard (slack, dates, priority, constraints) or Priority then Standard.</li>
+    <li>Options: level only within available slack, clear earlier leveling first, let leveling adjust individual assignments, and let leveling split remaining work.</li>
+    <li><b>Clear Leveling</b> removes all leveling delays.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ part 6 tracking -->
+<section class="chapter">
+  <h1 class="part">Part 6 · Tracking</h1>
+  <h2>18. Baselines</h2>
+  <figure class="third"><img src="img/d_baseline.jpg" alt=""><figcaption>Set Baseline.</figcaption></figure>
+  <p>Planora keeps <b>11 baselines</b> (Baseline, Baseline 1–10) and <b>10 interim plans</b> (start and finish only). Save the whole project or only selected tasks; summary tasks can roll up the baselines of their tasks. <span class="path">Project › Clear Baseline</span> removes one. Variance fields (start, finish, duration, work, cost) compare the current plan with the baseline.</p>
+
+  <h2 style="margin-top:22px">19. Recording progress</h2>
+  <ul>
+    <li><b>Status date</b> (Project Information): the “as of” date for progress and earned value. Empty means today.</li>
+    <li><b>% complete buttons</b>, dragging the bar's left edge, or typing in the % Complete column.</li>
+    <li><b>Update Tasks</b>: actual start and finish, actual and remaining duration.</li>
+    <li><b>Mark on Track</b>: records progress exactly as planned up to the status date.</li>
+    <li><b>Update Project</b>: marks all work complete through a date, or reschedules unfinished work to start after it.</li>
+    <li>The <b>Tracking</b> table shows actual dates, durations, costs and work.</li>
+  </ul>
+
+  <h2 style="margin-top:22px">20. Earned value, progress lines and task path</h2>
+  <ul>
+    <li><b>Earned value</b>: the <i>Earned Value</i> table and report show BCWS, BCWP, ACWP, SV, CV, EAC, BAC and VAC at the status date.</li>
+    <li><b>Progress lines</b> (<span class="path">View › Progress Lines</span>): a line from the status date that bends left for tasks behind and right for tasks ahead.</li>
+    <li><b>Task path</b> (<span class="path">Format › Task Path</span>): highlights the selected task's predecessors, driving predecessors, successors and driven successors in different colours.</li>
+  </ul>
+  <figure><img src="img/m_taskpath.jpg" alt=""><figcaption>Task Path: the predecessors of the selected task highlighted.</figcaption></figure>
+</section>
+
+<!-- ============================================================ part 7 customising -->
+<section class="chapter">
+  <h1 class="part">Part 7 · Customising</h1>
+  <h2>21. Tables, filters, groups and sorting</h2>
+  <h3>Tables</h3>
+  <p>A table is the set of columns in the task table. Built in: <b>Entry, Schedule, Cost, Tracking, Variance, Work, Baseline, Summary, Earned Value, Constraint Dates, Delay</b>. Switch in <span class="path">View › Table</span>; insert, remove and arrange columns in <span class="path">Format › Columns</span>; create your own in <span class="path">View › Define › Tables</span>.</p>
+  <h3>Filters</h3>
+  <p>Built in: All Tasks, Active, Completed, Incomplete, Critical, Late, Slipping, Milestones, Marked, Summary, Manually Scheduled, Tasks With Deadlines, Missed Deadlines, Estimated Durations and Fixed Dates. A filter can <b>hide</b> other tasks or <b>highlight</b> the matching ones. Define your own with any field and condition; a value starting with <code>?</code> makes an <b>interactive filter</b> that asks for the value each time. Right-click a column header for a quick <b>AutoFilter</b>.</p>
+  <figure class="half"><img src="img/d_filter.jpg" alt=""><figcaption>Defining a filter.</figcaption></figure>
+  <h3>Groups and sorting</h3>
+  <p>Group tasks by status, critical, milestone, duration, priority, constraint type, mode, resource or start month — or any field you choose — with roll-up bars for each group. <span class="path">View › Sort</span> sorts by up to three fields, optionally keeping the outline.</p>
+  <figure><img src="img/m_group.jpg" alt=""><figcaption>Tasks grouped by resource.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 7 · Customising</h1>
+  <h2>22. Custom fields and formulas</h2>
+  <p>Give your own meaning to the spare fields: Text 1–30, Number 1–20, Date 1–10, Flag 1–20, Cost 1–10, Duration 1–10 and Outline Code 1–10 (<span class="path">Project › Custom Fields</span>).</p>
+  <ul>
+    <li><b>Alias</b>: a name such as “Zone” or “Contractor”.</li>
+    <li><b>Lookup list</b>: a drop-down of allowed values.</li>
+    <li><b>Formula</b>: calculate from other fields, e.g. <code>[Cost] - [Baseline Cost]</code> or <code>IIf([% Complete] = 100, "Done", "Open")</code>. Functions include IIf, Switch, Abs, Round, Min, Max, Len, Left, Right, Mid, CStr, Val, Format, Now, Date, DateAdd, DateDiff and ProjDurConv.</li>
+    <li><b>Graphical indicators</b>: show a symbol instead of the value when conditions are met (traffic lights for variance, for example).</li>
+    <li><b>Outline codes</b>: hierarchical codes such as cost codes or locations, usable in groups and filters.</li>
+  </ul>
+  <figure class="half"><img src="img/d_fields.jpg" alt=""><figcaption>Custom Fields.</figcaption></figure>
+
+  <h2 style="margin-top:22px">23. Formatting the Gantt chart</h2>
+  <div class="cols2">
+    <figure><img src="img/d_barstyles.jpg" alt=""><figcaption>Bar Styles.</figcaption></figure>
+    <figure><img src="img/d_timescale.jpg" alt=""><figcaption>Timescale.</figcaption></figure>
+  </div>
+  <ul>
+    <li><b>Bar Styles</b>: colour, border and shape of each bar type, the texts left, right, above and inside, and extra styles for tasks with a flag field set.</li>
+    <li><b>Text Styles</b>: font settings for bar text and for summary, critical, milestone, marked and external tasks.</li>
+    <li><b>Timescale</b>: one to three tiers with units (hours to years), counts and label formats; shading of non-working time.</li>
+    <li><b>Gridlines</b>: row and column lines, and lines for today, the status date, project start and finish.</li>
+    <li><b>Accent colour</b> (account menu): Indigo, Slate Blue, Teal or Graphite.</li>
+  </ul>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 7 · Customising</h1>
+  <h2>24. Saved views and the Organizer</h2>
+  <p><span class="path">View › Save View</span> stores the current view with its table, filter, group and sort under a name; <span class="path">View › Saved Views</span> brings it back. The <b>Organizer</b> (<span class="path">View › Define › Organizer</span>) copies calendars, tables, filters, groups, views, custom fields, reports and macros between projects, or deletes ones you no longer need.</p>
+  <figure class="half"><img src="img/d_organizer.jpg" alt=""><figcaption>Organizer.</figcaption></figure>
+</section>
+
+<!-- ============================================================ part 8 output -->
+<section class="chapter">
+  <h1 class="part">Part 8 · Output and files</h1>
+  <h2>25. Reports and Compare Projects</h2>
+  <table>
+    <tr><th style="width:24%">Group</th><th>Reports</th></tr>
+    <tr><td>Dashboards</td><td>Project Overview, Cost Overview, Earned Value, Burndown, Cash Flow, Work Overview, Cost Overruns</td></tr>
+    <tr><td>Tasks</td><td>Critical Tasks, Task Status, Milestones, Late Tasks, Upcoming Tasks, Slipping Tasks</td></tr>
+    <tr><td>Resources</td><td>Resource Overview, Who Does What, Overallocated Resources</td></tr>
+  </table>
+  <p>Reports open in a report window from which they can be printed or saved as PDF. <b>Custom Reports</b> opens the <b>report designer</b>: build your own report from text, key project figures, task tables (any fields, filtered), task bar charts of any numeric field, and resource tables.</p>
+  <div class="cols2">
+    <figure><img src="img/r_overview.jpg" alt=""><figcaption>Project Overview report.</figcaption></figure>
+    <figure><img src="img/d_report.jpg" alt=""><figcaption>Report designer.</figcaption></figure>
+  </div>
+  <p><b>Compare Projects</b> (<span class="path">Report › Compare Projects</span>) opens an earlier version of the plan and lists tasks and resources that were added, removed or changed, field by field.</p>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 8 · Output and files</h1>
+  <h2>26. Printing, PDF and images</h2>
+  <figure><img src="img/b_print.jpg" alt=""><figcaption>File › Print with page-by-page preview.</figcaption></figure>
+  <ul>
+    <li><b>Page Setup</b>: paper size, orientation, margins, scaling, header and footer text (with project name, page number and date codes), and the Gantt legend.</li>
+    <li><b>Print</b> prints the current view; <b>Export as PDF</b> and <b>Export as Image</b> save it as a PDF document or PNG picture.</li>
+  </ul>
+  <figure class="half"><img src="img/d_pagesetup.jpg" alt=""><figcaption>Page Setup.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 8 · Output and files</h1>
+  <h2>27. Opening, importing and exporting</h2>
+  <table>
+    <tr><th style="width:38%">Format</th><th style="width:14%">Open</th><th style="width:14%">Save / export</th><th>Notes</th></tr>
+    <tr><td>Planora project (.planora)</td><td>Yes</td><td>Yes</td><td>Planora's own format: keeps everything.</td></tr>
+    <tr><td>Microsoft Project (.mpp, .mpt)</td><td>Yes</td><td>No</td><td>Opens .mpp files saved by current and older versions of Microsoft Project. To give a plan back to Microsoft Project, export Microsoft Project XML.</td></tr>
+    <tr><td>Microsoft Project XML (.xml)</td><td>Yes</td><td>Yes</td><td>Full schedule, resources, assignments, calendars, baselines, custom fields, splits and contours.</td></tr>
+    <tr><td>Excel (.xlsx) and CSV</td><td>Yes</td><td>Yes</td><td>Import Wizard maps your columns to Planora fields.</td></tr>
+    <tr><td>Primavera P6 (.xer, P6 XML)</td><td>Yes</td><td>Yes</td><td></td></tr>
+    <tr><td>MPX (.mpx)</td><td>Yes</td><td>Yes</td><td></td></tr>
+    <tr><td>Asta, Phoenix, GanttProject and others</td><td>Yes</td><td>No</td><td>.pp, .ppx, .gan, .sdef, .fts, .pod, .cdpx, .schedule_grid</td></tr>
+    <tr><td>Planora template</td><td>Yes</td><td>Yes</td><td>File › Save as Template; File › New › From a template.</td></tr>
+  </table>
+  <p>When a file contains something Planora cannot bring in exactly (for example a link to a missing task), Planora opens it anyway and lists the <b>import notes</b>. Files opened from other formats open as new, unsaved Planora projects.</p>
+  <figure><img src="img/b_new.jpg" alt=""><figcaption>File › New: blank project, templates, sample project, or import from Excel/CSV.</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Part 8 · Output and files</h1>
+  <h2>28. Multiple projects and resource pools</h2>
+  <ul>
+    <li><b>Subprojects</b>: <span class="path">Project › Insert Subproject</span> inserts another project file as a summary task; its tasks can be edited in place, refreshed from the file, and saved back to it. A project made of subprojects is a <b>master project</b>.</li>
+    <li><b>Links between projects</b>: <span class="path">Project › Link to Other Project</span> makes a task in another file a predecessor; <i>Refresh External Links</i> re-reads its dates.</li>
+    <li><b>Resource pools</b>: <span class="path">Resource › Share Resources</span> uses the resources of a pool file; <i>Refresh from Pool</i> and <i>Update Pool</i> keep them in step, and <i>Pool Overallocations</i> checks resources across every project that shares the pool.</li>
+  </ul>
+
+  <h2 style="margin-top:22px">29. Macros</h2>
+  <p><span class="path">View › Macros</span> (<kbd>Alt</kbd>+<kbd>F8</kbd>) writes and runs macros in a VBA-like language: loops, conditions, variables and functions over tasks, resources and fields — for example to set a custom field on every critical task. Macros are saved with the project and can be copied with the Organizer.</p>
+  <figure class="half"><img src="img/d_macros.jpg" alt=""><figcaption>Macros.</figcaption></figure>
+  <div class="note"><b>Note.</b> Planora's macro language resembles VBA, but macros written for Microsoft Project's VBA object model do not run unchanged.</div>
+
+  <h2 style="margin-top:22px">30. Options, autosave and recovery</h2>
+  <ul>
+    <li><b>File › Options</b>: whether new tasks are manually scheduled or effort driven, the default task type, the autosave interval and the accent colour.</li>
+    <li><b>Project Information</b>: start or finish date, status date, calendar, hours per day and week, days per month, critical slack, honour constraints and autolink.</li>
+    <li><b>Autosave</b> keeps a recovery copy of unsaved changes at the chosen interval. If Planora closes unexpectedly, it offers to recover your work the next time it starts.</li>
+  </ul>
+  <figure class="half"><img src="img/d_options.jpg" alt=""><figcaption>Options.</figcaption></figure>
+</section>
+
+<!-- ============================================================ appendix -->
+<section class="chapter">
+  <h1 class="part">Appendix</h1>
+  <h2>A. Typing durations, dates and links</h2>
+  <table>
+    <tr><th style="width:24%">You type</th><th>Planora reads</th></tr>
+    <tr><td><code>30m</code>, <code>4h</code></td><td>30 minutes, 4 hours of working time</td></tr>
+    <tr><td><code>5d</code>, <code>2w</code>, <code>1mo</code></td><td>5 days, 2 weeks, 1 month of working time (lengths set in Project Information)</td></tr>
+    <tr><td><code>3ed</code>, <code>1ew</code></td><td>Elapsed: 3 calendar days, 1 calendar week</td></tr>
+    <tr><td><code>4d?</code></td><td>An estimated duration</td></tr>
+    <tr><td><code>0d</code></td><td>A milestone</td></tr>
+    <tr><td><code>3</code>, <code>3FS+2d</code>, <code>5SS-1d</code>, <code>7FF+25%</code></td><td>Predecessors with type and lag</td></tr>
+    <tr><td><code>Movers[200%], Crates[40]</code></td><td>Resource names with units or quantities</td></tr>
+    <tr><td><code>28 Sep 2026</code>, <code>28/09/2026 13:00</code></td><td>Dates in your Windows format; a date without a time means the start of that working day (or its end, for finish dates)</td></tr>
+  </table>
+
+  <h2 style="margin-top:22px">B. Troubleshooting</h2>
+  <table>
+    <tr><th style="width:36%">Problem</th><th>What to do</th></tr>
+    <tr><td>A task will not move earlier</td><td>Select it and click <b>Inspect</b>: a predecessor, a constraint (perhaps set by dragging) or an actual start is holding it.</td></tr>
+    <tr><td>The finish date is later than expected</td><td>Turn on <b>Critical path</b>; shorten or overlap the red tasks, or add resources to effort-driven tasks.</td></tr>
+    <tr><td>A resource shows red</td><td>It is overallocated. Use Resource Usage to see when, then reassign work or run <b>Level Resources</b>.</td></tr>
+    <tr><td>Microsoft Project cannot open my file</td><td>Planora cannot write .mpp. Export <b>Microsoft Project XML</b> instead; Microsoft Project opens it and can save it as .mpp.</td></tr>
+    <tr><td>Setup shows “Windows protected your PC”</td><td>Click <b>More info › Run anyway</b>. The Setup file is not code-signed.</td></tr>
+    <tr><td>Planora closed unexpectedly</td><td>Start it again and accept the offer to recover the autosaved copy.</td></tr>
+  </table>
+
+  <h2 style="margin-top:22px">C. About Planora</h2>
+  <p>Planora 1.0 is project scheduling and control software for Windows, <b>developed by Adeeb</b>. It reads Microsoft Project files with MPXJ and MPXJ.Net (LGPL 2.1) running on IKVM (MIT), and uses the Inter typeface (SIL Open Font License 1.1). See THIRD-PARTY-NOTICES.md in the program folder.</p>
+  <p style="color:var(--muted);font-size:9pt">Microsoft and Microsoft Project are trademarks of Microsoft Corporation. Primavera is a trademark of Oracle. Planora is independent software and is not affiliated with or endorsed by Microsoft or Oracle.</p>
+  <div class="footer-credit"><span>Planora User Manual · Version 1.0.0 · October 2026</span><span>Developed by Adeeb</span></div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Planora vs Microsoft Project</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .matrix td:nth-child(2), .matrix td:nth-child(3), .matrix th:nth-child(2), .matrix th:nth-child(3) { text-align: center; width: 12%; }
+  .matrix td:first-child { width: 38%; }
+  .matrix td { padding: 4px 8px; }
+  .cover .shot { margin: 0 0 4px; }
+  .matrix td:last-child { color: var(--text2); font-size: 8.8pt; }
+  .area td { background: var(--soft); font-weight: 600; color: var(--navy); font-size: 9pt; letter-spacing: .02em; }
+  .legend { display: flex; gap: 18px; font-size: 8.8pt; color: var(--text2); margin: 4px 0 10px; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="band">
+    <div class="logo"><i></i><i></i><i></i></div>
+    <div class="brand">PLANORA</div>
+    <h1>Planora vs<br>Microsoft Project</h1>
+    <div class="sub">A feature-by-feature comparison of Planora 1.0 with Microsoft Project Professional 2024 (desktop), including file compatibility, a scheduling accuracy test on real Microsoft Project files, and what Planora does not do.</div>
+    <div class="meta">
+      <div><b>Planora</b>Version 1.0.0</div>
+      <div><b>Compared with</b>Project Professional 2024</div>
+      <div><b>Edition</b>October 2026</div>
+    </div>
+  </div>
+  <div class="shot"><img src="img/m_critical.jpg" alt=""></div>
+  <div class="scorecards">
+    <div class="card"><div class="num">188 / 188</div><div class="lbl">task dates identical to Microsoft Project on three real .mpp plans</div></div>
+    <div class="card"><div class="num">≈ 96%</div><div class="lbl">of desktop Microsoft Project features (our estimate)</div></div>
+    <div class="card"><div class="num">Free</div><div class="lbl">vs US$680–1,130 one-time or US$30–55 per user per month</div></div>
+  </div>
+  <div class="credit"><span>Planora · Project Management</span><b>Developed by Adeeb</b></div>
+</section>
+
+<section>
+  <h1 class="part">Summary</h1>
+  <h2>The short answer</h2>
+  <p class="lead">For planning, scheduling, tracking and reporting projects on a Windows PC, Planora does almost everything the desktop edition of Microsoft Project does, calculates the same dates, and opens Microsoft Project files — at no cost. Microsoft Project remains the choice when you need to <b>save .mpp files</b>, run <b>existing VBA macros</b>, or work inside Microsoft's <b>cloud and Office ecosystem</b> (Project Online, Project Server, SharePoint, Teams, Power BI).</p>
+
+  <h3>At a glance</h3>
+  <table>
+    <tr><th style="width:28%"></th><th style="width:36%">Planora 1.0</th><th>Microsoft Project</th></tr>
+    <tr><td>Price</td><td><b>Free</b></td><td>Project Standard 2024 US$679.99, Professional 2024 US$1,129.99 (one PC, one user); or Planner and Project Plan 3 US$30 and Plan 5 US$55 per user per month</td></tr>
+    <tr><td>Platform</td><td>Windows 10 / 11, 64-bit</td><td>Windows desktop app; web app with subscription plans</td></tr>
+    <tr><td>Account or sign-in</td><td>None</td><td>Microsoft account or Microsoft 365 work account</td></tr>
+    <tr><td>Works offline</td><td>Always</td><td>Desktop: yes. Web: no</td></tr>
+    <tr><td>Installation</td><td>One Setup file, no administrator rights, nothing else required</td><td>Microsoft installer; licence activation</td></tr>
+    <tr><td>Native file format</td><td>.planora (opens .mpp; exchanges Microsoft Project XML)</td><td>.mpp</td></tr>
+    <tr><td>Interface</td><td>Sidebar of views, command bar with menus, command search (Ctrl+K)</td><td>Office ribbon</td></tr>
+    <tr><td>Collaboration</td><td>Share files (.planora, XML, PDF)</td><td>Project Online / Server, SharePoint, Teams</td></tr>
+    <tr><td>Automation</td><td>Built-in VBA-like macro language</td><td>VBA, COM automation, Office add-ins</td></tr>
+  </table>
+
+  <h3>How the comparison was made</h3>
+  <p>Planora's columns describe features that exist in Planora 1.0 and were checked in its code and automated tests (305 tests). Microsoft Project's column describes the desktop <b>Project Professional 2024</b>; a few features (Team Planner, inactive tasks) are not in Project Standard. Prices are Microsoft's US list prices at the time of writing.</p>
+  <div class="legend"><span><span class="y">Yes</span> Available</span><span><span class="p">Partial</span> Available with limits (see notes)</span><span><span class="n">No</span> Not available</span></div>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Feature matrix</h1>
+  <h2>Scheduling and tasks</h2>
+  <table class="matrix">
+    <tr><th>Feature</th><th>Planora</th><th>MS Project</th><th>Notes</th></tr>
+    <tr class="area"><td colspan="4">Scheduling engine</td></tr>
+    <tr><td>Critical path method, forward and backward pass</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Same dates on real Microsoft Project files (see Accuracy).</td></tr>
+    <tr><td>Auto and manual scheduling</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Schedule from start or finish date</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Task types (fixed units, duration, work) and effort-driven</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Durations in minutes to months, elapsed, estimated</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Eight constraint types, honour-constraints option</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Deadlines</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Split tasks, split mode</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Recurring tasks</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Inactive tasks</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Professional only in Microsoft Project.</td></tr>
+    <tr><td>Summary tasks, outline, WBS codes, collapse/expand</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Milestones</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Task Inspector (what drives a task)</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Task Path highlighting</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr class="area"><td colspan="4">Dependencies</td></tr>
+    <tr><td>FS, SS, FF, SF links with lag and lead</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Including percentage and elapsed lag.</td></tr>
+    <tr><td>Link by dragging in the chart</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Autolink inserted or deleted tasks</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Links to tasks in other project files</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr class="area"><td colspan="4">Calendars</td></tr>
+    <tr><td>Project, task and resource calendars</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Exceptions with recurrence; work weeks</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Standard, 24 Hours and Night Shift base calendars</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+  </table>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Feature matrix</h1>
+  <h2>Resources, costs and tracking</h2>
+  <table class="matrix">
+    <tr><th>Feature</th><th>Planora</th><th>MS Project</th><th>Notes</th></tr>
+    <tr class="area"><td colspan="4">Resources</td></tr>
+    <tr><td>Work, material and cost resources</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Max units, availability over time, resource calendars</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Standard, overtime, per-use rates; cost rate tables A–E</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Generic resources, booking type, budget resources</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Assignment units, work, delay, work contours</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Eight contours plus period-by-period work.</td></tr>
+    <tr><td>Overallocation detection</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Minute by minute up to month by month.</td></tr>
+    <tr><td>Resource leveling (order, range, slack, splits)</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Not yet compared with Microsoft Project's leveling on the same files.</td></tr>
+    <tr><td>Shared resource pools</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>File-based pools.</td></tr>
+    <tr><td>Enterprise resource pool (Project Server)</td><td><span class="n">No</span></td><td><span class="y">Yes</span></td><td>Requires Project Online or Project Server.</td></tr>
+    <tr class="area"><td colspan="4">Costs</td></tr>
+    <tr><td>Resource, fixed and material costs; accrual</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Budgets</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Earned value (BCWS, BCWP, ACWP, SV, CV, EAC, BAC, VAC)</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>% Complete or Physical % Complete method.</td></tr>
+    <tr class="area"><td colspan="4">Tracking</td></tr>
+    <tr><td>11 baselines and 10 interim plans</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Status date, % complete, actual dates and durations</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Update Tasks, Update Project, Mark on Track</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Progress lines, Tracking Gantt, variance fields</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Timesheets and team status updates</td><td><span class="n">No</span></td><td><span class="p">Partial</span></td><td>Microsoft Project needs Project Online or Server for these.</td></tr>
+  </table>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Feature matrix</h1>
+  <h2>Views, customising and output</h2>
+  <table class="matrix">
+    <tr><th>Feature</th><th>Planora</th><th>MS Project</th><th>Notes</th></tr>
+    <tr class="area"><td colspan="4">Views</td></tr>
+    <tr><td>Gantt Chart, Tracking Gantt, Task Sheet</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Network Diagram, Calendar, Timeline</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Task Usage, Resource Usage, Resource Graph</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Resource Sheet, Team Planner</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Team Planner is Professional only in Microsoft Project.</td></tr>
+    <tr><td>Kanban / Task Board</td><td><span class="y">Yes</span></td><td><span class="p">Partial</span></td><td>In Microsoft Project, Task Boards come with the subscription desktop client.</td></tr>
+    <tr><td>Relationship Diagram</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Split views: Timeline, Details (Task / Resource Form)</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Command search across commands and tasks</td><td><span class="y">Yes</span></td><td><span class="p">Partial</span></td><td>Microsoft's “Tell me” searches commands only.</td></tr>
+    <tr><td>Schedule warnings panel</td><td><span class="y">Yes</span></td><td><span class="p">Partial</span></td><td>Planora collects late tasks, missed deadlines and overallocations in one list.</td></tr>
+    <tr class="area"><td colspan="4">Customising</td></tr>
+    <tr><td>Tables, filters (incl. interactive, AutoFilter, highlight), groups, sorting</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Custom fields: alias, lookup, formula, graphical indicators</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Formulas cover the common functions (IIf, Switch, DateAdd, DateDiff, ProjDurConv…), not all of Microsoft's.</td></tr>
+    <tr><td>Outline codes</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Bar styles, text styles, timescale, gridlines</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Saved views, Organizer</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Themes</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Planora: four accent colours.</td></tr>
+    <tr class="area"><td colspan="4">Reports and output</td></tr>
+    <tr><td>Built-in dashboards and reports</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>16 built-in reports.</td></tr>
+    <tr><td>Custom report designer</td><td><span class="p">Partial</span></td><td><span class="y">Yes</span></td><td>Text, figures, task tables, bar charts and resource tables; fewer chart types than Microsoft's.</td></tr>
+    <tr><td>Compare Projects</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Print with page setup, header, footer and legend</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Save as PDF; save view as image</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Visual Reports to Excel / Visio; Copy Picture to Office</td><td><span class="n">No</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr class="area"><td colspan="4">Productivity and safety</td></tr>
+    <tr><td>Multi-level undo and redo</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Find, replace, fill down, spelling</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Templates</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Autosave and crash recovery</td><td><span class="y">Yes</span></td><td><span class="p">Partial</span></td><td>Microsoft Project autosaves; recovery relies on Windows/Office.</td></tr>
+  </table>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Feature matrix</h1>
+  <h2>Files, multiple projects, automation and cloud</h2>
+  <table class="matrix">
+    <tr><th>Feature</th><th>Planora</th><th>MS Project</th><th>Notes</th></tr>
+    <tr class="area"><td colspan="4">Microsoft Project files</td></tr>
+    <tr><td>Open .mpp / .mpt</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Planora reads them with MPXJ, including timephased work and splits.</td></tr>
+    <tr><td>Save .mpp</td><td><span class="n">No</span></td><td><span class="y">Yes</span></td><td>The format is closed; no free library can write it. Use Microsoft Project XML.</td></tr>
+    <tr><td>Microsoft Project XML, open and save</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td>Planora writes XML in Microsoft's schema order; not yet tested by opening it in Microsoft Project.</td></tr>
+    <tr class="area"><td colspan="4">Other formats</td></tr>
+    <tr><td>Excel and CSV with an import map</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Primavera P6 XER and XML</td><td><span class="y">Yes</span></td><td><span class="n">No</span></td><td>Planora opens and exports both.</td></tr>
+    <tr><td>MPX</td><td><span class="y">Yes</span></td><td><span class="p">Partial</span></td><td>Current Microsoft Project opens MPX but no longer saves it.</td></tr>
+    <tr><td>Asta, Phoenix, GanttProject and others</td><td><span class="y">Yes</span></td><td><span class="n">No</span></td><td>Open only.</td></tr>
+    <tr class="area"><td colspan="4">Multiple projects</td></tr>
+    <tr><td>Subprojects and master projects</td><td><span class="y">Yes</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr><td>Portfolio management, demand management</td><td><span class="n">No</span></td><td><span class="p">Partial</span></td><td>Plan 5 / Project Server only.</td></tr>
+    <tr class="area"><td colspan="4">Automation</td></tr>
+    <tr><td>Macros</td><td><span class="p">Partial</span></td><td><span class="y">Yes</span></td><td>Planora has its own VBA-like language; existing Microsoft Project VBA macros do not run.</td></tr>
+    <tr><td>COM automation, Office add-ins</td><td><span class="n">No</span></td><td><span class="y">Yes</span></td><td></td></tr>
+    <tr class="area"><td colspan="4">Cloud and Office integration</td></tr>
+    <tr><td>Project Online, Project Server, web app</td><td><span class="n">No</span></td><td><span class="y">Yes</span></td><td>Subscription or server licences.</td></tr>
+    <tr><td>SharePoint task list sync, Teams, Power BI</td><td><span class="n">No</span></td><td><span class="y">Yes</span></td><td></td></tr>
+  </table>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Accuracy</h1>
+  <h2>Scheduling accuracy on real Microsoft Project files</h2>
+  <p class="lead">A scheduler is only as good as its dates. Planora was tested on three plans saved by Microsoft Project itself.</p>
+  <p>For each file, the dates Microsoft Project had stored were read from the .mpp; then Planora rescheduled the plan from scratch with its own engine and the two sets of dates were compared, task by task. This test runs automatically with every change to Planora.</p>
+  <table>
+    <tr><th style="width:46%">File</th><th>Tasks</th><th>Start and finish dates identical</th></tr>
+    <tr><td>Advanced Analytics Microsoft Project Plan</td><td>34</td><td><span class="y">34 / 34</span></td></tr>
+    <tr><td>Commercial construction sample</td><td>144</td><td><span class="y">144 / 144</span></td></tr>
+    <tr><td>Product development sample</td><td>10</td><td><span class="y">10 / 10</span></td></tr>
+    <tr><td><b>Total</b></td><td><b>188</b></td><td><b>188 / 188</b></td></tr>
+  </table>
+  <p>“Identical” means within one minute: Microsoft Project stores seconds, Planora schedules in whole minutes. The plans include fixed-duration tasks, milestones with resources, interrupted (stop/resume) tasks, delayed assignments, cost and material resources and contoured work. One task shows a displayed duration of 181.8 hours where Microsoft Project shows 180 hours, with the same dates.</p>
+  <figure><img src="img/installed.jpg" alt=""><figcaption>The commercial construction .mpp open in Planora (144 tasks, 60 resources).</figcaption></figure>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Conclusion</h1>
+  <h2>What Planora does not do</h2>
+  <ul>
+    <li><b>Save .mpp files.</b> Planora opens them, but saves .planora and Microsoft Project XML. Microsoft Project opens the XML and can save it as .mpp.</li>
+    <li><b>Run Microsoft Project VBA macros</b>, COM automation or Office add-ins. Planora's own macro language covers common automation.</li>
+    <li><b>Connect to Microsoft's cloud</b>: Project Online, Project Server, SharePoint, Teams, Power BI, timesheets and portfolio management.</li>
+    <li><b>Visual Reports</b> to Excel or Visio, and Copy Picture to Office.</li>
+    <li><b>Run on Mac, Linux or the web.</b> Planora is a Windows desktop program.</li>
+  </ul>
+  <p>Two areas have not yet been cross-checked against Microsoft Project: <b>resource leveling results</b> on the same files, and <b>opening Planora's XML in Microsoft Project</b>. Both are implemented and tested in Planora itself.</p>
+
+  <h2 style="margin-top:22px">Which should you choose?</h2>
+  <table>
+    <tr><th style="width:50%">Choose Planora if you…</th><th>Choose Microsoft Project if you…</th></tr>
+    <tr>
+      <td><ul>
+        <li>plan and control projects on Windows PCs and want desktop Microsoft Project's scheduling at no cost</li>
+        <li>receive .mpp files and need to open, analyse and report them</li>
+        <li>exchange schedules with Primavera P6 users</li>
+        <li>work offline or without Microsoft 365 accounts</li>
+        <li>want a modern interface with command search</li>
+      </ul></td>
+      <td><ul>
+        <li>must send editable .mpp files to clients or head office</li>
+        <li>depend on existing VBA macros or Office add-ins</li>
+        <li>use Project Online, Project Server, SharePoint or Teams for team updates and timesheets</li>
+        <li>need portfolio-level management across many projects</li>
+      </ul></td>
+    </tr>
+  </table>
+
+  <h3>Sources and notes</h3>
+  <p style="font-size:9pt;color:var(--text2)">Microsoft Project prices: Microsoft 365 Project plans and pricing page (microsoft.com/en-us/microsoft-365/project/microsoft-project-enterprise-plans-and-pricing) and retailer listings for Project Standard and Professional 2024, US list prices in October 2026; prices vary by country and change over time. Planora facts: Planora 1.0.0 source code and its automated test suite. The feature coverage figure is an estimate by the Planora developer.</p>
+  <p style="font-size:9pt;color:var(--muted)">Microsoft, Microsoft Project, SharePoint, Teams, Power BI, Excel and Visio are trademarks of Microsoft Corporation. Primavera is a trademark of Oracle. Planora is independent software and is not affiliated with or endorsed by Microsoft or Oracle.</p>
+  <div class="footer-credit"><span>Planora vs Microsoft Project · October 2026</span><span>Developed by Adeeb</span></div>
+</section>
+
+</body>
+</html>

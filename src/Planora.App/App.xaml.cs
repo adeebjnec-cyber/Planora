@@ -94,6 +94,8 @@ public partial class App : Application
                 window.ViewModel.CurrentTableName = table;
             if (options.TryGetValue("--filter", out var filter))
                 window.ViewModel.CurrentFilterName = filter;
+            if (options.ContainsKey("--critical"))
+                window.ViewModel.ShowCriticalPath = true;
             if (options.ContainsKey("--progress"))
                 window.ViewModel.ShowProgressLines = true;
             if (options.TryGetValue("--group", out var group))
