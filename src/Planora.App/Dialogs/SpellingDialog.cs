@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using Planora.App.ViewModels;
 using Planora.Engine.Model;
 
@@ -12,7 +13,7 @@ namespace Planora.App.Dialogs;
 /// </summary>
 public sealed class SpellingDialog : Window
 {
-    private sealed record Spot(int? TaskId, int? ResourceId, string Field, int Start, int Length, string Word, IReadOnlyList<string> Suggestions);
+    private sealed record Spot(int? TaskId, int? ResourceId, string Field, int Start, int Length, string Word);
 
     private readonly MainViewModel _owner;
     private readonly TextBox _checker = new();
@@ -22,6 +23,7 @@ public sealed class SpellingDialog : Window
     private readonly ListBox _suggestions = new() { Height = 110, Width = 220, HorizontalAlignment = HorizontalAlignment.Left };
     private readonly List<Button> _actionButtons = new();
     private List<Spot> _spots = new();
+    private IReadOnlyList<string> _currentSuggestions = Array.Empty<string>();
     private int _index;
 
     public SpellingDialog(MainViewModel owner)
@@ -33,7 +35,7 @@ public sealed class SpellingDialog : Window
         _notInDictionary.IsReadOnly = true;
         _suggestions.SelectionChanged += (_, _) =>
         {
-            if (_suggestions.SelectedItem is string s && _spots.Count > _index && _spots[_index].Suggestions.Count > 0)
+            if (_suggestions.SelectedItem is string s && _currentSuggestions.Count > 0)
                 _changeTo.Text = s;
         };
 
@@ -67,7 +69,15 @@ public sealed class SpellingDialog : Window
 
         Loaded += (_, _) =>
         {
-            Rescan();
+            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+            try
+            {
+                Rescan();
+            }
+            finally
+            {
+                Mouse.OverrideCursor = null;
+            }
             Show(0);
         };
     }
@@ -80,37 +90,63 @@ public sealed class SpellingDialog : Window
         _actionButtons.Add(button);
     }
 
+    private static readonly System.Text.RegularExpressions.Regex WordPattern = new(@"\p{L}[\p{L}'’]*", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>The words Windows' spell checker does not know, by checking each distinct word once.</summary>
+    private readonly Dictionary<string, bool> _known = new();
+
     /// <summary>Every misspelt word in the project's texts, in order.</summary>
     private void Rescan()
     {
-        var spots = new List<Spot>();
         var project = _owner.Project;
+        var texts = new List<(string Text, int? TaskId, int? ResourceId, string Field)>();
         foreach (var task in project.Tasks)
         {
-            Collect(spots, task.Name, task.Id, null, "Name");
-            Collect(spots, task.Notes, task.Id, null, "Notes");
+            texts.Add((task.Name, task.Id, null, "Name"));
+            texts.Add((task.Notes, task.Id, null, "Notes"));
         }
         foreach (var resource in project.Resources)
-            Collect(spots, resource.Name, null, resource.Id, "Resource Name");
-        _spots = spots.Where(s => !_ignored.Contains(s.Word)).ToList();
-    }
+            texts.Add((resource.Name, null, resource.Id, "Resource Name"));
 
-    private void Collect(List<Spot> spots, string text, int? taskId, int? resourceId, string field)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return;
-        _checker.Text = text;
-        _checker.UpdateLayout();
-        int at = _checker.GetNextSpellingErrorCharacterIndex(0, LogicalDirection.Forward);
-        while (at >= 0 && at < text.Length)
+        // Checking one long text per note is slow (the checker re-reads the text at every step), so all
+        // new distinct words are checked together in a single pass.
+        var unchecked_ = texts.Where(t => !string.IsNullOrWhiteSpace(t.Text))
+            .SelectMany(t => WordPattern.Matches(t.Text).Select(m => m.Value))
+            .Where(w => !_known.ContainsKey(w)).Distinct().ToList();
+        var misspelt = new HashSet<string>();
+        // Small batches keep each scan short: the checker's cost grows with the text length at every step.
+        foreach (var batch in unchecked_.Chunk(40))
         {
-            var error = _checker.GetSpellingError(at);
-            if (error is null)
-                break;
-            int length = Math.Max(1, _checker.GetSpellingErrorLength(at));
-            spots.Add(new Spot(taskId, resourceId, field, at, length, text.Substring(at, Math.Min(length, text.Length - at)), error.Suggestions.ToList()));
-            at = _checker.GetNextSpellingErrorCharacterIndex(at + length, LogicalDirection.Forward);
+            var joined = string.Join("\n", batch);
+            _checker.Text = joined;
+            _checker.UpdateLayout();
+            int at = _checker.GetNextSpellingErrorCharacterIndex(0, LogicalDirection.Forward);
+            while (at >= 0 && at < joined.Length)
+            {
+                int length = Math.Max(1, _checker.GetSpellingErrorLength(at));
+                misspelt.Add(joined.Substring(at, Math.Min(length, joined.Length - at)));
+                // The checker can report the same position again; always move forward so the scan ends.
+                int next = _checker.GetNextSpellingErrorCharacterIndex(at + length, LogicalDirection.Forward);
+                if (next <= at)
+                    break;
+                at = next;
+            }
         }
+        foreach (var word in unchecked_)
+            _known[word] = !misspelt.Contains(word);
+
+        var spots = new List<Spot>();
+        foreach (var (text, taskId, resourceId, field) in texts)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                continue;
+            foreach (System.Text.RegularExpressions.Match m in WordPattern.Matches(text))
+            {
+                if (_known.TryGetValue(m.Value, out var ok) && !ok)
+                    spots.Add(new Spot(taskId, resourceId, field, m.Index, m.Length, m.Value));
+            }
+        }
+        _spots = spots.Where(s => !_ignored.Contains(s.Word)).ToList();
     }
 
     private void Show(int index)
@@ -133,11 +169,20 @@ public sealed class SpellingDialog : Window
             : $"resource '{project.Resources.FirstOrDefault(r => r.Id == spot.ResourceId)?.Name}'";
         _where.Text = $"{spot.Field} of {where}";
         _notInDictionary.Text = spot.Word;
-        _suggestions.ItemsSource = spot.Suggestions.Count > 0 ? spot.Suggestions : new[] { "(no suggestions)" };
-        _suggestions.SelectedIndex = spot.Suggestions.Count > 0 ? 0 : -1;
-        _changeTo.Text = spot.Suggestions.FirstOrDefault() ?? spot.Word;
+        _currentSuggestions = SuggestionsFor(spot.Word);
+        _suggestions.ItemsSource = _currentSuggestions.Count > 0 ? _currentSuggestions : new[] { "(no suggestions)" };
+        _suggestions.SelectedIndex = _currentSuggestions.Count > 0 ? 0 : -1;
+        _changeTo.Text = _currentSuggestions.FirstOrDefault() ?? spot.Word;
         if (spot.TaskId is { } taskId && project.GetTask(taskId) is { } task)
             _owner.SelectTask(task);
+    }
+
+    private IReadOnlyList<string> SuggestionsFor(string word)
+    {
+        _checker.Text = word;
+        _checker.UpdateLayout();
+        int at = _checker.GetNextSpellingErrorCharacterIndex(0, LogicalDirection.Forward);
+        return at >= 0 && _checker.GetSpellingError(at) is { } error ? error.Suggestions.Take(12).ToList() : Array.Empty<string>();
     }
 
     private void Ignore() => Show(_index + 1);

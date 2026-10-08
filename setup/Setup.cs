@@ -26,14 +26,14 @@ using Microsoft.Win32;
 [assembly: AssemblyCompany("Adeeb")]
 [assembly: AssemblyCopyright("© 2026 Adeeb. Developed by Adeeb.")]
 [assembly: AssemblyDescription("Installs Planora, project scheduling and control software. Developed by Adeeb.")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 
 namespace PlanoraSetup
 {
     internal static class Program
     {
-        public const string Version = "1.0.0";
+        public const string Version = "1.1.0";
         public const string MarkerFile = "planora.install";
 
         [STAThread]

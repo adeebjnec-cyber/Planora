@@ -72,6 +72,22 @@ public partial class App : Application
             });
             return;
         }
+        if (options.TryGetValue("--mousetest", out var mouseLog))
+        {
+            DispatcherUnhandledException -= OnUnhandledException;
+            window.Show();
+            window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => new Infrastructure.MouseSelfTest(window, mouseLog).Run());
+            return;
+        }
+        if (options.TryGetValue("--uitest", out var testLog))
+        {
+            // The self-test records unexpected errors itself instead of showing them.
+            DispatcherUnhandledException -= OnUnhandledException;
+            window.ViewModel.IsHeadless = true;
+            window.Show();
+            window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () => new Infrastructure.UiSelfTest(window, testLog, positional).Run());
+            return;
+        }
         if (options.TryGetValue("--screenshot", out var output))
         {
             // Never block on a message box in this unattended mode: log the error and exit.

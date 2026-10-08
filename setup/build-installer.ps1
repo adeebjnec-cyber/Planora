@@ -6,7 +6,7 @@
 # Planora Setup is developed by Adeeb.
 
 $ErrorActionPreference = 'Stop'
-$version = '1.0.0'
+$version = '1.1.0'
 $root = Split-Path -Parent $PSScriptRoot
 $dotnet = 'C:\Program Files\dotnet\dotnet.exe'
 $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'

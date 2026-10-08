@@ -136,6 +136,8 @@ public sealed class CommandPalette : Window
             Top = origin.Y / dpi.DpiScaleY + 70;
             _input.Focus();
         };
+        // However it closes (Esc, Alt+F4, running a command), losing focus while closing must not close it again.
+        Closing += (_, _) => _closing = true;
         Deactivated += (_, _) => SafeClose();
         Refresh();
     }

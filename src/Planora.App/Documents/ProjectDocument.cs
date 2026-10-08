@@ -58,6 +58,9 @@ public sealed class ProjectDocument : ObservableObject
 
     public string Title => (FilePath is null ? Project.Name : Path.GetFileNameWithoutExtension(FilePath)) + (IsDirty ? " *" : "");
 
+    /// <summary>Treats the current state as saved (the UI self-test uses this to switch projects without a prompt).</summary>
+    internal void ForgetChanges() => IsDirty = false;
+
     public bool CanUndo => _undo.Count > 0;
     public bool CanRedo => _redo.Count > 0;
     public string? UndoDescription => _undo.Last?.Value.Description;
