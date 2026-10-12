@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Planora Test Report</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .tight td, .tight th { padding: 3px 8px; }
+  .r { text-align: right; font-variant-numeric: tabular-nums; }
+  .cols3 { columns: 3; column-gap: 18px; }
+  .cols3 table { margin-top: 0; }
+  .card .num { font-size: 17pt; white-space: nowrap; }
+  .cover .shot { margin: 0 0 4px; }
+</style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="band">
+    <div class="logo"><i></i><i></i><i></i></div>
+    <div class="brand">PLANORA</div>
+    <h1>Final Test Report</h1>
+    <div class="sub">Version 1.1.0 — results of automatic, real-file, user-interface, mouse and installer testing, the bugs they found, and what has not been tested yet.</div>
+    <div class="meta">
+      <div><b>Version tested</b>1.1.0</div>
+      <div><b>Test dates</b>6 – 12 October 2026</div>
+      <div><b>Test machine</b>Windows 11 (build 26200), .NET 8</div>
+    </div>
+  </div>
+  <div class="shot"><img src="img/m_gantt.jpg" alt=""></div>
+  <div class="scorecards">
+    <div class="card"><div class="num">305 / 305</div><div class="lbl">automatic engine tests passed</div></div>
+    <div class="card"><div class="num">188 / 188</div><div class="lbl">task dates identical to Microsoft Project</div></div>
+    <div class="card"><div class="num">1,879</div><div class="lbl">UI steps run, 0 errors</div></div>
+    <div class="card"><div class="num">16 / 16</div><div class="lbl">real mouse &amp; keyboard checks passed</div></div>
+  </div>
+  <div class="credit"><span>Planora · Project Management</span><b>Developed by Adeeb</b></div>
+</section>
+
+<section>
+  <h1 class="part">Summary</h1>
+  <h2>Result: all tests pass</h2>
+  <p class="lead">Planora 1.1.0 passed every test in five levels of testing. Testing found 17 real bugs during development; all were fixed before release. One slow spot remains (Spelling on very note-heavy plans) and a few areas have not been tested yet (page 7).</p>
+  <table>
+    <tr><th style="width:4%">#</th><th style="width:28%">Test level</th><th>What it checks</th><th style="width:16%">Result</th></tr>
+    <tr><td>1</td><td>Automatic engine tests</td><td>The calculation “brain”: dates, calendars, costs, resources, files, reports</td><td><span class="y">305 / 305 pass</span></td></tr>
+    <tr><td>2</td><td>Real Microsoft Project files</td><td>Planora recalculates real .mpp plans and must get Microsoft Project's dates</td><td><span class="y">188 / 188 match</span></td></tr>
+    <tr><td>3</td><td>Full user-interface sweep</td><td>Every menu command, view, table, filter, group and zoom on 6 projects</td><td><span class="y">1,879 steps, 0 errors</span></td></tr>
+    <tr><td>4</td><td>Real mouse &amp; keyboard</td><td>Dragging, resizing and linking Gantt bars, menus, Ctrl+K, sidebar</td><td><span class="y">16 / 16 pass (×2)</span></td></tr>
+    <tr><td>5</td><td>Installer</td><td>Setup unpacks the program, makes shortcuts, installed copy runs</td><td><span class="y">Pass</span></td></tr>
+  </table>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Level 1</h1>
+  <h2>Automatic engine tests</h2>
+  <p>These tests give the calculation engine a small project and check the answer, for example “a 5-day task starting Monday must finish Friday at 17:00”. All 305 run in under 20 seconds and are re-run after every change. Run on 12 October 2026: <b>305 passed, 0 failed, 0 skipped</b>.</p>
+  <div class="cols3">
+  <table class="tight">
+    <tr><th>Test group</th><th class="r">Tests</th></tr>
+    <tr><td>Scheduler</td><td class="r">23</td></tr>
+    <tr><td>Advanced scheduling</td><td class="r">16</td></tr>
+    <tr><td>Schedule options</td><td class="r">6</td></tr>
+    <tr><td>Task progress</td><td class="r">6</td></tr>
+    <tr><td>Tracking</td><td class="r">8</td></tr>
+    <tr><td>Task inspector</td><td class="r">1</td></tr>
+    <tr><td>Task path</td><td class="r">1</td></tr>
+    <tr><td>Move task</td><td class="r">1</td></tr>
+    <tr><td>Calendars</td><td class="r">14</td></tr>
+    <tr><td>Calendar patterns</td><td class="r">6</td></tr>
+    <tr><td>Working-time text</td><td class="r">10</td></tr>
+    <tr><td>Duration text</td><td class="r">17</td></tr>
+    <tr><td>Predecessor text</td><td class="r">7</td></tr>
+    <tr><td>Resource names text</td><td class="r">6</td></tr>
+  </table>
+  <table class="tight">
+    <tr><th>Test group</th><th class="r">Tests</th></tr>
+    <tr><td>Resources</td><td class="r">27</td></tr>
+    <tr><td>Resource parity</td><td class="r">8</td></tr>
+    <tr><td>Field &amp; leveling options</td><td class="r">4</td></tr>
+    <tr><td>Timephased edits</td><td class="r">12</td></tr>
+    <tr><td>Timephased detail</td><td class="r">2</td></tr>
+    <tr><td>Formulas &amp; options</td><td class="r">27</td></tr>
+    <tr><td>Views, tables, filters</td><td class="r">12</td></tr>
+    <tr><td>Interactive filters</td><td class="r">1</td></tr>
+    <tr><td>Task search</td><td class="r">3</td></tr>
+    <tr><td>Gantt format</td><td class="r">4</td></tr>
+    <tr><td>Reports</td><td class="r">19</td></tr>
+    <tr><td>More reports</td><td class="r">3</td></tr>
+    <tr><td>Project comparison</td><td class="r">1</td></tr>
+    <tr><td>Macros</td><td class="r">4</td></tr>
+  </table>
+  <table class="tight">
+    <tr><th>Test group</th><th class="r">Tests</th></tr>
+    <tr><td>Project model</td><td class="r">7</td></tr>
+    <tr><td>.planora files</td><td class="r">7</td></tr>
+    <tr><td>Microsoft Project XML</td><td class="r">4</td></tr>
+    <tr><td>XML schema order</td><td class="r">4</td></tr>
+    <tr><td>Extended attributes</td><td class="r">3</td></tr>
+    <tr><td>Excel &amp; CSV</td><td class="r">6</td></tr>
+    <tr><td>Other formats (.mpp, P6, MPX)</td><td class="r">4</td></tr>
+    <tr><td>Clipboard &amp; templates</td><td class="r">5</td></tr>
+    <tr><td>Master projects</td><td class="r">5</td></tr>
+    <tr><td>Multiple projects</td><td class="r">2</td></tr>
+    <tr><td>Organizer</td><td class="r">1</td></tr>
+    <tr><td>Construction test pack</td><td class="r">5</td></tr>
+    <tr><td>Real .mpp files</td><td class="r">3</td></tr>
+    <tr><td><b>Total (41 groups)</b></td><td class="r"><b>305</b></td></tr>
+  </table>
+  </div>
+
+  <h2 style="margin-top:20px">Level 2: Real Microsoft Project files</h2>
+  <p>For each file, the dates Microsoft Project had saved were read from the .mpp. Planora then recalculated the whole plan with its own engine and the dates were compared task by task (equal within one minute; Microsoft Project stores seconds, Planora whole minutes).</p>
+  <table>
+    <tr><th style="width:48%">File</th><th class="r">Tasks</th><th>Before fixes</th><th>Final result</th></tr>
+    <tr><td>Advanced Analytics Microsoft Project Plan.mpp</td><td class="r">34</td><td>23 matched</td><td><span class="y">34 / 34</span></td></tr>
+    <tr><td>commercial-construction-sample.mpp</td><td class="r">144</td><td>15 matched</td><td><span class="y">144 / 144</span></td></tr>
+    <tr><td>product-development-sample.mpp</td><td class="r">10</td><td>3 matched</td><td><span class="y">10 / 10</span></td></tr>
+    <tr><td><b>Total</b></td><td class="r"><b>188</b></td><td><b>41 matched</b></td><td><b>188 / 188</b></td></tr>
+  </table>
+  <p>The construction test pack (4 project XML files plus a parser edge-case file) also imports completely, with every task, duration and link that can be imported, and clear notes for the two links that cannot.</p>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Level 3</h1>
+  <h2>Full user-interface sweep</h2>
+  <p>An automatic tester (<code>Planora.exe --uitest</code>) drove the real window: every view, every table, filter and group, all 8 zoom levels, and <b>every command in every menu</b>, followed by undo and redo. A watchdog closed each dialog a command opened and recorded any error message. Run on 9 October 2026, 436 seconds.</p>
+  <table>
+    <tr><th style="width:52%">Project</th><th class="r">Tasks</th><th class="r">Resources</th><th class="r">Steps</th><th>Errors</th></tr>
+    <tr><td>Sample project (Office Relocation)</td><td class="r">15</td><td class="r">4</td><td class="r">240</td><td><span class="y">0</span></td></tr>
+    <tr><td>commercial-construction-sample.mpp</td><td class="r">144</td><td class="r">60</td><td class="r">240</td><td><span class="y">0</span></td></tr>
+    <tr><td>Advanced Analytics Microsoft Project Plan.mpp</td><td class="r">34</td><td class="r">8</td><td class="r">238</td><td><span class="y">0</span></td></tr>
+    <tr><td>product-development-sample.mpp</td><td class="r">10</td><td class="r">5</td><td class="r">240</td><td><span class="y">0</span></td></tr>
+    <tr><td>Hospital_Construction_Advanced.xml</td><td class="r">91</td><td class="r">12</td><td class="r">240</td><td><span class="y">0</span></td></tr>
+    <tr><td>XML_Parser_Edge_Cases.xml</td><td class="r">5</td><td class="r">0</td><td class="r">238</td><td><span class="y">0</span></td></tr>
+    <tr><td>Sample project, second pass</td><td class="r">15</td><td class="r">4</td><td class="r">236</td><td><span class="y">0</span></td></tr>
+    <tr><td>Blank new project</td><td class="r">0</td><td class="r">0</td><td class="r">207</td><td><span class="y">0</span></td></tr>
+    <tr><td><b>Total</b></td><td></td><td></td><td class="r"><b>1,879</b></td><td><b>0</b></td></tr>
+  </table>
+  <p>428 dialogs and windows opened and closed without errors. All message boxes were expected ones (“Do you want to save changes?”, file dialogs, and the correct refusal “cannot be indented further”). The only notes were two slow steps: <b>Spelling</b> took 3.6 s and 12.9 s on the large plans (see page 7).</p>
+  <h3>Save and reopen (round trip)</h3>
+  <p>Each of the five files was saved as <b>.planora</b> and as <b>Microsoft Project XML</b>, reopened, and compared: <b>10 of 10 round trips identical</b> (all task names, starts and finishes).</p>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Level 4 and 5</h1>
+  <h2>Real mouse and keyboard</h2>
+  <p>A second tester (<code>Planora.exe --mousetest</code>) moved the real mouse pointer and pressed real keys on the sample project. Run twice on 9 October 2026; both runs 16 / 16.</p>
+  <table>
+    <tr><th style="width:4%">#</th><th>Check</th><th style="width:30%">Observed</th><th style="width:12%">Result</th></tr>
+    <tr><td>1</td><td>Drag a Gantt bar to the right moves the task later</td><td>9 Oct → 12 Oct</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>2</td><td>Ctrl+Z undoes the drag</td><td>back to 9 Oct</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>3</td><td>Drag a bar's right edge lengthens the task</td><td>4 → 5 days</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>4</td><td>Drag a bar's left edge sets % complete</td><td>0% → 50%</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>5</td><td>Drag a bar onto another task links them</td><td>link added</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>6</td><td>Hovering a bar shows the details card</td><td>card shown</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>7–8</td><td>Phase arrow collapses and expands a phase</td><td>16 → 12 → 16 rows</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>9</td><td>Critical path switch turns red highlighting on</td><td>on</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>10–11</td><td>Clicking Task opens its menu; Esc closes it</td><td>opens, closes</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>12–14</td><td>Ctrl+K opens search; typing “zoom in” + Enter runs it; Esc closes</td><td>zoom 4 → 5</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>15–16</td><td>Sidebar opens Resource Sheet and returns to Gantt Chart</td><td>views switch</td><td><span class="y">Pass</span></td></tr>
+  </table>
+
+  <h2 style="margin-top:20px">Installer</h2>
+  <table>
+    <tr><th>Check</th><th style="width:30%">Result</th></tr>
+    <tr><td>Planora-Setup-1.1.0.exe built (self-contained, 118 MB)</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>Setup self-test: unpacks 598 files and creates a working shortcut</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>Installed Planora.exe reports version 1.1.0, publisher Adeeb, “Developed by Adeeb”</td><td><span class="y">Pass</span></td></tr>
+    <tr><td>Installed copy runs on its own and opens a real .mpp file (1.0.0 installer)</td><td><span class="y">Pass</span></td></tr>
+  </table>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Bugs</h1>
+  <h2>Bugs found by testing, all fixed</h2>
+  <table>
+    <tr><th style="width:4%">#</th><th>Bug</th><th style="width:22%">Found by</th><th style="width:10%">Status</th></tr>
+    <tr><td>1</td><td>Fixed Duration tasks were shortened to their assignments' work</td><td>Real .mpp files</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>2</td><td>Milestones with resources moved to the next morning</td><td>Real .mpp files</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>3</td><td>Interrupted (stop/resume) tasks were ignored</td><td>Real .mpp files</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>4</td><td>A delayed assignment moved the task start instead of its finish</td><td>Real .mpp files</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>5</td><td>Contractor (cost) resources were not recognised</td><td>Real .mpp files</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>6</td><td>Material and cost assignments lost their stored length</td><td>Real .mpp files</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>7</td><td>Contoured (hand-shaped) work was imported as flat</td><td>Real .mpp files</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>8</td><td>Assignments without work made every duration zero</td><td>Construction test pack</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>9</td><td>Tasks numbered 0 were dropped on import</td><td>Construction test pack</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>10</td><td>Links that could not be imported disappeared silently (now reported)</td><td>Construction test pack</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>11</td><td>% complete without actual dates was ignored</td><td>Construction test pack</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>12</td><td>The MPXJ file reader could not read Planora's own XML files (byte-order mark)</td><td>Format tests</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>13</td><td>Command search (Ctrl+K) could never close</td><td>Compiler warning</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>14</td><td>Command search crashed (“…while a Window is closing”) when closed with Alt+F4</td><td>UI sweep</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>15</td><td>Spelling froze for about 40 s on plans with long notes (now about 8 s)</td><td>UI sweep</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>16</td><td>Spelling's word scan could loop forever on some text</td><td>UI sweep</td><td><span class="y">Fixed</span></td></tr>
+    <tr><td>17</td><td>A macro with an empty loop hung the program</td><td>Unit tests</td><td><span class="y">Fixed</span></td></tr>
+  </table>
+  <p style="font-size:9pt;color:var(--text2)">Three crashes and some failed checks during testing turned out to come from the test tools themselves (for example closing a window that a person cannot close while a file dialog is open, and aiming the mouse at bars outside the screen). Each was investigated, proven not to be a Planora bug, and the tester corrected.</p>
+</section>
+
+<section class="chapter">
+  <h1 class="part">Open items</h1>
+  <h2>Known limitations and what is not tested yet</h2>
+  <h3>Known limitations</h3>
+  <table>
+    <tr><th style="width:36%">Item</th><th>Detail</th></tr>
+    <tr><td>Spelling on note-heavy plans</td><td>About 8–13 s on a plan with 34 long notes (instant on normal plans); a wait cursor is shown.</td></tr>
+    <tr><td>Dragging past the chart edge</td><td>The chart does not scroll by itself while dragging a bar beyond its edge (Microsoft Project does).</td></tr>
+    <tr><td>Saving .mpp files</td><td>Not possible (closed format); Planora saves Microsoft Project XML instead.</td></tr>
+    <tr><td>Microsoft Project VBA macros</td><td>Not supported; Planora has its own macro language.</td></tr>
+    <tr><td>Installer not code-signed</td><td>Windows shows a “Windows protected your PC” warning the first time.</td></tr>
+  </table>
+  <h3>Not tested yet</h3>
+  <ul>
+    <li>Printing to a real printer (print preview and PDF export were tested).</li>
+    <li>A full install and uninstall through Windows “Installed apps” on a clean PC (the installer self-test passed).</li>
+    <li>Opening Planora's exported XML in Microsoft Project itself.</li>
+    <li>Resource leveling results compared with Microsoft Project's leveling on the same files.</li>
+    <li>Use by real people over a longer period.</li>
+  </ul>
+
+  <h3>How to repeat these tests</h3>
+  <table class="tight">
+    <tr><th style="width:42%">Test</th><th>Command (in the Planora folder)</th></tr>
+    <tr><td>Engine tests</td><td><code>dotnet test tests\Planora.Engine.Tests</code></td></tr>
+    <tr><td>UI sweep</td><td><code>Planora.exe --uitest log.txt [project files]</code></td></tr>
+    <tr><td>Mouse &amp; keyboard (moves the pointer)</td><td><code>Planora.exe --mousetest log.txt</code></td></tr>
+    <tr><td>Installer self-test</td><td><code>Planora-Setup-1.1.0.exe /selftest &lt;empty folder&gt;</code></td></tr>
+  </table>
+  <div class="footer-credit"><span>Planora Final Test Report · Version 1.1.0 · October 2026</span><span>Developed by Adeeb</span></div>
+</section>
+
+</body>
+</html>
