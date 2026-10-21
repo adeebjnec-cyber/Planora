@@ -33,6 +33,15 @@ public partial class App : Application
                 window.ViewModel.OpenFile(source);
             else
                 window.ViewModel.LoadSample();
+            // Export options: "--zoom 0..7", "--collapse 1" (phases only), "--critical 1", "--table Name".
+            if (options.TryGetValue("--zoom", out var exportZoom) && int.TryParse(exportZoom, out var zoomLevel))
+                window.ViewModel.ZoomIndex = zoomLevel;
+            if (options.ContainsKey("--collapse"))
+                window.ViewModel.CollapseAllCommand.Execute(null);
+            if (options.ContainsKey("--critical"))
+                window.ViewModel.ShowCriticalPath = true;
+            if (options.TryGetValue("--table", out var exportTable))
+                window.ViewModel.CurrentTableName = exportTable;
             window.Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
             {
                 try

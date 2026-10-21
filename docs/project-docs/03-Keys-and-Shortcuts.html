@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Keys and Shortcuts</title><link rel="stylesheet" href="../style.css"><style>
+body{font-size:9.8pt} h2{font-size:18pt} h3{font-size:12pt;margin:14px 0 5px}
+.top{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--navy);padding-bottom:10px;margin-bottom:14px}
+.top .logo{width:38px;height:38px;border-radius:9px;background:var(--navy);position:relative;flex:none}
+.top .logo i{position:absolute;height:5px;border-radius:2.5px}
+.top .logo i:nth-child(1){left:7px;top:10px;width:15px;background:#fff}.top .logo i:nth-child(2){left:13px;top:17px;width:19px;background:#8F9AEA}.top .logo i:nth-child(3){left:19px;top:24px;width:12px;background:#9AA3B2}
+.top .t{flex:1}.top .t b{display:block;font-size:17pt;line-height:1.15}.top .t span{color:var(--muted);font-size:9pt}
+.top .doc{font-size:8.5pt;color:var(--muted);text-align:right}
+table.c td,table.c th{padding:3px 6px;font-size:8.6pt}
+.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.crit{color:var(--red);font-weight:600}
+.sum td{background:var(--soft);font-weight:600}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 14px}
+.kv div{border:1px solid var(--border);border-radius:8px;padding:8px 10px}.kv b{display:block;font-size:13.5pt;color:var(--navy)}.kv span{font-size:8.4pt;color:var(--muted)}
+.foot{margin-top:16px;padding-top:7px;border-top:1px solid var(--border);color:var(--muted);font-size:8pt;display:flex;justify-content:space-between}
+.pb{page-break-before:always}
+table.tiny td,table.tiny th{padding:1.6px 5px;font-size:7.8pt;line-height:1.3}
+</style></head><body>
+<div class="top"><div class="logo"><i></i><i></i><i></i></div><div class="t"><b>Keys and Shortcuts</b><span>Keyboard shortcuts and mouse actions in Planora</span></div>
+<div class="doc">Planora · Document 3<br>October 2026</div></div>
+
+<p class="lead">Every command in Planora is in the menus, but these keys make daily work faster. The single most useful one is <kbd>Ctrl</kbd> + <kbd>K</kbd>:
+it opens a search box where you can type the name of any command, view or task.</p>
+<div class="cols2"><h3>Files</h3><table class="c"><tr><th style="width:38%">Keys</th><th>What it does</th></tr><tr><td><kbd>Ctrl</kbd> + <kbd>N</kbd></td><td>New project</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>O</kbd></td><td>Open a project</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Save</td></tr><tr><td><kbd>F12</kbd></td><td>Save As</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>P</kbd></td><td>Print</td></tr></table><h3>Editing</h3><table class="c"><tr><th style="width:38%">Keys</th><th>What it does</th></tr><tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>Y</kbd></td><td>Redo</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>C</kbd></td><td>Copy tasks</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>X</kbd></td><td>Cut tasks</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>V</kbd></td><td>Paste tasks</td></tr><tr><td><kbd>Delete</kbd></td><td>Delete the selected tasks</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>D</kbd></td><td>Fill down</td></tr></table><h3>Tasks</h3><table class="c"><tr><th style="width:38%">Keys</th><th>What it does</th></tr><tr><td><kbd>Insert</kbd></td><td>Insert a task</td></tr><tr><td><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>→</kbd></td><td>Indent (make a subtask)</td></tr><tr><td><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>←</kbd></td><td>Outdent</td></tr><tr><td><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>↑</kbd></td><td>Move task up</td></tr><tr><td><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>↓</kbd></td><td>Move task down</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>F2</kbd></td><td>Link selected tasks</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F2</kbd></td><td>Unlink tasks</td></tr><tr><td><kbd>Shift</kbd> + <kbd>F2</kbd></td><td>Task Information</td></tr></table><h3>Finding and checking</h3><table class="c"><tr><th style="width:38%">Keys</th><th>What it does</th></tr><tr><td><kbd>Ctrl</kbd> + <kbd>K</kbd></td><td>Search any command, view or task</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>F</kbd></td><td>Find</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>H</kbd></td><td>Replace</td></tr><tr><td><kbd>F7</kbd></td><td>Spelling</td></tr><tr><td><kbd>F9</kbd></td><td>Recalculate the schedule</td></tr></table><h3>View</h3><table class="c"><tr><th style="width:38%">Keys</th><th>What it does</th></tr><tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>F5</kbd></td><td>Scroll the chart to the selected task</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>Plus</kbd></td><td>Zoom in</td></tr><tr><td><kbd>Ctrl</kbd> + <kbd>Minus</kbd></td><td>Zoom out</td></tr><tr><td><kbd>Alt</kbd> + <kbd>F8</kbd></td><td>Macros</td></tr></table></div>
+<h3 class="pb">Mouse actions in the Gantt chart</h3>
+<table class="c"><tr><th style="width:40%">Action</th><th>Result</th></tr>
+<tr><td>Drag the middle of a bar left or right</td><td>Moves the task (an auto-scheduled task gets a “Start No Earlier Than” date)</td></tr>
+<tr><td>Drag the right end of a bar</td><td>Changes the duration</td></tr>
+<tr><td>Drag the left end of a bar</td><td>Sets the % complete</td></tr>
+<tr><td>Drag a bar up or down onto another task</td><td>Links the two tasks (finish-to-start)</td></tr>
+<tr><td>Double-click a bar or a row number</td><td>Opens Task Information</td></tr>
+<tr><td>Hover over a bar</td><td>Shows duration, start, finish, progress and slack</td></tr>
+<tr><td><kbd>Ctrl</kbd> + mouse wheel</td><td>Zoom in and out around the mouse</td></tr>
+<tr><td><kbd>Shift</kbd> + mouse wheel</td><td>Scroll the chart sideways</td></tr>
+<tr><td>Click the arrow next to a phase</td><td>Collapse or expand the phase</td></tr>
+<tr><td>Right-click a column heading</td><td>AutoFilter: show only rows with chosen values</td></tr></table>
+<h3>Typing shortcuts in the task table</h3>
+<table class="c"><tr><th style="width:40%">You type</th><th>Planora understands</th></tr>
+<tr><td><code>5d</code>, <code>2w</code>, <code>4h</code>, <code>1mo</code></td><td>5 days, 2 weeks, 4 hours, 1 month of working time</td></tr>
+<tr><td><code>3ed</code></td><td>3 elapsed (calendar) days, including weekends</td></tr>
+<tr><td><code>4d?</code></td><td>An estimated duration</td></tr>
+<tr><td><code>0d</code></td><td>A milestone</td></tr>
+<tr><td><code>3</code> or <code>3FS+2d</code> or <code>5SS-1d</code></td><td>Predecessors: row number, link type and lag or lead</td></tr>
+<tr><td><code>Crew[200%], Cement[40]</code></td><td>Resources with units or quantities</td></tr></table>
+<div class="tip"><b>Tip.</b> Every change, typed or dragged, can be undone with <kbd>Ctrl</kbd> + <kbd>Z</kbd>.</div>
+<div class="foot"><span>Planora 1.1.0 · Keys and Shortcuts</span><span>Developed by Adeeb</span></div></body></html>

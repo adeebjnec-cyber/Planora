@@ -1,0 +1,53 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Introduction to Planora</title><link rel="stylesheet" href="../style.css"><style>
+body{font-size:9.8pt} h2{font-size:18pt} h3{font-size:12pt;margin:14px 0 5px}
+.top{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--navy);padding-bottom:10px;margin-bottom:14px}
+.top .logo{width:38px;height:38px;border-radius:9px;background:var(--navy);position:relative;flex:none}
+.top .logo i{position:absolute;height:5px;border-radius:2.5px}
+.top .logo i:nth-child(1){left:7px;top:10px;width:15px;background:#fff}.top .logo i:nth-child(2){left:13px;top:17px;width:19px;background:#8F9AEA}.top .logo i:nth-child(3){left:19px;top:24px;width:12px;background:#9AA3B2}
+.top .t{flex:1}.top .t b{display:block;font-size:17pt;line-height:1.15}.top .t span{color:var(--muted);font-size:9pt}
+.top .doc{font-size:8.5pt;color:var(--muted);text-align:right}
+table.c td,table.c th{padding:3px 6px;font-size:8.6pt}
+.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.crit{color:var(--red);font-weight:600}
+.sum td{background:var(--soft);font-weight:600}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 14px}
+.kv div{border:1px solid var(--border);border-radius:8px;padding:8px 10px}.kv b{display:block;font-size:13.5pt;color:var(--navy)}.kv span{font-size:8.4pt;color:var(--muted)}
+.foot{margin-top:16px;padding-top:7px;border-top:1px solid var(--border);color:var(--muted);font-size:8pt;display:flex;justify-content:space-between}
+.pb{page-break-before:always}
+table.tiny td,table.tiny th{padding:1.6px 5px;font-size:7.8pt;line-height:1.3}
+</style></head><body>
+<div class="top"><div class="logo"><i></i><i></i><i></i></div><div class="t"><b>Introduction to Planora</b><span>Project scheduling and control software for Windows</span></div>
+<div class="doc">Planora · Document 1<br>October 2026</div></div>
+
+<p class="lead">Planora is a free Windows program for planning and controlling projects. It does the same job as Microsoft Project:
+you list the work, link the tasks, assign people and costs, and Planora calculates the dates, the critical path and the budget.</p>
+<figure><img src="img/m_gantt.jpg"><figcaption>The main window: views on the left, commands at the top, task table and Gantt chart in the middle, status bar at the bottom.</figcaption></figure>
+<h3>Who it is for</h3>
+<p>Project managers, planning engineers, architects, contractors and students who need professional scheduling on a Windows PC without a paid licence.</p>
+<h3>What it does</h3>
+<table class="c"><tr><th style="width:26%">Area</th><th>Features</th></tr>
+<tr><td>Planning</td><td>Tasks, phases (summary tasks), milestones, durations, four link types with lag and lead, constraints, deadlines, recurring and split tasks</td></tr>
+<tr><td>Scheduling</td><td>Critical Path Method (CPM): earliest and latest dates, total and free slack, critical path; working calendars with holidays</td></tr>
+<tr><td>Resources and costs</td><td>People, equipment, materials and fixed costs; rates; overload detection; automatic resource leveling; budgets</td></tr>
+<tr><td>Tracking</td><td>11 baselines, % complete, actual dates, Tracking Gantt, progress lines, earned value</td></tr>
+<tr><td>Views</td><td>Gantt Chart, Tracking Gantt, Network Diagram, Calendar, Kanban Board, Timeline, Task and Resource Usage, Resource Graph, Team Planner and more (13 views)</td></tr>
+<tr><td>Reports and output</td><td>16 built-in reports, a report designer, printing, PDF and image export</td></tr>
+<tr><td>Files</td><td>Opens Microsoft Project .mpp files; opens and saves Microsoft Project XML, Excel, CSV, Primavera P6 and MPX</td></tr>
+<tr><td>Ease of use</td><td>Command search (Ctrl+K), undo/redo of every change, autosave and recovery</td></tr></table>
+<h3 class="pb">How Planora is built</h3>
+<table class="c"><tr><th style="width:26%">Part</th><th>What it is</th></tr>
+<tr><td>Language</td><td>C# for the logic, XAML for the screens, on Microsoft .NET 8 (WPF)</td></tr>
+<tr><td>Engine (the “brain”)</td><td>About 12,400 lines: scheduling, calendars, resources, costs, reports and file formats. It has no screens, so it can be tested on its own.</td></tr>
+<tr><td>App (the screens)</td><td>About 18,000 lines: windows, menus, Gantt chart, dialogs and views. It shows the engine's results and sends your clicks back to it.</td></tr>
+<tr><td>Tests</td><td>305 automatic tests; dates checked against three real Microsoft Project files (188 of 188 tasks identical)</td></tr>
+<tr><td>Installer</td><td>One Setup file (118 MB) that includes everything; no administrator rights and no internet needed</td></tr></table>
+<h3>How it works, in four steps</h3>
+<ol class="steps">
+<li><b>Enter the work.</b> Type the tasks, their durations and how they depend on each other.</li>
+<li><b>Planora calculates.</b> The engine runs the Critical Path Method to find every task's dates and the tasks that decide the finish date.</li>
+<li><b>Add people and money.</b> Assign resources with rates; Planora adds up work and cost and warns about overloaded people.</li>
+<li><b>Track and report.</b> Save a baseline, record progress, compare plan against actual, and print or export reports.</li></ol>
+<h3>System requirements</h3>
+<p>Windows 10 or 11 (64-bit), about 300 MB of disk space. Nothing else to install; works offline.</p>
+<div class="tip"><b>In one sentence:</b> Planora gives you Microsoft Project-style scheduling, critical path and cost control on any Windows PC, free of charge.</div>
+<div class="foot"><span>Planora 1.1.0 · Introduction to Planora</span><span>Developed by Adeeb</span></div></body></html>

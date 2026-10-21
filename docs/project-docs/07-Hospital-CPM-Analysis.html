@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Critical Path Method (CPM) Analysis</title><link rel="stylesheet" href="../style.css"><style>
+body{font-size:9.8pt} h2{font-size:18pt} h3{font-size:12pt;margin:14px 0 5px}
+.top{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--navy);padding-bottom:10px;margin-bottom:14px}
+.top .logo{width:38px;height:38px;border-radius:9px;background:var(--navy);position:relative;flex:none}
+.top .logo i{position:absolute;height:5px;border-radius:2.5px}
+.top .logo i:nth-child(1){left:7px;top:10px;width:15px;background:#fff}.top .logo i:nth-child(2){left:13px;top:17px;width:19px;background:#8F9AEA}.top .logo i:nth-child(3){left:19px;top:24px;width:12px;background:#9AA3B2}
+.top .t{flex:1}.top .t b{display:block;font-size:17pt;line-height:1.15}.top .t span{color:var(--muted);font-size:9pt}
+.top .doc{font-size:8.5pt;color:var(--muted);text-align:right}
+table.c td,table.c th{padding:3px 6px;font-size:8.6pt}
+.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.crit{color:var(--red);font-weight:600}
+.sum td{background:var(--soft);font-weight:600}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 14px}
+.kv div{border:1px solid var(--border);border-radius:8px;padding:8px 10px}.kv b{display:block;font-size:13.5pt;color:var(--navy)}.kv span{font-size:8.4pt;color:var(--muted)}
+.foot{margin-top:16px;padding-top:7px;border-top:1px solid var(--border);color:var(--muted);font-size:8pt;display:flex;justify-content:space-between}
+.pb{page-break-before:always}
+table.tiny td,table.tiny th{padding:1.6px 5px;font-size:7.8pt;line-height:1.3}
+</style></head><body>
+<div class="top"><div class="logo"><i></i><i></i><i></i></div><div class="t"><b>Critical Path Method (CPM) Analysis</b><span>200-Bed Hospital Construction (as-planned schedule, calculated by Planora)</span></div>
+<div class="doc">Planora · Document 4D<br>October 2026</div></div>
+
+<p class="lead">The Critical Path Method finds the longest chain of dependent tasks. That chain sets the project duration:
+any delay to a task on it delays the whole project. Planora calculated this analysis automatically.</p>
+<div class="kv"><div><b>467 days</b><span>project duration (working days)</span></div><div><b>75</b><span>critical tasks (of 79)</span></div>
+<div><b>4 Jan 2027</b><span>project start</span></div><div><b>18 Oct 2028</b><span>project finish</span></div></div>
+<h3>How the calculation works</h3>
+<ol class="steps">
+<li><b>Forward pass.</b> Starting at the project start, each task's <b>Early Start (ES)</b> is the latest Early Finish of its predecessors; <b>Early Finish (EF)</b> = ES + duration (working time on the calendar).</li>
+<li><b>Backward pass.</b> Starting at the project finish, each task's <b>Late Finish (LF)</b> is the earliest Late Start of its successors; <b>Late Start (LS)</b> = LF − duration.</li>
+<li><b>Total float (slack)</b> = LS − ES. It is how long a task can slip without delaying the project.</li>
+<li><b>Critical path</b> = the tasks with zero total float.</li></ol>
+<h3>Result by phase</h3>
+<table class="c"><tr><th>WBS</th><th>Phase</th><th class="r">Duration</th><th class="r">ES</th><th class="r">EF</th><th class="r">LS</th><th class="r">LF</th><th class="r">Float</th></tr><tr><td>1</td><td>Pre-Construction</td><td class="r">40 d</td><td class="r">4 Jan 2027</td><td class="r">26 Feb 2027</td><td class="r">4 Jan 2027</td><td class="r">26 Feb 2027</td><td class="r crit">0 d</td></tr><tr><td>2</td><td>Site &amp; Earthwork</td><td class="r">25 d</td><td class="r">1 Mar 2027</td><td class="r">2 Apr 2027</td><td class="r">1 Mar 2027</td><td class="r">2 Apr 2027</td><td class="r crit">0 d</td></tr><tr><td>3</td><td>Foundation</td><td class="r">34 d</td><td class="r">29 Mar 2027</td><td class="r">13 May 2027</td><td class="r">29 Mar 2027</td><td class="r">13 May 2027</td><td class="r crit">0 d</td></tr><tr><td>4</td><td>RCC Structure</td><td class="r">83 d</td><td class="r">11 May 2027</td><td class="r">3 Sep 2027</td><td class="r">11 May 2027</td><td class="r">3 Sep 2027</td><td class="r crit">0 d</td></tr><tr><td>5</td><td>Masonry</td><td class="r">45 d</td><td class="r">3 Sep 2027</td><td class="r">5 Nov 2027</td><td class="r">3 Sep 2027</td><td class="r">5 Nov 2027</td><td class="r crit">0 d</td></tr><tr><td>6</td><td>MEP First Fix</td><td class="r">35.1 d</td><td class="r">6 Oct 2027</td><td class="r">24 Nov 2027</td><td class="r">6 Oct 2027</td><td class="r">24 Nov 2027</td><td class="r crit">0 d</td></tr><tr><td>7</td><td>Plaster &amp; Waterproofing</td><td class="r">43 d</td><td class="r">24 Nov 2027</td><td class="r">24 Jan 2028</td><td class="r">24 Nov 2027</td><td class="r">24 Jan 2028</td><td class="r crit">0 d</td></tr><tr><td>8</td><td>Doors Windows &amp; Facade</td><td class="r">35 d</td><td class="r">12 Jan 2028</td><td class="r">1 Mar 2028</td><td class="r">12 Jan 2028</td><td class="r">1 Mar 2028</td><td class="r crit">0 d</td></tr><tr><td>9</td><td>Flooring &amp; Finishes</td><td class="r">72.1 d</td><td class="r">1 Mar 2028</td><td class="r">9 Jun 2028</td><td class="r">1 Mar 2028</td><td class="r">9 Jun 2028</td><td class="r crit">0 d</td></tr><tr><td>10</td><td>MEP Second Fix</td><td class="r">51 d</td><td class="r">12 May 2028</td><td class="r">24 Jul 2028</td><td class="r">12 May 2028</td><td class="r">24 Jul 2028</td><td class="r crit">0 d</td></tr><tr><td>11</td><td>External Development</td><td class="r">36 d</td><td class="r">24 Jul 2028</td><td class="r">12 Sep 2028</td><td class="r">24 Jul 2028</td><td class="r">12 Sep 2028</td><td class="r crit">0 d</td></tr><tr><td>12</td><td>Testing Commissioning &amp; Handover</td><td class="r">33.1 d</td><td class="r">1 Sep 2028</td><td class="r">18 Oct 2028</td><td class="r">1 Sep 2028</td><td class="r">18 Oct 2028</td><td class="r crit">0 d</td></tr></table>
+<h3 class="pb">The critical path</h3>
+<p>Every phase has zero float: the hospital plan is one continuous chain from <b>Site Survey &amp; Soil Investigation</b> to <b>Project Handover</b>,
+with 75 critical tasks. Phases follow one another as:</p>
+<p style="font-weight:600;color:var(--red)">Pre-Construction → Site &amp; Earthwork → Foundation → RCC Structure → Masonry → MEP First Fix → Plaster &amp; Waterproofing → Doors Windows &amp; Facade → Flooring &amp; Finishes → MEP Second Fix → External Development → Testing Commissioning &amp; Handover → Project Handover</p>
+<h3>Tasks with float (not critical)</h3>
+<table class="c"><tr><th>Task</th><th class="r">Early finish</th><th class="r">Late finish</th><th class="r">Total float</th></tr><tr><td>Design Approval Milestone</td><td class="r">19 Mar 2027</td><td class="r">18 Oct 2028</td><td class="r">412.4 d</td></tr><tr><td>Foundation Complete Milestone</td><td class="r">6 Oct 2027</td><td class="r">18 Oct 2028</td><td class="r">270.3 d</td></tr><tr><td>Structure Topped Out Milestone</td><td class="r">19 Apr 2028</td><td class="r">18 Oct 2028</td><td class="r">130.1 d</td></tr><tr><td>MEP Testing Complete Milestone</td><td class="r">4 Jan 2027</td><td class="r">18 Oct 2028</td><td class="r">467.4 d</td></tr></table>
+<p>Only these milestones can slip; they are not linked to anything that follows them. Everything else is critical.</p>
+<h3>What this means for the project manager</h3>
+<ul><li>Because the whole plan is critical, <b>any delay</b> in any task moves the handover date. The plan has no buffer.</li>
+<li>To finish earlier, overlap phases (for example start MEP First Fix on lower floors while upper floors are still being built) or add crews to the longest phases: <b>RCC Structure</b> and <b>Flooring &amp; Finishes</b>.</li>
+<li>Track the critical tasks weekly; Planora shows them in red when the Critical path switch is on.</li></ul>
+<div class="note"><b>Source.</b> Hospital_Construction_Advanced.xml from the construction test pack, opened in Planora 1.1.0. Dates are the <b>as-planned</b> schedule (progress recorded in the file cleared), calculated by Planora on the file's calendar (Mon–Fri, 8:00–17:00). Two links in the file could not be imported (one to the project summary row, one to a missing task); Planora reports them as import notes. Amounts are in the file's currency units, shown as ₹.</div>
+<div class="foot"><span>Planora 1.1.0 · Critical Path Method (CPM) Analysis</span><span>Developed by Adeeb</span></div></body></html>
