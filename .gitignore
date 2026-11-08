@@ -484,3 +484,7 @@ $RECYCLE.BIN/
 
 # Built installer (rebuild with setup/build-installer.ps1)
 Installer/
+
+# Exclude unrelated folders
+/MS_Project_Advanced_Construction_Test_Pack/
+/Real mss file/
